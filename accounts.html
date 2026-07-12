@@ -1,1 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="BSMS Web Account Manager. Manage your profile, security, and settings across the BSMS ecosystem."/>
+<meta name="theme-color" content="#BB001E">
+<title>BSMS Web Account Manager</title>
 
+<!-- Load Firebase SDK (Compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --theme-rgb:187,0,30;
+  --red:rgb(var(--theme-rgb));--red-h:#d10022;--red-glow:rgba(var(--theme-rgb),0.35);
+  --border:rgba(255,255,255,0.13);--msg-bg:rgba(255,255,255,0.06);
+  --input-bg:rgba(255,255,255,0.08);--font:'Patrick Hand',cursive;
+}
+html,body{margin:0;padding:0;height:100%;width:100%;font-family:var(--font);background:#000;color:#fff;overflow:hidden}
+
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes popIn{from{opacity:0;transform:scale(.92) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes slideLeft{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+@keyframes notifIn{from{opacity:0;transform:translateY(14px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+/* UI Elements */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.82);display:none;align-items:center;justify-content:center;z-index:800;animation:fadeIn .2s ease}
+.overlay.show{display:flex}
+.popup{background:#080808;border:3px solid var(--red);border-radius:20px;padding:26px 24px 20px;width:min(420px,92vw);animation:popIn .22s ease; display:flex; flex-direction:column; max-height: 90vh; overflow-y:auto;}
+.popup h2{font-size:26px;margin:0 0 8px}
+.popup p{font-size:18px;color:rgba(255,255,255,0.72);margin:0 0 14px;line-height:1.45}
+
+.btn{display:block;width:100%;font-family:var(--font);font-size:21px;padding:10px 14px;border-radius:12px;border:2px solid var(--red);background:var(--red);color:#fff;cursor:pointer;transition:transform .13s,background .13s,border-color .13s,box-shadow .13s;margin-bottom:9px;line-height:1.2}
+.btn:last-child{margin-bottom:0}
+.btn:hover{background:var(--red-h);transform:scale(1.02);box-shadow:0 4px 18px var(--red-glow)}
+.btn:active{transform:scale(.97)}
+.btn.sec{background:transparent;border-color:rgba(255,255,255,0.4)}
+.btn.sec:hover{background:rgba(255,255,255,0.09);box-shadow:none}
+.btn.warn{background:#7a0010;border-color:#7a0010}
+.btn.warn:hover{background:#9a0015;border-color:#9a0015}
+
+input,textarea{width:100%;font-family:var(--font);font-size:20px;padding:10px 13px;border-radius:12px;border:2px solid var(--border);background:var(--input-bg);color:#fff;margin:5px 0 12px;display:block;transition:border-color .2s,box-shadow .2s}
+input:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 14px var(--red-glow);outline:none}
+input:disabled{opacity:0.5;cursor:not-allowed}
+input::placeholder,textarea::placeholder{color:rgba(255,255,255,0.32)}
+textarea{resize:vertical;height:110px}
+
+/* Loaders */
+.spinner{width:50px;height:50px;border:4px solid rgba(255,255,255,0.1);border-top-color:var(--red);border-radius:50%;animation:spin 1s cubic-bezier(.4,0,.2,1) infinite;margin:0 auto 20px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Screens */
+.screen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;animation:fadeIn .25s ease;overflow-y:auto;}
+.screen.show{display:flex}
+.card{width:min(420px,100%);background:rgba(0,0,0,0.97);border:3px solid var(--red);border-radius:26px;padding:32px 24px;animation:popIn .3s ease;text-align:center;box-shadow:0 0 60px rgba(var(--theme-rgb),0.12); position:relative;}
+.card h1{font-size:42px;margin:0 0 4px;line-height:1.1}
+.card>p{font-size:19px;color:rgba(255,255,255,0.65);margin:0 0 22px}
+.logo-img{width:72px;height:72px;object-fit:contain;margin:0 auto 15px;display:block;border-radius:14px; background: rgba(255,255,255,0.05); border: 2px solid var(--border);}
+
+/* Dashboard Shell */
+#appShell{position:fixed;inset:0;display:none;flex-direction:row}
+#appShell.show{display:flex;animation:fadeIn .3s ease}
+#sidebar{width:220px;min-width:220px;border-right:3px solid var(--red);padding:20px 14px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;background:rgba(0,0,0,0.98);}
+.sidebar-title { font-size: 26px; margin: 0 0 15px 5px; color: #fff; font-weight: bold; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
+.navBtn{width:100%;font-family:var(--font);font-size:18px;padding:12px 14px;border-radius:12px;border:2px solid transparent;background:transparent;color:rgba(255,255,255,0.7);cursor:pointer;text-align:left;transition:all .15s;display:flex;align-items:center;gap:10px;}
+.navBtn:hover{background:rgba(var(--theme-rgb),0.15);color:#fff;transform:translateX(4px);}
+.navBtn.active{background:rgba(var(--theme-rgb),0.25);border-color:var(--red);color:#fff;box-shadow:0 2px 12px rgba(var(--theme-rgb),0.2);}
+.sidebar-gap{flex:1}
+
+/* Topbar for mobile */
+#mobileTopbar{display:none;height:55px;border-bottom:3px solid var(--red);padding:0 12px;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.98);flex-shrink:0;}
+#mobileMenuBtn{font-family:var(--font);font-size:20px;padding:6px 14px;border-radius:10px;border:2px solid var(--red);background:transparent;color:#fff;cursor:pointer;}
+#mobileMenuBtn:hover{background:rgba(var(--theme-rgb),0.22)}
+.mobile-title { font-size: 22px; color: #fff; font-weight: bold;}
+
+#mobileDrawerBackdrop{position:fixed;inset:0;top:55px;background:rgba(0,0,0,0.5);z-index:699;display:none;animation:fadeIn .2s ease}
+#mobileDrawerBackdrop.show{display:block}
+#mobileDrawer{position:fixed;top:55px;left:0;bottom:0;width:240px;background:rgba(0,0,0,0.98);border-right:3px solid var(--red);z-index:700;display:flex;flex-direction:column;gap:7px;padding:15px;overflow-y:auto;transform:translateX(-100%);transition:transform .25s cubic-bezier(.4,0,.2,1)}
+#mobileDrawer.open{transform:translateX(0)}
+
+/* Dashboard Main View */
+#mainView{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:24px;position:relative;}
+.panel{display:none;flex:1;flex-direction:column;overflow-y:auto;animation:slideLeft .2s ease; max-width: 600px; margin: 0 auto; width: 100%;}
+.panel.show{display:flex}
+.panel-header{margin-bottom:20px;}
+.panel-header h1{font-size:36px;margin:0 0 5px;}
+.panel-header p{font-size:18px;color:rgba(255,255,255,0.5);margin:0;}
+
+/* Form & Settings specifics */
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; font-size: 18px; margin-bottom: 6px; color: rgba(255,255,255,0.85); }
+.setting-row { display:flex; justify-content:space-between; align-items:center; background: var(--msg-bg); border: 2px solid var(--border); padding: 14px 18px; border-radius: 12px; margin-bottom: 12px; }
+.setting-row input[type="color"] { width:44px; height:44px; padding:0; border:2px solid var(--border); border-radius:10px; cursor:pointer; background:transparent; }
+.avatar-preview { width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--red); object-fit: cover; background: #111; margin-bottom: 15px; display:flex; align-items:center; justify-content:center; font-size: 40px; color: var(--red); overflow: hidden; transition: border-color 0.2s;}
+.avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Apps Section */
+.app-grid { display: flex; flex-direction: column; gap: 14px; }
+.app-card { background: var(--msg-bg); border: 2px solid var(--border); border-radius: 16px; padding: 20px; transition: transform 0.2s, border-color 0.2s; display: flex; flex-direction: column; gap: 10px; }
+.app-card:hover { border-color: var(--red); transform: translateY(-3px); box-shadow: 0 4px 20px rgba(var(--theme-rgb), 0.15); }
+.app-card h3 { margin: 0; font-size: 24px; color: #fff; }
+.app-card p { margin: 0; font-size: 16px; color: rgba(255,255,255,0.6); flex: 1; }
+
+/* Notifications */
+#notifContainer{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:7px;z-index:900;pointer-events:none;width:min(430px,92vw)}
+.notif{background:rgba(8,8,8,0.96);border:2px solid rgba(var(--theme-rgb),0.6);border-radius:11px;padding:9px 16px;font-size:16px;color:rgba(255,255,255,0.9);pointer-events:all;cursor:pointer;animation:notifIn .26s ease;width:100%;text-align:center;transition:opacity .28s,transform .28s; box-shadow: 0 4px 12px rgba(0,0,0,0.5);}
+
+/* Big Countdown */
+#deleteCountdownDisplay { font-size: 72px; font-weight: bold; color: #ff3333; margin: 20px 0; font-family: monospace; }
+
+@media (max-width:768px){
+    #sidebar{display:none;}
+    #mobileTopbar{display:flex;}
+    #mainView{padding:16px;}
+}
+</style>
+</head>
+<body>
+
+<!-- Loaders & Modals -->
+<div id="initLoadingScreen" class="screen show">
+  <div class="card" style="background:transparent; border:none; box-shadow:none;">
+    <div class="spinner"></div>
+    <h1 style="font-size:42px;">BSMS Web</h1>
+    <div style="font-size:18px; color:var(--red);">Loading Accounts...</div>
+  </div>
+</div>
+
+<div id="actionLoadingScreen" class="overlay" style="z-index:900;">
+  <div class="popup" style="width: auto; background: transparent; border: none; align-items: center; box-shadow: none;">
+    <div class="spinner"></div>
+    <div id="actionLoadingText" style="font-size: 22px; font-weight: bold; color:var(--red);">Please wait...</div>
+  </div>
+</div>
+
+<div id="alertOverlay" class="overlay">
+  <div class="popup">
+    <p id="alertText" style="font-size:22px;margin-bottom:20px;color:rgba(255,255,255,.9)"></p>
+    <button class="btn" onclick="closeAlert()">OK</button>
+  </div>
+</div>
+
+<!-- Change Username Modal -->
+<div id="changeUsernameModal" class="overlay">
+  <div class="popup">
+    <h2>Change Username</h2>
+    <p>You can only change your username once every 7 days. Your new username must not be taken.</p>
+    <input type="text" id="newUsernameInput" placeholder="New Username (3-20 chars)" maxlength="20"/>
+    <p style="font-size: 14px; color:rgba(255,255,255,0.4); margin-top:-5px;">Spaces will be replaced with underscores.</p>
+    <button class="btn warn" onclick="executeUsernameChange()">Confirm Change</button>
+    <button class="btn sec" onclick="closePopup('changeUsernameModal')">Cancel</button>
+  </div>
+</div>
+
+<!-- Delete Account Setup Modal -->
+<div id="deleteAccountModal" class="overlay">
+  <div class="popup">
+    <h2 style="color:#ff3333;">Delete Account</h2>
+    <p>This action is irreversible. All of your BSMS Web data will be permanently lost.</p>
+    <p style="font-size: 15px;">Please confirm your credentials to proceed.</p>
+    <input type="text" id="delAuthUser" placeholder="Enter your username"/>
+    <input type="password" id="delAuthPass" placeholder="Enter your password"/>
+    <button class="btn warn" onclick="verifyAccountDeletion()">Proceed</button>
+    <button class="btn sec" onclick="closePopup('deleteAccountModal')">Cancel</button>
+  </div>
+</div>
+
+<!-- Delete Account Countdown Modal -->
+<div id="deleteCountdownModal" class="overlay" style="z-index:999; background:rgba(20,0,0,0.95);">
+  <div class="popup" style="border-color:#ff3333; text-align:center;">
+    <h2 style="color:#ff3333;">Account Deletion</h2>
+    <p>Your account will be permanently deleted in:</p>
+    <div id="deleteCountdownDisplay">10</div>
+    <p style="font-size:16px;">This is your last chance to abort.</p>
+    <button class="btn sec" style="border-color:#fff; color:#fff;" onclick="cancelDeletion()">Cancel Deletion</button>
+  </div>
+</div>
+
+
+<!-- Authentication Screen (Login / Sign Up) -->
+<div id="authScreen" class="screen">
+  <div class="card">
+    <div class="logo-img">
+        <svg style="width:40px;height:40px;margin-top:14px;fill:var(--red);" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+    </div>
+    <h1 id="authTitle">Sign In</h1>
+    <p id="authSubtitle">Access your BSMS Web Account</p>
+    
+    <div style="text-align: left;">
+      <input id="authUsername" type="text" placeholder="Username (3-20 chars)" maxlength="20" autocomplete="username"/>
+      <input id="authPassword" type="password" placeholder="Password" autocomplete="current-password"/>
+    </div>
+    
+    <button class="btn" id="authSubmitBtn" onclick="handleAuth()" style="margin-top: 10px;">Login</button>
+    
+    <div style="margin-top: 18px; font-size: 17px; color: rgba(255,255,255,0.5);">
+      <span id="authToggleText">Don't have an account?</span> 
+      <strong style="color:var(--red); cursor:pointer;" onclick="toggleAuthMode()">Sign up here</strong>
+    </div>
+  </div>
+</div>
+
+<!-- Logged In Dashboard -->
+<div id="appShell">
+  <!-- Desktop Sidebar -->
+  <div id="sidebar">
+    <div class="sidebar-title">BSMS Accounts</div>
+    <button class="navBtn active" id="dock-profile" onclick="switchPanel('profile')">Profile</button>
+    <button class="navBtn" id="dock-security" onclick="switchPanel('security')">Security</button>
+    <button class="navBtn" id="dock-settings" onclick="switchPanel('settings')">Preferences</button>
+    <button class="navBtn" id="dock-apps" onclick="switchPanel('apps')">Apps</button>
+    <div class="sidebar-gap"></div>
+    <div style="font-size: 15px; color:rgba(255,255,255,0.4); text-align:center; margin-bottom:10px;">Logged in as <br><strong id="sidebarUsername" style="color:#fff;">---</strong></div>
+    <button class="navBtn" style="border-color:#555; color:#ff6666; justify-content:center;" onclick="logout()">Logout</button>
+  </div>
+
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;">
+    
+    <!-- Mobile Topbar -->
+    <div id="mobileTopbar">
+      <button id="mobileMenuBtn" onclick="toggleMobileDrawer()">Menu</button>
+      <div class="mobile-title">BSMS Accounts</div>
+      <div style="width: 60px;"></div> <!-- Spacer for centering -->
+    </div>
+    
+    <!-- Mobile Drawer -->
+    <div id="mobileDrawerBackdrop" onclick="closeMobileDrawer()"></div>
+    <div id="mobileDrawer">
+      <div class="sidebar-title">Menu</div>
+      <button class="navBtn active" id="mob-profile" onclick="switchPanel('profile'); closeMobileDrawer()">Profile</button>
+      <button class="navBtn" id="mob-security" onclick="switchPanel('security'); closeMobileDrawer()">Security</button>
+      <button class="navBtn" id="mob-settings" onclick="switchPanel('settings'); closeMobileDrawer()">Preferences</button>
+      <button class="navBtn" id="mob-apps" onclick="switchPanel('apps'); closeMobileDrawer()">Apps</button>
+      <div class="sidebar-gap"></div>
+      <div style="font-size: 15px; color:rgba(255,255,255,0.4); text-align:center; margin-bottom:10px;">Logged in as <br><strong id="mobileSidebarUsername" style="color:#fff;">---</strong></div>
+      <button class="navBtn" style="border-color:#555; color:#ff6666; justify-content:center;" onclick="logout()">Logout</button>
+    </div>
+
+    <!-- Main Content Area -->
+    <div id="mainView">
+        
+      <!-- Profile Panel -->
+      <div id="profilePanel" class="panel show">
+        <div class="panel-header">
+            <h1>Public Profile</h1>
+            <p>Manage your identity across BSMS Web apps.</p>
+        </div>
+        
+        <div class="form-group" style="display:flex; flex-direction:column; align-items:center;">
+            <div class="avatar-preview" id="avatarPreviewContainer">
+                <span id="avatarFallback">?</span>
+            </div>
+            <input type="file" id="avatarUpload" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)"/>
+            <button class="btn sec" style="width:auto; padding: 6px 14px; font-size:16px;" onclick="document.getElementById('avatarUpload').click()">Upload Picture</button>
+            <p style="font-size:14px; color:rgba(255,255,255,0.4); margin: 10px 0 15px 0;">Account created: <span id="accountCreatedDate">---</span></p>
+        </div>
+
+        <div class="form-group">
+            <label>Username <span style="font-size:14px; color:rgba(255,255,255,0.4);">(Used for login)</span></label>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="profileUsername" disabled style="margin:0;"/>
+                <button class="btn sec" style="width:auto; margin:0;" onclick="openUsernameModal()">Change</button>
+            </div>
+            <div id="usernameCooldownText" style="font-size: 14px; color:var(--red); margin-top:6px; display:none;"></div>
+        </div>
+
+        <div class="form-group">
+            <label>Display Name <span style="font-size:14px; color:rgba(255,255,255,0.4);">(Visible to others)</span></label>
+            <input type="text" id="profileDisplayName" placeholder="Your display name" maxlength="30"/>
+        </div>
+        
+        <div class="form-group">
+            <label>Bio</label>
+            <textarea id="profileBio" placeholder="Tell us a bit about yourself..." maxlength="200"></textarea>
+        </div>
+
+        <div class="panel-header" style="margin-top: 30px;">
+            <h2 style="margin:0; font-size: 28px;">Contact Information (Optional)</h2>
+        </div>
+
+        <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="profileEmail" placeholder="name@example.com"/>
+        </div>
+
+        <div class="form-group">
+            <label>Phone Number</label>
+            <input type="tel" id="profilePhone" placeholder="(123) 456-7890"/>
+        </div>
+
+        <button class="btn" onclick="saveProfile()" style="margin-top: 10px; margin-bottom: 40px;">Save Profile Changes</button>
+      </div>
+
+      <!-- Security Panel -->
+      <div id="securityPanel" class="panel">
+        <div class="panel-header">
+            <h1>Security</h1>
+            <p>Update your password and secure your account.</p>
+        </div>
+        
+        <div class="form-group">
+            <label>Current Password</label>
+            <input type="password" id="secCurrentPass" placeholder="Enter current password"/>
+        </div>
+        <div class="form-group">
+            <label>New Password</label>
+            <input type="password" id="secNewPass" placeholder="Enter new password (min 6 chars)"/>
+        </div>
+        <div class="form-group">
+            <label>Confirm New Password</label>
+            <input type="password" id="secConfirmPass" placeholder="Confirm new password"/>
+        </div>
+        
+        <button class="btn warn" onclick="changePassword()" style="margin-top: 10px;">Update Password</button>
+
+        <div style="margin-top: 60px; padding-top: 20px; border-top: 2px solid var(--border);">
+            <h2 style="color: #ff3333; margin: 0 0 10px;">Danger Zone</h2>
+            <p style="font-size:16px; color:rgba(255,255,255,0.6); margin:0 0 15px;">Once you delete your account, there is no going back. Please be certain.</p>
+            <button class="btn warn" style="background:transparent; color:#ff3333; border-color:#ff3333;" onclick="openPopup('deleteAccountModal')">Delete Account</button>
+        </div>
+      </div>
+
+      <!-- Settings Panel -->
+      <div id="settingsPanel" class="panel">
+        <div class="panel-header">
+            <h1>Preferences</h1>
+            <p>Customize your BSMS Web experience.</p>
+        </div>
+        
+        <div class="setting-row">
+            <div>
+                <div style="font-size: 20px;">Theme Color</div>
+                <div style="font-size: 15px; color:rgba(255,255,255,0.4);">Choose your primary accent color</div>
+            </div>
+            <input type="color" id="prefThemeColor" value="#BB001E" onchange="previewThemeColor(this.value)">
+        </div>
+
+        <button class="btn" onclick="savePreferences()" style="margin-top: 20px;">Save Preferences</button>
+      </div>
+
+      <!-- Apps Panel -->
+      <div id="appsPanel" class="panel">
+        <div class="panel-header">
+            <h1>Apps</h1>
+            <p>Manage app-specific settings across the ecosystem.</p>
+        </div>
+
+        <div class="app-grid">
+            <div class="app-card">
+                <h3>BSMS Rooms</h3>
+                <p>Real-time chat and communication platform for students.</p>
+                <button class="btn sec" style="margin:0;" onclick="window.location.href='https://bsms-rooms.oneapp.dev'">Go to App Settings</button>
+            </div>
+            
+            <div class="app-card" style="opacity: 0.6;">
+                <h3>BSMS Countdown</h3>
+                <p>Track important dates and times. (Coming Soon)</p>
+                <button class="btn sec" style="margin:0;" disabled>Not Available</button>
+            </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Notifications -->
+<div id="notifContainer"></div>
+
+<script>
+// ---------- FIREBASE INIT ----------
+firebase.initializeApp({
+  databaseURL: "https://bsms-web-default-rtdb.firebaseio.com"
+});
+const db = firebase.database();
+
+// ---------- GLOBALS ----------
+let currentUser = null;
+let currentAccountData = null;
+let authMode = 'login'; // 'login' or 'signup'
+let pendingAvatarBase64 = null;
+let deleteInterval = null;
+let deleteTimer = 10;
+const SESSION_KEY = 'bsms_account_session';
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+// ---------- UI HELPERS ----------
+function showScreen(id) {
+  document.querySelectorAll('.screen, #appShell').forEach(s => s.classList.remove('show'));
+  document.getElementById(id).classList.add('show');
+}
+
+function showActionLoader(text = "Please wait...") {
+    document.getElementById('actionLoadingText').textContent = text;
+    document.getElementById('actionLoadingScreen').classList.add('show');
+}
+function hideActionLoader() {
+    document.getElementById('actionLoadingScreen').classList.remove('show');
+}
+
+function showAlert(msg) {
+    document.getElementById('alertText').innerText = msg;
+    document.getElementById('alertOverlay').classList.add('show');
+}
+function closeAlert() {
+    document.getElementById('alertOverlay').classList.remove('show');
+}
+
+function openPopup(id) {
+    document.getElementById(id).classList.add('show');
+}
+function closePopup(id) {
+    document.getElementById(id).classList.remove('show');
+}
+
+function showToast(msg) {
+    const c = document.getElementById('notifContainer');
+    const n = document.createElement('div');
+    n.className = 'notif';
+    n.textContent = msg;
+    n.onclick = () => { n.style.opacity='0'; setTimeout(()=>n.remove(), 280); };
+    c.appendChild(n);
+    setTimeout(() => { if(n.parentNode) { n.style.opacity='0'; setTimeout(()=>n.remove(), 280); } }, 4000);
+}
+
+function applyColor(hex) {
+    if(!hex) hex = '#BB001E';
+    document.documentElement.style.setProperty('--red', hex);
+    if(hex.length === 7) {
+        let r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
+        document.documentElement.style.setProperty('--theme-rgb', `${r}, ${g}, ${b}`);
+        let hr = Math.min(255, r + 20), hg = Math.min(255, g + 20), hb = Math.min(255, b + 20);
+        document.documentElement.style.setProperty('--red-h', `rgb(${hr},${hg},${hb})`);
+        document.documentElement.style.setProperty('--red-glow', `rgba(${r},${g},${b},0.35)`);
+    }
+}
+
+// Spaces to Underscores Input Listeners
+function preventSpaces(e) {
+    this.value = this.value.replace(/ /g, '_');
+}
+document.getElementById('authUsername').addEventListener('input', preventSpaces);
+document.getElementById('newUsernameInput').addEventListener('input', preventSpaces);
+
+
+// Mobile Menu
+function toggleMobileDrawer(){
+    const d=document.getElementById('mobileDrawer'), bd=document.getElementById('mobileDrawerBackdrop');
+    const o=d.classList.toggle('open');
+    bd.classList.toggle('show',o);
+}
+function closeMobileDrawer(){
+    document.getElementById('mobileDrawer').classList.remove('open');
+    document.getElementById('mobileDrawerBackdrop').classList.remove('show');
+}
+
+// Panel Switching
+function switchPanel(name) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('show'));
+    document.querySelectorAll('.navBtn').forEach(b => b.classList.remove('active'));
+    
+    document.getElementById(name + 'Panel').classList.add('show');
+    if(document.getElementById('dock-' + name)) document.getElementById('dock-' + name).classList.add('active');
+    if(document.getElementById('mob-' + name)) document.getElementById('mob-' + name).classList.add('active');
+}
+
+// ---------- AUTHENTICATION ----------
+function toggleAuthMode() {
+    authMode = authMode === 'login' ? 'signup' : 'login';
+    const title = document.getElementById('authTitle');
+    const subtitle = document.getElementById('authSubtitle');
+    const btn = document.getElementById('authSubmitBtn');
+    const toggleText = document.getElementById('authToggleText');
+    const toggleLink = toggleText.nextElementSibling;
+
+    if (authMode === 'signup') {
+        title.textContent = 'Create Account';
+        subtitle.textContent = 'Join the BSMS Web ecosystem';
+        btn.textContent = 'Sign Up';
+        toggleText.textContent = 'Already have an account?';
+        toggleLink.textContent = 'Log in here';
+    } else {
+        title.textContent = 'Sign In';
+        subtitle.textContent = 'Access your BSMS Web Account';
+        btn.textContent = 'Login';
+        toggleText.textContent = "Don't have an account?";
+        toggleLink.textContent = 'Sign up here';
+    }
+}
+
+async function handleAuth() {
+    let user = document.getElementById('authUsername').value;
+    user = user.replace(/ /g, '_'); // Extra safety
+    const pass = document.getElementById('authPassword').value.trim();
+
+    if (user.length < 3 || user.length > 20) return showAlert("Username must be between 3 and 20 characters.");
+    if (!/^[a-zA-Z0-9_]+$/.test(user)) return showAlert("Username can only contain letters, numbers, and underscores.");
+    if (!pass) return showAlert("Password is required.");
+
+    showActionLoader(authMode === 'signup' ? "Creating account..." : "Logging in...");
+
+    try {
+        const ref = db.ref(`/accounts/${user}`);
+        const snap = await ref.once('value');
+        const data = snap.val();
+
+        if (authMode === 'signup') {
+            if (data) {
+                hideActionLoader();
+                return showAlert("That username is already taken. Please choose another.");
+            }
+            
+            const newAcc = {
+                password: btoa(encodeURIComponent(pass)), 
+                displayName: user,
+                bio: "",
+                avatar: "",
+                email: "",
+                phone: "",
+                theme: "#BB001E",
+                createdAt: Date.now(),
+                lastUsernameChange: 0
+            };
+            
+            await ref.set(newAcc);
+            completeLogin(user, newAcc);
+            
+        } else {
+            if (!data) {
+                hideActionLoader();
+                return showAlert("Account not found. Please check your username.");
+            }
+            let decodedPass = "";
+            try { decodedPass = decodeURIComponent(atob(data.password)); } catch(e) { decodedPass = data.password; }
+            
+            if (decodedPass !== pass) {
+                hideActionLoader();
+                return showAlert("Incorrect password.");
+            }
+            completeLogin(user, data);
+        }
+    } catch (err) {
+        hideActionLoader();
+        showAlert("Connection error. Please try again.");
+        console.error(err);
+    }
+}
+
+function completeLogin(username, data) {
+    currentUser = username;
+    currentAccountData = data;
+    localStorage.setItem(SESSION_KEY, username);
+    
+    document.getElementById('authPassword').value = '';
+    hideActionLoader();
+    loadDashboard();
+}
+
+function logout() {
+    currentUser = null;
+    currentAccountData = null;
+    pendingAvatarBase64 = null;
+    localStorage.removeItem(SESSION_KEY);
+    applyColor('#BB001E'); 
+    showScreen('authScreen');
+    showToast("You have been logged out.");
+}
+
+// ---------- DASHBOARD DATA ----------
+async function checkSession() {
+    const savedUser = localStorage.getItem(SESSION_KEY);
+    if (!savedUser) {
+        showScreen('authScreen');
+        return;
+    }
+    
+    try {
+        const snap = await db.ref(`/accounts/${savedUser}`).once('value');
+        const data = snap.val();
+        if (data) {
+            currentUser = savedUser;
+            currentAccountData = data;
+            loadDashboard();
+        } else {
+            localStorage.removeItem(SESSION_KEY);
+            showScreen('authScreen');
+        }
+    } catch(err) {
+        showScreen('authScreen');
+    }
+}
+
+function loadDashboard() {
+    showScreen('appShell');
+    switchPanel('profile');
+    
+    document.getElementById('sidebarUsername').textContent = currentUser;
+    document.getElementById('mobileSidebarUsername').textContent = currentUser;
+    
+    // Populate form fields
+    document.getElementById('profileUsername').value = currentUser;
+    document.getElementById('profileDisplayName').value = currentAccountData.displayName || currentUser;
+    document.getElementById('profileBio').value = currentAccountData.bio || "";
+    document.getElementById('profileEmail').value = currentAccountData.email || "";
+    document.getElementById('profilePhone').value = currentAccountData.phone || "";
+    document.getElementById('prefThemeColor').value = currentAccountData.theme || "#BB001E";
+    
+    pendingAvatarBase64 = currentAccountData.avatar || null;
+    
+    const cd = currentAccountData.createdAt ? new Date(currentAccountData.createdAt).toLocaleDateString() : 'Unknown';
+    document.getElementById('accountCreatedDate').textContent = cd;
+    
+    applyColor(currentAccountData.theme || "#BB001E");
+    renderAvatarPreview();
+}
+
+function renderAvatarPreview() {
+    const container = document.getElementById('avatarPreviewContainer');
+    
+    if (pendingAvatarBase64) {
+        container.innerHTML = `<img src="${pendingAvatarBase64}" alt="Avatar">`;
+    } else {
+        const initial = (document.getElementById('profileDisplayName').value || currentUser || "?").charAt(0).toUpperCase();
+        container.innerHTML = `<span id="avatarFallback">${initial}</span>`;
+    }
+}
+
+// Avatar File Upload
+function handleAvatarUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 500 * 1024) { // 500KB limit to avoid RTDB string limits
+        showAlert("Image size too large. Please select an image under 500KB.");
+        e.target.value = "";
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        pendingAvatarBase64 = event.target.result;
+        renderAvatarPreview();
+    };
+    reader.readAsDataURL(file);
+}
+
+// Add listeners for Enter key in auth
+document.getElementById('authUsername').addEventListener('keydown', e => { if(e.key === 'Enter') document.getElementById('authPassword').focus(); });
+document.getElementById('authPassword').addEventListener('keydown', e => { if(e.key === 'Enter') handleAuth(); });
+
+// ---------- ACCOUNT UPDATES ----------
+
+// 1. Save general profile
+async function saveProfile() {
+    if (!currentUser) return;
+    
+    const dName = document.getElementById('profileDisplayName').value.trim();
+    const bio = document.getElementById('profileBio').value.trim();
+    const email = document.getElementById('profileEmail').value.trim();
+    const phone = document.getElementById('profilePhone').value.trim();
+    
+    if (dName.length > 30) return showAlert("Display name cannot exceed 30 characters.");
+    
+    showActionLoader("Saving profile...");
+    try {
+        const updateObj = {
+            displayName: dName || currentUser,
+            bio: bio,
+            email: email,
+            phone: phone,
+            avatar: pendingAvatarBase64 || ""
+        };
+        
+        await db.ref(`/accounts/${currentUser}`).update(updateObj);
+        
+        Object.assign(currentAccountData, updateObj);
+        
+        hideActionLoader();
+        showToast("Profile updated successfully!");
+        renderAvatarPreview();
+    } catch (err) {
+        hideActionLoader();
+        showAlert("Failed to save profile.");
+    }
+}
+
+// 2. Change Username
+function openUsernameModal() {
+    const lastChange = currentAccountData.lastUsernameChange || 0;
+    const timeSince = Date.now() - lastChange;
+    const warnText = document.getElementById('usernameCooldownText');
+
+    if (timeSince < SEVEN_DAYS_MS) {
+        const daysLeft = Math.ceil((SEVEN_DAYS_MS - timeSince) / (1000 * 60 * 60 * 24));
+        warnText.textContent = `You can change your username again in ${daysLeft} day(s).`;
+        warnText.style.display = 'block';
+    } else {
+        warnText.style.display = 'none';
+        document.getElementById('newUsernameInput').value = '';
+        openPopup('changeUsernameModal');
+    }
+}
+
+async function executeUsernameChange() {
+    let newName = document.getElementById('newUsernameInput').value;
+    newName = newName.replace(/ /g, '_');
+
+    if (newName.length < 3 || newName.length > 20) return showAlert("Username must be between 3 and 20 characters.");
+    if (!/^[a-zA-Z0-9_]+$/.test(newName)) return showAlert("Username can only contain letters, numbers, and underscores.");
+    if (newName === currentUser) return showAlert("That is already your username.");
+
+    showActionLoader("Checking availability...");
+
+    try {
+        const existSnap = await db.ref(`/accounts/${newName}`).once('value');
+        if (existSnap.exists()) {
+            hideActionLoader();
+            return showAlert("That username is already taken.");
+        }
+
+        document.getElementById('actionLoadingText').textContent = "Migrating account...";
+        
+        const newData = { ...currentAccountData };
+        newData.lastUsernameChange = Date.now();
+
+        await db.ref(`/accounts/${newName}`).set(newData);
+        await db.ref(`/accounts/${currentUser}`).remove();
+
+        // Update local session
+        currentUser = newName;
+        currentAccountData = newData;
+        localStorage.setItem(SESSION_KEY, newName);
+
+        document.getElementById('profileUsername').value = newName;
+        document.getElementById('sidebarUsername').textContent = newName;
+        document.getElementById('mobileSidebarUsername').textContent = newName;
+        
+        closePopup('changeUsernameModal');
+        hideActionLoader();
+        showToast("Username successfully changed!");
+
+    } catch (err) {
+        hideActionLoader();
+        showAlert("An error occurred while changing username.");
+        console.error(err);
+    }
+}
+
+
+// 3. Security Updates
+async function changePassword() {
+    if (!currentUser) return;
+    
+    const currentPass = document.getElementById('secCurrentPass').value;
+    const newPass = document.getElementById('secNewPass').value;
+    const confirmPass = document.getElementById('secConfirmPass').value;
+    
+    if (!currentPass || !newPass || !confirmPass) return showAlert("All fields are required.");
+    if (newPass.length < 6) return showAlert("New password must be at least 6 characters.");
+    if (newPass !== confirmPass) return showAlert("New passwords do not match.");
+    
+    showActionLoader("Verifying...");
+    
+    try {
+        let decodedOld = "";
+        try { decodedOld = decodeURIComponent(atob(currentAccountData.password)); } catch(e) { decodedOld = currentAccountData.password; }
+        
+        if (decodedOld !== currentPass) {
+            hideActionLoader();
+            return showAlert("Incorrect current password.");
+        }
+        
+        const newEncoded = btoa(encodeURIComponent(newPass));
+        await db.ref(`/accounts/${currentUser}`).update({ password: newEncoded });
+        currentAccountData.password = newEncoded;
+        
+        document.getElementById('secCurrentPass').value = '';
+        document.getElementById('secNewPass').value = '';
+        document.getElementById('secConfirmPass').value = '';
+        
+        hideActionLoader();
+        showToast("Password updated successfully.");
+        
+    } catch(err) {
+        hideActionLoader();
+        showAlert("Error updating password.");
+    }
+}
+
+// 4. Preferences
+function previewThemeColor(hex) {
+    applyColor(hex);
+}
+
+async function savePreferences() {
+    if (!currentUser) return;
+    
+    const theme = document.getElementById('prefThemeColor').value;
+    
+    showActionLoader("Saving...");
+    try {
+        await db.ref(`/accounts/${currentUser}`).update({ theme: theme });
+        currentAccountData.theme = theme;
+        applyColor(theme);
+        hideActionLoader();
+        showToast("Preferences saved.");
+    } catch (err) {
+        hideActionLoader();
+        showAlert("Failed to save preferences.");
+    }
+}
+
+// 5. Account Deletion
+function verifyAccountDeletion() {
+    const inputUser = document.getElementById('delAuthUser').value.trim();
+    const inputPass = document.getElementById('delAuthPass').value.trim();
+
+    if (inputUser !== currentUser) {
+        return showAlert("Incorrect username entered.");
+    }
+
+    let decodedOld = "";
+    try { decodedOld = decodeURIComponent(atob(currentAccountData.password)); } catch(e) { decodedOld = currentAccountData.password; }
+    
+    if (inputPass !== decodedOld) {
+        return showAlert("Incorrect password entered.");
+    }
+
+    closePopup('deleteAccountModal');
+    
+    // Clear inputs for security
+    document.getElementById('delAuthUser').value = '';
+    document.getElementById('delAuthPass').value = '';
+
+    startDeletionCountdown();
+}
+
+function startDeletionCountdown() {
+    deleteTimer = 10;
+    document.getElementById('deleteCountdownDisplay').textContent = deleteTimer;
+    openPopup('deleteCountdownModal');
+
+    deleteInterval = setInterval(() => {
+        deleteTimer--;
+        document.getElementById('deleteCountdownDisplay').textContent = deleteTimer;
+        
+        if (deleteTimer <= 0) {
+            clearInterval(deleteInterval);
+            executeFinalDeletion();
+        }
+    }, 1000);
+}
+
+function cancelDeletion() {
+    if (deleteInterval) clearInterval(deleteInterval);
+    closePopup('deleteCountdownModal');
+    showToast("Account deletion canceled.");
+}
+
+async function executeFinalDeletion() {
+    try {
+        await db.ref(`/accounts/${currentUser}`).remove();
+        closePopup('deleteCountdownModal');
+        logout();
+        showAlert("Your account has been successfully deleted.");
+    } catch (err) {
+        closePopup('deleteCountdownModal');
+        showAlert("Failed to delete account. Please try again.");
+    }
+}
+
+// ---------- BOOT ----------
+setTimeout(() => {
+    checkSession();
+}, 800);
+
+</script>
+</body>
+</html>
