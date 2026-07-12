@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>404 - Page Not Found</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+
+*,*::before,*::after{
+  box-sizing:border-box;
+}
+
+:root{
+  --red:#BB001E;
+  --font:'Patrick Hand',cursive;
+}
+
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#000;
+  color:#fff;
+  font-family:var(--font);
+}
+
+body{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+/* animations */
+@keyframes fadeIn{
+  from{opacity:0}
+  to{opacity:1}
+}
+
+@keyframes popIn{
+  from{
+    opacity:0;
+    transform:scale(.92) translateY(14px);
+  }
+  to{
+    opacity:1;
+    transform:scale(1) translateY(0);
+  }
+}
+
+@keyframes glowPulse{
+  0%{box-shadow:0 0 20px rgba(187,0,30,0.18);}
+  50%{box-shadow:0 0 60px rgba(187,0,30,0.45);}
+  100%{box-shadow:0 0 20px rgba(187,0,30,0.18);}
+}
+
+/* CARD */
+.card{
+  width:min(560px,100%);
+  background:rgba(0,0,0,0.97);
+  border:3px solid var(--red);
+  border-radius:28px;
+  padding:40px 30px;
+  text-align:center;
+  animation:fadeIn .25s ease, popIn .3s ease;
+}
+
+.card.glow{
+  animation:fadeIn .25s ease, popIn .3s ease, glowPulse 3s infinite ease-in-out;
+}
+
+.error-code{
+  font-size:120px;
+  line-height:1;
+  margin:0;
+  color:var(--red);
+  text-shadow:0 0 35px rgba(187,0,30,0.55);
+}
+
+.title{
+  font-size:42px;
+  margin:10px 0 12px;
+}
+
+.desc{
+  font-size:22px;
+  color:rgba(255,255,255,0.65);
+  line-height:1.5;
+  margin:0;
+}
+
+/* BACKGROUND GLOW (now controlled) */
+.bg-glow{
+  position:fixed;
+  width:600px;
+  height:600px;
+  background:radial-gradient(circle, rgba(187,0,30,0.2) 0%, transparent 70%);
+  pointer-events:none;
+  filter:blur(30px);
+  animation:fadeIn 1s ease;
+  display:none; /* OFF by default */
+}
+
+body.glow .bg-glow{
+  display:block;
+}
+
+.bg-glow.one{
+  top:-220px;
+  left:-160px;
+}
+
+.bg-glow.two{
+  bottom:-240px;
+  right:-160px;
+}
+
+/* remove everything if glow is off */
+body:not(.glow) .card{
+  box-shadow:none;
+}
+
+@media(max-width:600px){
+  .error-code{font-size:90px;}
+  .title{font-size:34px;}
+  .desc{font-size:19px;}
+}
+</style>
+</head>
+
+<body>
+
+<div class="bg-glow one"></div>
+<div class="bg-glow two"></div>
+
+<div class="card" id="card">
+  <h1 class="error-code">404</h1>
+
+  <div class="title">Page Not Found</div>
+
+  <p class="desc">
+    The page you are looking for does<br>
+    not exist or may have been removed.
+  </p>
+</div>
+
+<script>
+const GLOW_ENABLED = false;
+
+const card = document.getElementById("card");
+
+if (GLOW_ENABLED) {
+  document.body.classList.add("glow");
+  card.classList.add("glow");
+}
+</script>
+
+</body>
+</html>
