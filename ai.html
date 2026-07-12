@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>BSMS Web AI</title>
+
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+
+*,*::before,*::after{
+  box-sizing:border-box
+}
+
+:root{
+  --red:#BB001E;
+  --red-h:#d10022;
+  --red-glow:rgba(187,0,30,0.35);
+  --border:rgba(255,255,255,0.13);
+  --msg-bg:rgba(255,255,255,0.06);
+  --input-bg:rgba(255,255,255,0.08);
+  --font:'Patrick Hand',cursive;
+}
+
+html,body{
+  margin:0;
+  padding:0;
+  height:100%;
+  background:#000;
+  color:#fff;
+  font-family:var(--font);
+  overflow:hidden;
+}
+
+#app{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  padding:16px;
+  position: relative; /* Helps position the toast container */
+}
+
+h1{
+  margin:0 0 12px;
+  font-size:42px;
+  color:white;
+}
+
+/* 🔔 TOAST NOTIFICATIONS */
+#toastContainer {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+  pointer-events: none; /* Clicks pass right through it */
+}
+
+.toast {
+  background: var(--red);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6), 0 0 10px var(--red-glow);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: toastIn 0.3s ease forwards;
+}
+
+.toast.hide {
+  animation: toastOut 0.3s ease forwards;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-20px); }
+}
+
+/* 💬 CHAT AREA */
+#chatLog{
+  flex:1;
+  overflow-y:auto;
+  border:2px solid var(--border);
+  border-radius:16px;
+  padding:18px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  background:rgba(255,255,255,0.02);
+}
+
+/* 💬 BIGGER BUBBLES */
+.msg-wrap{
+  display:flex;
+  flex-direction:column;
+  max-width:85%;
+  animation:fadeUp .2s ease;
+}
+
+.msg-wrap.user{
+  align-self:flex-end;
+  align-items:flex-end;
+}
+
+.msg-wrap.ai{
+  align-self:flex-start;
+  align-items:flex-start;
+}
+
+.msg{
+  padding:16px 18px;
+  border-radius:18px;
+  font-size:24px;
+  line-height:1.5;
+  word-break:break-word;
+}
+
+/* user bubble */
+.msg-wrap.user .msg{
+  background:rgba(187,0,30,0.22);
+  border:1px solid rgba(187,0,30,0.35);
+  border-bottom-right-radius:6px;
+}
+
+/* ai bubble */
+.msg-wrap.ai .msg{
+  background:var(--msg-bg);
+  border-bottom-left-radius:6px;
+}
+
+/* INPUT BAR */
+#bottomBar{
+  display:flex;
+  gap:10px;
+  margin-top:12px;
+}
+
+#prompt{
+  flex:1;
+  resize:none;
+  height:70px;
+  font-family:var(--font);
+  font-size:22px;
+  padding:12px;
+  border-radius:14px;
+  border:2px solid var(--border);
+  background:var(--input-bg);
+  color:white;
+  outline:none;
+}
+
+#prompt:focus{
+  border-color:var(--red);
+  box-shadow:0 0 15px var(--red-glow);
+}
+
+#sendBtn{
+  width:130px;
+  border:none;
+  border-radius:14px;
+  background:var(--red);
+  color:white;
+  font-family:var(--font);
+  font-size:24px;
+  cursor:pointer;
+  transition:0.15s;
+}
+
+#sendBtn:hover{
+  background:var(--red-h);
+  transform:scale(1.03);
+  box-shadow:0 0 18px var(--red-glow);
+}
+
+#sendBtn:active{
+  transform:scale(.96);
+}
+
+/* typing */
+.typing{
+  display:flex;
+  gap:5px;
+  padding:12px 16px;
+  background:var(--msg-bg);
+  border-radius:18px;
+}
+
+.dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.6);
+  animation:bounce 1.2s infinite;
+}
+
+.dot:nth-child(2){animation-delay:.15s;}
+.dot:nth-child(3){animation-delay:.3s;}
+
+@keyframes bounce{
+  0%,80%,100%{
+    transform:scale(.7);
+    opacity:.5;
+  }
+  40%{
+    transform:scale(1);
+    opacity:1;
+  }
+}
+
+@keyframes fadeUp{
+  from{
+    opacity:0;
+    transform:translateY(10px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+::-webkit-scrollbar{
+  width:5px;
+}
+
+::-webkit-scrollbar-thumb{
+  background:rgba(187,0,30,0.5);
+  border-radius:10px;
+}
+
+  </style>
+</head>
+
+<body>
+
+<div id="app">
+  <!-- Container for the popup errors -->
+  <div id="toastContainer"></div>
+
+  <h1>AI Chat</h1>
+
+  <div id="chatLog"></div>
+
+  <div id="bottomBar">
+    <textarea id="prompt" placeholder="Message AI..."></textarea>
+    <button id="sendBtn">Send</button>
+  </div>
+
+</div>
+
+<script>
+
+const API_KEY = "AIzaSyCMFdEn9_OnTpMUG2fOSVsg8QW0hUEMCog";
+const MODEL = "gemini-3.1-flash-lite";
+
+/* ⚙️ SETTINGS */
+const MESSAGE_COOLDOWN = 10000;
+const MESSAGES_PER_MINUTE = 3;
+const MASTER_MESSAGE_LIMIT = 50;
+
+/* STATE */
+let lastMessageTime = 0;
+let messageTimestamps = [];
+let totalMessagesSent = 0;
+let conversationHistory = []; 
+
+const chatLog = document.getElementById("chatLog");
+const promptBox = document.getElementById("prompt");
+const sendBtn = document.getElementById("sendBtn");
+const toastContainer = document.getElementById("toastContainer");
+
+sendBtn.onclick = askGemini;
+
+promptBox.addEventListener("keydown", e => {
+  if(e.key === "Enter" && !e.shiftKey){
+    e.preventDefault();
+    askGemini();
+  }
+});
+
+/* 🔔 SHOW TOAST NOTIFICATION */
+function showToast(message) {
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = message;
+  
+  toastContainer.appendChild(toast);
+
+  // Remove toast automatically after 3.5 seconds
+  setTimeout(() => {
+    toast.classList.add("hide");
+    toast.addEventListener("animationend", () => toast.remove());
+  }, 3500);
+}
+
+/* 🧹 CLEAR CHAT */
+function clearChat(){
+  chatLog.innerHTML = "";
+  conversationHistory = []; 
+}
+
+function addMessage(text, type){
+
+  const wrap = document.createElement("div");
+  wrap.className = "msg-wrap " + type;
+
+  const msg = document.createElement("div");
+  msg.className = "msg";
+  msg.textContent = text;
+
+  wrap.appendChild(msg);
+  chatLog.appendChild(wrap);
+
+  chatLog.scrollTop = chatLog.scrollHeight;
+
+  return wrap;
+}
+
+function addTyping(){
+
+  const wrap = document.createElement("div");
+  wrap.className = "msg-wrap ai";
+
+  const typing = document.createElement("div");
+  typing.className = "typing";
+
+  typing.innerHTML = `
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  `;
+
+  wrap.appendChild(typing);
+  chatLog.appendChild(wrap);
+
+  chatLog.scrollTop = chatLog.scrollHeight;
+
+  return wrap;
+}
+
+/* 🚫 LIMITS */
+function canSend(){
+
+  const now = Date.now();
+
+  if(now - lastMessageTime < MESSAGE_COOLDOWN){
+    return { ok:false, reason:"Wait a moment before making another request." };
+  }
+
+  if(totalMessagesSent >= MASTER_MESSAGE_LIMIT){
+    return { ok:false, reason:"Message limit reached." };
+  }
+
+  messageTimestamps = messageTimestamps.filter(t => now - t < 60000);
+
+  if(messageTimestamps.length >= MESSAGES_PER_MINUTE){
+    return { ok:false, reason:"You have reached the request limit." };
+  }
+
+  return { ok:true };
+}
+
+/* 🤖 MAIN */
+async function askGemini(){
+
+  const prompt = promptBox.value.trim();
+  if(!prompt) return;
+
+  const check = canSend();
+
+  if(!check.ok){
+    // SHOW TOAST INSTEAD OF CHAT BUBBLE
+    showToast(check.reason);
+    return;
+  }
+
+  const now = Date.now();
+  lastMessageTime = now;
+  messageTimestamps.push(now);
+  totalMessagesSent++;
+
+  /* ADD TO UI */
+  addMessage(prompt, "user");
+  promptBox.value = "";
+
+  /* ADD TO MEMORY */
+  conversationHistory.push({
+    role: "user",
+    parts: [{ text: prompt }]
+  });
+
+  const typing = addTyping();
+
+  try{
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`,
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+          contents: conversationHistory 
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    typing.remove();
+
+    if(data.error){
+      // SHOW TOAST INSTEAD OF CHAT BUBBLE
+      showToast("Error: " + data.error.message);
+      conversationHistory.pop(); 
+      return;
+    }
+
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response";
+
+    addMessage(text, "ai");
+
+    /* ADD AI RESPONSE TO MEMORY */
+    conversationHistory.push({
+      role: "model",
+      parts: [{ text: text }]
+    });
+
+  }catch(err){
+    typing.remove();
+    // SHOW TOAST INSTEAD OF CHAT BUBBLE
+    showToast("Request failed. Check your connection.");
+    conversationHistory.pop(); 
+  }
+}
+
+</script>
+
+</body>
+</html>
