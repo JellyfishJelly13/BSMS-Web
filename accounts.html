@@ -374,7 +374,8 @@ textarea{resize:vertical;height:110px}
 <script>
 // ---------- FIREBASE INIT ----------
 firebase.initializeApp({
-  databaseURL: "https://bsms-web-default-rtdb.firebaseio.com"
+  // URL obfuscated to avoid plain-text scraper exposure, but kept intact so unmigrated features (signup, profile saving) continue to work properly.
+  databaseURL: atob("aHR0cHM6Ly9ic21zLXdlYi1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20=") 
 });
 const db = firebase.database();
 
@@ -504,11 +505,12 @@ async function handleAuth() {
     showActionLoader(authMode === 'signup' ? "Creating account..." : "Logging in...");
 
     try {
-        const ref = db.ref(`/accounts/${user}`);
-        const snap = await ref.once('value');
-        const data = snap.val();
-
         if (authMode === 'signup') {
+            // Keep signup using direct Firebase (has not been migrated to an API yet)
+            const ref = db.ref(`/accounts/${user}`);
+            const snap = await ref.once('value');
+            const data = snap.val();
+
             if (data) {
                 hideActionLoader();
                 return showAlert("That username is already taken. Please choose another.");
@@ -530,18 +532,26 @@ async function handleAuth() {
             completeLogin(user, newAcc);
             
         } else {
-            if (!data) {
+            // LOGIN FLOW: Use secure Vercel API endpoint
+            const response = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    username: user,
+                    password: pass
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
                 hideActionLoader();
-                return showAlert("Account not found. Please check your username.");
+                return showAlert(data.error || "Login failed.");
             }
-            let decodedPass = "";
-            try { decodedPass = decodeURIComponent(atob(data.password)); } catch(e) { decodedPass = data.password; }
-            
-            if (decodedPass !== pass) {
-                hideActionLoader();
-                return showAlert("Incorrect password.");
-            }
-            completeLogin(user, data);
+
+            completeLogin(data.user, data.accountData);
         }
     } catch (err) {
         hideActionLoader();
