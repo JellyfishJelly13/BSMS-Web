@@ -1,5 +1,6 @@
 /*
- * Jellyfish Jelly
+ * BSMS Web
+
  * Copyright © 2026 Jellyfish Jelly
  * SPDX-License-Identifier: MIT
  */
