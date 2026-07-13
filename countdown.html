@@ -2815,5 +2815,9 @@ checkCelebration();
 setInterval(()=>{updateLabel();checkCelebration();},100);
 setInterval(()=>{updateBar();},SHIMMER_CYCLE);
 </script>
+<script type="module">
+  import { inject } from 'https://cdn.jsdelivr.net/npm/@vercel/analytics@1/dist/index.js';
+  inject();
+</script>
 </body>
 </html>
