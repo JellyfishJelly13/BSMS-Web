@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "bcrypt": "^6.0.0",
     "firebase-admin": "^12.7.0"
   }
