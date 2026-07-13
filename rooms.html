@@ -1,3 +1,9 @@
+<!--
+BSMS Web
+Copyright © 2026 Jellyfish Jelly
+SPDX-License-Identifier: MIT
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,6 +15,7 @@
 <meta name="theme-color" content="#BB001E">
 <meta name="color-scheme" content="#BB001E">
 <meta name="application-name" content="BSMS Rooms">
+<meta name="application-version" content="v3.2.0">
 <meta property="og:title" content="BSMS Rooms">
 <meta property="og:description" content="BSMS Rooms is a real-time chat app for Boiling Springs Middle School.">
 <meta property="og:category" content="Education">
@@ -20,9 +27,6 @@
 <link rel="apple-touch-icon" href="https://uploads.onecompiler.io/44jajt6dm/44pd5qadx/Clipboard%20May%2018,%202026%20at%2012.17%E2%80%AFAM.png">
 <title>BSMS Rooms</title>
 <link rel="icon" type="image/png" href="https://uploads.onecompiler.io/44jajt6dm/44pd5qadx/Clipboard%20May%2018,%202026%20at%2012.17%E2%80%AFAM.png"/>
-<!-- Load Firebase SDK (Compat) -->
-<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Roboto:wght@400;700&display=swap');
 *,*::before,*::after{box-sizing:border-box}
@@ -234,7 +238,7 @@ body.light-mode .notif { background: #fff; color:#111; border-color:#ccc; box-sh
 <button class="btn" onclick="executeLogin()">Login</button>
 <div style="text-align:center; margin-top: 15px; font-size: 16px; color:rgba(255,255,255,0.5);">
 Don't have an account? <br>
-<a href="https://accounts-bsmsweb.oneapp.dev/#signup" style="color:var(--red); font-weight:bold; text-decoration:none;">Sign up here</a> 
+<a href="https://bsms-web.vercel.app/accounts" style="color:var(--red); font-weight:bold; text-decoration:none;">Sign up here</a> 
 </div>
 <button class="btn sec" style="margin-top:20px;" onclick="closePopup('loginOverlay'); showScreen('landingScreen');">Cancel</button>
 </div>
@@ -324,7 +328,7 @@ Don't have an account? <br>
 <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
 </div>
 <div class="card">
-<img class="logo-img" src="https://uploads.onecompiler.io/44jajt6dm/44pd5qadx/Clipboard%20May%2018,%202026%20at%2012.17%E2%80%AFAM.png" alt="BSMS"/>
+<img class="logo-img" src="https://uploads.onecompiler.io/44jajt6dm/44pd5qadx/Clipboard%20May%2018,%202026%20at%2012.17%E2%80%AFAM.png" alt="BSMS Web"/>
 <h1>BSMS Rooms</h1>
 <p>Create or join a room to get started</p>
 <button class="btn" onclick="goCreate()">Create Room</button>
@@ -440,12 +444,15 @@ Don't have an account? <br>
 <div id="notifContainer"></div>
 
 <script>
-// ---------- CONFIGURATION ----------
-firebase.initializeApp({ databaseURL: "https://bsms-web-default-rtdb.firebaseio.com" });
-const db = firebase.database();
-const version = 'v3.1.0';
+/*
+ * BSMS Web
+ * Copyright © 2026 Jellyfish Jelly
+ * SPDX-License-Identifier: MIT
+ */
 
 // ---------- GLOBALS ----------
+const version = 'v3.2.0';
+
 let room = null;
 let userRole = 'member';
 let roomSettings = {};
@@ -455,7 +462,12 @@ const SESSION_KEY = 'bsms_account_session';
 let currentUser = null; 
 let currentAccountData = null; 
 const accountCache = {};
-const accountListeners = {};
+const accountListeners = {}; // Used to prevent duplicate concurrent fetches for the same user
+
+let pollingInterval = null;
+let processedMessages = new Set();
+let inVoiceChat = false; 
+let isMicMuted = false;
 
 // Background Notifications
 let isWindowActive = true;
@@ -513,7 +525,13 @@ window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', ()
 
 async function updateGlobalSetting(key, val) {
     if(!currentUser) return;
-    await db.ref(`/accounts/${currentUser}`).update({ [key]: val });
+    try {
+        await fetch('/api/index?action=updateAccountSetting', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: currentUser, key, value: val })
+        });
+    } catch(e) { console.error("Error updating setting", e); }
 }
 
 function showScreen(id){
@@ -598,13 +616,13 @@ async function checkSession() {
     const savedUser = localStorage.getItem(SESSION_KEY);
     if (!savedUser) { finishBoot(); return; }
     try {
-        const snap = await db.ref(`/accounts/${savedUser}`).once('value');
-        const data = snap.val();
-        if (data) {
+        const res = await fetch(`/api/index?action=getAccount&username=${encodeURIComponent(savedUser)}`);
+        const data = await res.json();
+        if (res.ok && data.success && data.accountData) {
             currentUser = savedUser;
-            currentAccountData = data;
-            accountCache[currentUser] = data;
-            applyGlobalPreferences(data);
+            currentAccountData = data.accountData;
+            accountCache[currentUser] = data.accountData;
+            applyGlobalPreferences(data.accountData);
             updateDOMForAccount(currentUser);
             ensureAccountWatched(currentUser);
         } else { localStorage.removeItem(SESSION_KEY); }
@@ -628,7 +646,7 @@ function openAccountMenu() {
 
 function goToAccountManager() {
     const returnUrl = room ? `?return=${room}` : '';
-    window.open(`https://accounts-bsmsweb.oneapp.dev/#profile${returnUrl}`, '_blank');
+    window.open(`https://bsms-web.vercel.app/accounts#profile${returnUrl}`, '_blank');
     closePopup('accountMenuPopup');
 }
 
@@ -638,20 +656,38 @@ async function executeLogin() {
     if(!user || !pass) return showAlert("Please enter username and password.");
     document.getElementById('actionLoadingText').textContent="Logging in...";
     openPopup('actionLoadingScreen');
+    
     try {
-        const snap = await db.ref(`/accounts/${user}`).once('value');
-        const data = snap.val();
-        if(!data) { closePopup('actionLoadingScreen'); return showAlert("Account not found."); }
-        let decoded = "";
-        try { decoded = decodeURIComponent(atob(data.password)); } catch(e) { decoded = data.password; }
-        if (decoded !== pass) { closePopup('actionLoadingScreen'); return showAlert("Incorrect password."); }
-        currentUser = user; currentAccountData = data; accountCache[user] = data;
+        const res = await fetch('/api/index?action=login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: user, password: pass })
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+            closePopup('actionLoadingScreen'); 
+            return showAlert(data.error || "Login failed.");
+        }
+        
+        currentUser = user; 
+        currentAccountData = data.accountData; 
+        accountCache[user] = data.accountData;
         localStorage.setItem(SESSION_KEY, user);
-        applyGlobalPreferences(data); updateDOMForAccount(currentUser); ensureAccountWatched(currentUser);
-        closePopup('loginOverlay'); closePopup('actionLoadingScreen');
+        
+        applyGlobalPreferences(data.accountData); 
+        updateDOMForAccount(currentUser); 
+        ensureAccountWatched(currentUser);
+        
+        closePopup('loginOverlay'); 
+        closePopup('actionLoadingScreen');
         showToast("Logged in successfully!");
+        
         if (pendingCode) checkCode();
-    } catch (err) { closePopup('actionLoadingScreen'); showAlert("Login failed."); }
+    } catch (err) { 
+        closePopup('actionLoadingScreen'); 
+        showAlert("Connection error."); 
+    }
 }
 
 function executeLogout() {
@@ -659,17 +695,18 @@ function executeLogout() {
     closePopup('accountMenuPopup'); applyGlobalPreferences({}); showToast("Logged out successfully.");
 }
 
-function ensureAccountWatched(uid) {
-    if (!uid || accountListeners[uid]) return;
+async function ensureAccountWatched(uid) {
+    if (!uid || accountCache[uid] || accountListeners[uid]) return;
     accountListeners[uid] = true;
-    db.ref(`/accounts/${uid}`).on('value', snap => {
-        const data = snap.val();
-        if (data) {
-            accountCache[uid] = data;
+    try {
+        const res = await fetch(`/api/index?action=getAccount&username=${encodeURIComponent(uid)}`);
+        const data = await res.json();
+        if (res.ok && data.success && data.accountData) {
+            accountCache[uid] = data.accountData;
             updateDOMForAccount(uid);
-            if (uid === currentUser) { currentAccountData = data; applyGlobalPreferences(data); }
+            if (uid === currentUser) { currentAccountData = data.accountData; applyGlobalPreferences(data.accountData); }
         }
-    });
+    } catch(e) { console.error("Error fetching account data for", uid); }
 }
 
 function renderAvatarHtml(uid, size = 30, noBorder = false) {
@@ -707,14 +744,23 @@ async function checkCode(){
     const c=document.getElementById('codeInput').value.trim();
     if(c.length!==4)return showAlert('Enter a 4-digit code');
     document.getElementById('actionLoadingText').textContent="Finding room..."; openPopup('actionLoadingScreen');
+    
     try {
-        const snap=await db.ref(`/rooms/${c}`).once('value'); const data=snap.val();
+        const res = await fetch(`/api/index?action=checkRoom&code=${encodeURIComponent(c)}`);
+        const data = await res.json();
         closePopup('actionLoadingScreen');
-        if(!data) return showAlert('Room not found');
+        
+        if (!res.ok || !data.success) {
+            return showAlert('Room not found');
+        }
+        
         pendingCode=c;
         if(!currentUser) openPopup('loginOverlay');
-        else preparePreview(c, data);
-    } catch(e) { closePopup('actionLoadingScreen'); showAlert("Error connecting."); }
+        else preparePreview(c, data.roomData);
+    } catch(e) { 
+        closePopup('actionLoadingScreen'); 
+        showAlert("Error connecting."); 
+    }
 }
 
 function preparePreview(code, roomData) {
@@ -734,22 +780,58 @@ function preparePreview(code, roomData) {
 
 async function executeCreateRoom(){
     document.getElementById('actionLoadingText').textContent="Creating..."; openPopup('actionLoadingScreen');
-    let code; for(let i=0;i<30;i++){ code=String(Math.floor(1000+Math.random()*9000)); const ex=await db.ref(`/rooms/${code}`).once('value'); if(!ex.exists()) break; }
-    await db.ref(`/rooms/${code}`).set({ members: {[currentUser]: 'host'}, settings: { color: currentAccountData.theme || '#BB001E' }, createdAt: Date.now() });
-    room = code; userRole = 'host';
-    closePopup('actionLoadingScreen'); enterRoomUI();
+    try {
+        const res = await fetch('/api/index?action=createRoom', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                username: currentUser, 
+                theme: currentAccountData.theme || '#BB001E' 
+            })
+        });
+        const data = await res.json();
+        closePopup('actionLoadingScreen');
+        
+        if (res.ok && data.success) {
+            room = data.code; 
+            userRole = 'host';
+            enterRoomUI();
+        } else {
+            showAlert("Error creating room.");
+        }
+    } catch (e) {
+        closePopup('actionLoadingScreen');
+        showAlert("Error creating room.");
+    }
 }
 
 async function executeJoinRoom() {
     document.getElementById('actionLoadingText').textContent="Entering..."; openPopup('actionLoadingScreen');
     room = pendingCode;
-    const existingSnap = await db.ref(`/rooms/${room}/members/${enc(currentUser)}`).once('value');
-    if(!existingSnap.exists()) {
-        await db.ref(`/rooms/${room}/members/${enc(currentUser)}`).set('member');
-        await db.ref(`/rooms/${room}/messages`).push({ sys: true, html: `<strong class="uid-name-${escAttr(currentUser)}">${esc(currentUser)}</strong> joined the room.`, ts: fmtTime(new Date()) });
+    
+    try {
+        const res = await fetch('/api/index?action=joinRoom', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                code: room,
+                username: currentUser,
+                ts: fmtTime(new Date())
+            })
+        });
+        const data = await res.json();
+        closePopup('actionLoadingScreen');
+        
+        if (res.ok && data.success) {
+            userRole = data.role;
+            enterRoomUI();
+        } else {
+            showAlert(data.error || "Failed to join room.");
+        }
+    } catch (e) {
+        closePopup('actionLoadingScreen');
+        showAlert("Error joining room.");
     }
-    userRole = existingSnap.val() || 'member';
-    closePopup('actionLoadingScreen'); enterRoomUI();
 }
 
 function enterRoomUI() {
@@ -757,40 +839,122 @@ function enterRoomUI() {
     document.getElementById('mobileCodeDisplay').textContent = room;
     showApp(); switchPanel('chat'); window.location.hash='#chat';
     document.getElementById('chatLog').innerHTML = '';
+    processedMessages.clear();
     
-    db.ref(`/rooms/${room}/members`).on('value', snap => renderMembers(snap.val()));
-    db.ref(`/rooms/${room}/settings`).on('value', snap => {
-        roomSettings = snap.val() || {};
-        if(roomSettings.color) applyColor(roomSettings.color);
-        else if(currentAccountData) applyColor(currentAccountData.theme);
-        document.getElementById('roomThemeColorPicker').value = roomSettings.color || "#BB001E";
-    });
+    startPolling();
+}
 
-    db.ref(`/rooms/${room}/messages`).limitToLast(100).on('child_added', snap => {
-        const m = snap.val(); m.id = snap.key;
-        appendMessageDOM(m);
-    });
+function startPolling() {
+    if (pollingInterval) clearInterval(pollingInterval);
+    pollRoom(); 
+    pollingInterval = setInterval(pollRoom, 2000); 
+}
+
+async function pollRoom() {
+    if (!room) return stopPolling();
+    try {
+        const res = await fetch(`/api/index?action=getRoomData&code=${encodeURIComponent(room)}&limit=100`);
+        const data = await res.json();
+        
+        if (res.ok && data.success && data.roomData) {
+            const rData = data.roomData;
+            
+            // Settings
+            if (rData.settings) {
+                roomSettings = rData.settings;
+                if (roomSettings.color) applyColor(roomSettings.color);
+                else if (currentAccountData) applyColor(currentAccountData.theme);
+                document.getElementById('roomThemeColorPicker').value = roomSettings.color || "#BB001E";
+            }
+            
+            // Members
+            renderMembers(rData.members || {});
+            
+            // Messages
+            if (rData.messages) {
+                for (let key in rData.messages) {
+                    if (!processedMessages.has(key)) {
+                        processedMessages.add(key);
+                        let m = rData.messages[key];
+                        m.id = key;
+                        appendMessageDOM(m);
+                    }
+                }
+            }
+            
+            // Voice
+            if (inVoiceChat) {
+                renderVoiceGrid(rData.voice || {});
+            }
+        } else if (res.status === 404 || !data.roomData) {
+            handleRoomDeleted();
+        }
+    } catch(e) { console.error("Polling error", e); }
+}
+
+function stopPolling() {
+    if (pollingInterval) clearInterval(pollingInterval);
+    pollingInterval = null;
+}
+
+function handleRoomDeleted() {
+    if (!room) return;
+    stopPolling();
+    room = null; userRole = 'member'; inVoiceChat = false;
+    window.location.hash = ''; showScreen('landingScreen');
+    if (currentAccountData) applyColor(currentAccountData.theme);
+    showAlert("The room has been closed or you were disconnected.");
 }
 
 function handleRoomLabelClick() {
     if (userRole === 'host') openPopup('roomSettingsPopup'); else openPopup('inviteOverlay');
 }
 function copyInviteLink() {
-    const l = `https://bsms-rooms.oneapp.dev/#join?code=${room}`;
+    const l = `https://bsms-web.vercel.app/rooms#join?code=${room}`;
     navigator.clipboard.writeText(l); showToast("Link copied!");
 }
-async function updateRoomSetting(key, val) { await db.ref(`/rooms/${room}/settings`).update({ [key]: val }); }
+async function updateRoomSetting(key, val) { 
+    try {
+        await fetch('/api/index?action=updateRoomSettings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: room, key, val })
+        });
+    } catch(e) { console.error(e); }
+}
+
 async function handleLeave() {
     if(inVoiceChat) leaveVoice();
     document.getElementById('actionLoadingText').textContent="Leaving..."; openPopup('actionLoadingScreen');
-    await db.ref(`/rooms/${room}/members/${enc(currentUser)}`).remove();
-    await db.ref(`/rooms/${room}/messages`).push({ sys: true, html: `<strong class="uid-name-${escAttr(currentUser)}">${esc(currentUser)}</strong> left the room.`, ts: fmtTime(new Date()) });
-    const check = await db.ref(`/rooms/${room}/members`).once('value');
-    if(!check.exists()) await db.ref(`/rooms/${room}`).remove();
-    db.ref(`/rooms/${room}`).off(); room = null; userRole = 'member';
-    closePopup('actionLoadingScreen'); window.location.hash=''; showScreen('landingScreen');
-    if(currentAccountData) applyColor(currentAccountData.theme);
+    
+    try {
+        await fetch('/api/index?action=leaveRoom', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: room, username: currentUser, ts: fmtTime(new Date()) })
+        });
+        
+        stopPolling();
+        room = null; userRole = 'member';
+        closePopup('actionLoadingScreen'); window.location.hash=''; showScreen('landingScreen');
+        if(currentAccountData) applyColor(currentAccountData.theme);
+    } catch(e) {
+        closePopup('actionLoadingScreen');
+        showAlert("Error leaving room.");
+    }
 }
+
+// Beacon disconnect handling for when the user closes the tab
+window.addEventListener('beforeunload', () => {
+    if (room && currentUser) {
+        fetch('/api/index?action=leaveRoom', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: room, username: currentUser, ts: fmtTime(new Date()) }),
+            keepalive: true
+        });
+    }
+});
 
 // ---------- CHAT ----------
 document.getElementById('msgInput').addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();} });
@@ -800,7 +964,22 @@ async function sendMsg() {
     el.innerHTML = '';
     const div=document.createElement('div'); div.innerHTML=html;
     div.querySelectorAll('*').forEach(n=>{ if(!['B','I','U'].includes(n.tagName)) n.replaceWith(...n.childNodes); });
-    await db.ref(`/rooms/${room}/messages`).push({ uid: currentUser, html: div.innerHTML, ts: fmtTime(new Date()) });
+    
+    try {
+        const payloadHtml = div.innerHTML;
+        // Optimistic UI update
+        const tempId = 'temp_' + Date.now();
+        processedMessages.add(tempId);
+        appendMessageDOM({ id: tempId, uid: currentUser, html: payloadHtml, ts: fmtTime(new Date()) });
+        
+        await fetch('/api/index?action=sendMessage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: room, username: currentUser, html: payloadHtml, ts: fmtTime(new Date()) })
+        });
+    } catch (e) {
+        showToast("Error sending message.");
+    }
 }
 
 function appendMessageDOM(m) {
@@ -834,22 +1013,38 @@ function renderMembers(m) {
 }
 
 // ---------- VOICE CHAT ----------
-let inVoiceChat = false, isMicMuted = false;
-function joinVoice() {
+async function joinVoice() {
     inVoiceChat = true; document.getElementById('voiceLobby').style.display = 'none'; document.getElementById('voiceActive').style.display = 'flex';
     isMicMuted = currentAccountData?.micAutoMute === true; // Auto-mute sync
-    db.ref(`/rooms/${room}/voice/${enc(currentUser)}`).set({ isMuted: isMicMuted });
-    db.ref(`/rooms/${room}/voice/${enc(currentUser)}`).onDisconnect().remove();
-    db.ref(`/rooms/${room}/voice`).on('value', snap => renderVoiceGrid(snap.val() || {}));
+    
+    try {
+        await fetch('/api/index?action=updateVoiceState', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: room, username: currentUser, isMuted: isMicMuted })
+        });
+    } catch(e) { console.error(e); }
     updateMicBtnUI();
 }
-function leaveVoice() {
+async function leaveVoice() {
     inVoiceChat = false; document.getElementById('voiceLobby').style.display = 'flex'; document.getElementById('voiceActive').style.display = 'none';
-    db.ref(`/rooms/${room}/voice/${enc(currentUser)}`).remove(); db.ref(`/rooms/${room}/voice`).off();
+    try {
+        await fetch('/api/index?action=leaveVoice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: room, username: currentUser })
+        });
+    } catch(e) { console.error(e); }
 }
-function toggleMic() {
+async function toggleMic() {
     isMicMuted = !isMicMuted;
-    db.ref(`/rooms/${room}/voice/${enc(currentUser)}/isMuted`).set(isMicMuted);
+    try {
+        await fetch('/api/index?action=updateVoiceState', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: room, username: currentUser, isMuted: isMicMuted })
+        });
+    } catch(e) { console.error(e); }
     updateMicBtnUI();
 }
 function updateMicBtnUI() {
