@@ -1,15 +1,31 @@
+<!--
+BSMS Web
+Copyright © 2026 Jellyfish Jelly
+SPDX-License-Identifier: MIT
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="description" content="BSMS Web Account Manager. Manage your profile, security, and settings across the BSMS ecosystem."/>
+<meta name="description" content="BSMS Web Account Manager. Manage your profile, security, and settings across the BSMS Web ecosystem."/>
+<meta name="category" content="Education"/>
+<meta name="author" content="BSMS Web"/>
 <meta name="theme-color" content="#BB001E">
+<meta name="color-scheme" content="#BB001E">
+<meta name="application-name" content="BSMS Web Account Manager">
+<meta property="og:title" content="BSMS Web Account Manager">
+<meta property="og:description" content="BSMS Web Account Manager. Manage your profile, security, and settings across the BSMS Web ecosystem.">
+<meta property="og:category" content="Education">
+<meta property="og:image" content="">
+<meta property="og:url" content="https://bsms-web.vercel.app/accounts">
+<meta property="og:type" content="website">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="BSMS Web Account Manager">
+<link rel="apple-touch-icon" href="">
 <title>BSMS Web Account Manager</title>
-
-<!-- Load Firebase SDK (Compat) -->
-<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+<link rel="icon" type="image/png" href=""/>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
@@ -208,7 +224,7 @@ textarea{resize:vertical;height:110px}
 <div id="appShell">
   <!-- Desktop Sidebar -->
   <div id="sidebar">
-    <div class="sidebar-title">BSMS Accounts</div>
+    <div class="sidebar-title">BSMS Web Accounts</div>
     <button class="navBtn active" id="dock-profile" onclick="switchPanel('profile')">Profile</button>
     <button class="navBtn" id="dock-security" onclick="switchPanel('security')">Security</button>
     <button class="navBtn" id="dock-settings" onclick="switchPanel('settings')">Preferences</button>
@@ -223,7 +239,7 @@ textarea{resize:vertical;height:110px}
     <!-- Mobile Topbar -->
     <div id="mobileTopbar">
       <button id="mobileMenuBtn" onclick="toggleMobileDrawer()">Menu</button>
-      <div class="mobile-title">BSMS Accounts</div>
+      <div class="mobile-title">BSMS Web Accounts</div>
       <div style="width: 60px;"></div> <!-- Spacer for centering -->
     </div>
     
@@ -351,13 +367,13 @@ textarea{resize:vertical;height:110px}
 
         <div class="app-grid">
             <div class="app-card">
-                <h3>BSMS Rooms</h3>
+                <h3>BSMS Web Rooms</h3>
                 <p>Real-time chat and communication platform for students.</p>
-                <button class="btn sec" style="margin:0;" onclick="window.location.href='https://bsms-rooms.oneapp.dev'">Go to App Settings</button>
+                <button class="btn sec" style="margin:0;" onclick="window.location.href='https://bsms-web.vercel.app/rooms'">Go to App Settings</button>
             </div>
             
             <div class="app-card" style="opacity: 0.6;">
-                <h3>BSMS Countdown</h3>
+                <h3>BSMS Web Countdown</h3>
                 <p>Track important dates and times. (Coming Soon)</p>
                 <button class="btn sec" style="margin:0;" disabled>Not Available</button>
             </div>
@@ -372,12 +388,11 @@ textarea{resize:vertical;height:110px}
 <div id="notifContainer"></div>
 
 <script>
-// ---------- FIREBASE INIT ----------
-firebase.initializeApp({
-  // URL obfuscated to avoid plain-text scraper exposure, but kept intact so unmigrated features (signup, profile saving) continue to work properly.
-  databaseURL: atob("aHR0cHM6Ly9ic21zLXdlYi1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20=") 
-});
-const db = firebase.database();
+/*
+ * Jellyfish Jelly
+ * Copyright © 2026 Jellyfish Jelly
+ * SPDX-License-Identifier: MIT
+ */
 
 // ---------- GLOBALS ----------
 let currentUser = null;
@@ -386,6 +401,7 @@ let authMode = 'login'; // 'login' or 'signup'
 let pendingAvatarBase64 = null;
 let deleteInterval = null;
 let deleteTimer = 10;
+let pendingDeletePassword = null;
 const SESSION_KEY = 'bsms_account_session';
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -495,7 +511,7 @@ function toggleAuthMode() {
 
 async function handleAuth() {
     let user = document.getElementById('authUsername').value;
-    user = user.replace(/ /g, '_'); // Extra safety
+    user = user.replace(/ /g, '_'); 
     const pass = document.getElementById('authPassword').value.trim();
 
     if (user.length < 3 || user.length > 20) return showAlert("Username must be between 3 and 20 characters.");
@@ -505,54 +521,27 @@ async function handleAuth() {
     showActionLoader(authMode === 'signup' ? "Creating account..." : "Logging in...");
 
     try {
-        if (authMode === 'signup') {
-            // Keep signup using direct Firebase (has not been migrated to an API yet)
-            const ref = db.ref(`/accounts/${user}`);
-            const snap = await ref.once('value');
-            const data = snap.val();
+        const endpoint = authMode === 'signup' ? "/api/index?action=register" : "/api/index?action=login";
+        const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username: user,
+                password: pass
+            })
+        });
 
-            if (data) {
-                hideActionLoader();
-                return showAlert("That username is already taken. Please choose another.");
-            }
-            
-            const newAcc = {
-                password: btoa(encodeURIComponent(pass)), 
-                displayName: user,
-                bio: "",
-                avatar: "",
-                email: "",
-                phone: "",
-                theme: "#BB001E",
-                createdAt: Date.now(),
-                lastUsernameChange: 0
-            };
-            
-            await ref.set(newAcc);
-            completeLogin(user, newAcc);
-            
-        } else {
-            // LOGIN FLOW: Use secure Vercel API endpoint
-            const response = await fetch("/api/auth/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    username: user,
-                    password: pass
-                })
-            });
+        const data = await response.json();
 
-            const data = await response.json();
-
-            if (!response.ok || !data.success) {
-                hideActionLoader();
-                return showAlert(data.error || "Login failed.");
-            }
-
-            completeLogin(data.user, data.accountData);
+        if (!response.ok || !data.success) {
+            hideActionLoader();
+            return showAlert(data.error || "Authentication failed.");
         }
+
+        completeLogin(data.user, data.accountData);
+
     } catch (err) {
         hideActionLoader();
         showAlert("Connection error. Please try again.");
@@ -589,11 +578,12 @@ async function checkSession() {
     }
     
     try {
-        const snap = await db.ref(`/accounts/${savedUser}`).once('value');
-        const data = snap.val();
-        if (data) {
+        const response = await fetch(`/api/index?action=getAccount&username=${encodeURIComponent(savedUser)}`);
+        const data = await response.json();
+
+        if (response.ok && data.success && data.accountData) {
             currentUser = savedUser;
-            currentAccountData = data;
+            currentAccountData = data.accountData;
             loadDashboard();
         } else {
             localStorage.removeItem(SESSION_KEY);
@@ -644,7 +634,7 @@ function handleAvatarUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 500 * 1024) { // 500KB limit to avoid RTDB string limits
+    if (file.size > 500 * 1024) { 
         showAlert("Image size too large. Please select an image under 500KB.");
         e.target.value = "";
         return;
@@ -678,6 +668,7 @@ async function saveProfile() {
     showActionLoader("Saving profile...");
     try {
         const updateObj = {
+            username: currentUser,
             displayName: dName || currentUser,
             bio: bio,
             email: email,
@@ -685,7 +676,18 @@ async function saveProfile() {
             avatar: pendingAvatarBase64 || ""
         };
         
-        await db.ref(`/accounts/${currentUser}`).update(updateObj);
+        const response = await fetch("/api/index?action=updateProfile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updateObj)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            hideActionLoader();
+            return showAlert(data.error || "Failed to save profile.");
+        }
         
         Object.assign(currentAccountData, updateObj);
         
@@ -726,28 +728,30 @@ async function executeUsernameChange() {
     showActionLoader("Checking availability...");
 
     try {
-        const existSnap = await db.ref(`/accounts/${newName}`).once('value');
-        if (existSnap.exists()) {
+        const response = await fetch("/api/index?action=changeUsername", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                oldUsername: currentUser,
+                newUsername: newName
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
             hideActionLoader();
-            return showAlert("That username is already taken.");
+            return showAlert(data.error || "Failed to change username.");
         }
 
-        document.getElementById('actionLoadingText').textContent = "Migrating account...";
-        
-        const newData = { ...currentAccountData };
-        newData.lastUsernameChange = Date.now();
-
-        await db.ref(`/accounts/${newName}`).set(newData);
-        await db.ref(`/accounts/${currentUser}`).remove();
-
         // Update local session
-        currentUser = newName;
-        currentAccountData = newData;
-        localStorage.setItem(SESSION_KEY, newName);
+        currentUser = data.user;
+        currentAccountData = data.accountData;
+        localStorage.setItem(SESSION_KEY, currentUser);
 
-        document.getElementById('profileUsername').value = newName;
-        document.getElementById('sidebarUsername').textContent = newName;
-        document.getElementById('mobileSidebarUsername').textContent = newName;
+        document.getElementById('profileUsername').value = currentUser;
+        document.getElementById('sidebarUsername').textContent = currentUser;
+        document.getElementById('mobileSidebarUsername').textContent = currentUser;
         
         closePopup('changeUsernameModal');
         hideActionLoader();
@@ -776,17 +780,22 @@ async function changePassword() {
     showActionLoader("Verifying...");
     
     try {
-        let decodedOld = "";
-        try { decodedOld = decodeURIComponent(atob(currentAccountData.password)); } catch(e) { decodedOld = currentAccountData.password; }
-        
-        if (decodedOld !== currentPass) {
+        const response = await fetch("/api/index?action=changePassword", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                username: currentUser,
+                currentPassword: currentPass,
+                newPassword: newPass
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
             hideActionLoader();
-            return showAlert("Incorrect current password.");
+            return showAlert(data.error || "Failed to change password.");
         }
-        
-        const newEncoded = btoa(encodeURIComponent(newPass));
-        await db.ref(`/accounts/${currentUser}`).update({ password: newEncoded });
-        currentAccountData.password = newEncoded;
         
         document.getElementById('secCurrentPass').value = '';
         document.getElementById('secNewPass').value = '';
@@ -813,7 +822,23 @@ async function savePreferences() {
     
     showActionLoader("Saving...");
     try {
-        await db.ref(`/accounts/${currentUser}`).update({ theme: theme });
+        const response = await fetch("/api/index?action=updateAccountSetting", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                username: currentUser,
+                key: 'theme',
+                value: theme
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            hideActionLoader();
+            return showAlert(data.error || "Failed to save preferences.");
+        }
+
         currentAccountData.theme = theme;
         applyColor(theme);
         hideActionLoader();
@@ -825,7 +850,7 @@ async function savePreferences() {
 }
 
 // 5. Account Deletion
-function verifyAccountDeletion() {
+async function verifyAccountDeletion() {
     const inputUser = document.getElementById('delAuthUser').value.trim();
     const inputPass = document.getElementById('delAuthPass').value.trim();
 
@@ -833,20 +858,43 @@ function verifyAccountDeletion() {
         return showAlert("Incorrect username entered.");
     }
 
-    let decodedOld = "";
-    try { decodedOld = decodeURIComponent(atob(currentAccountData.password)); } catch(e) { decodedOld = currentAccountData.password; }
-    
-    if (inputPass !== decodedOld) {
-        return showAlert("Incorrect password entered.");
+    if (!inputPass) {
+        return showAlert("Please enter your password.");
     }
 
-    closePopup('deleteAccountModal');
-    
-    // Clear inputs for security
-    document.getElementById('delAuthUser').value = '';
-    document.getElementById('delAuthPass').value = '';
+    showActionLoader("Verifying...");
 
-    startDeletionCountdown();
+    try {
+        // Use the login endpoint to verify the credentials safely
+        const response = await fetch("/api/index?action=login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: inputUser, password: inputPass })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            hideActionLoader();
+            return showAlert("Incorrect password entered.");
+        }
+
+        // Credentials verified successfully
+        hideActionLoader();
+        closePopup('deleteAccountModal');
+        
+        // Store password temporarily to pass to the deleteAccount API
+        pendingDeletePassword = inputPass;
+
+        // Clear inputs for security
+        document.getElementById('delAuthUser').value = '';
+        document.getElementById('delAuthPass').value = '';
+
+        startDeletionCountdown();
+    } catch(e) {
+        hideActionLoader();
+        showAlert("Error verifying credentials.");
+    }
 }
 
 function startDeletionCountdown() {
@@ -867,17 +915,38 @@ function startDeletionCountdown() {
 
 function cancelDeletion() {
     if (deleteInterval) clearInterval(deleteInterval);
+    pendingDeletePassword = null;
     closePopup('deleteCountdownModal');
     showToast("Account deletion canceled.");
 }
 
 async function executeFinalDeletion() {
+    if (!pendingDeletePassword) return;
+
     try {
-        await db.ref(`/accounts/${currentUser}`).remove();
+        const response = await fetch("/api/index?action=deleteAccount", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                username: currentUser,
+                password: pendingDeletePassword
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            closePopup('deleteCountdownModal');
+            pendingDeletePassword = null;
+            return showAlert(data.error || "Failed to delete account.");
+        }
+
+        pendingDeletePassword = null;
         closePopup('deleteCountdownModal');
         logout();
         showAlert("Your account has been successfully deleted.");
     } catch (err) {
+        pendingDeletePassword = null;
         closePopup('deleteCountdownModal');
         showAlert("Failed to delete account. Please try again.");
     }
