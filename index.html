@@ -1,39 +1,288 @@
+<!--
+BSMS Web
+Copyright © 2026 Jellyfish Jelly
+SPDX-License-Identifier: MIT
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="description" content="BSMS Web - Your gateway to BSMS applications and services for Boiling Springs Middle School"/>
+<meta name="description" content="BSMS Web is the central digital hub for Boiling Springs Middle School. Access your unified account, rooms, countdown, and more."/>
 <meta name="category" content="Education"/>
 <meta name="author" content="BSMS Web"/>
 <meta name="theme-color" content="#BB001E">
+<meta name="color-scheme" content="#BB001E">
 <meta name="application-name" content="BSMS Web">
-<title>BSMS Web - Home</title>
+<meta name="application-version" content="v1.0.0">
+<meta property="og:title" content="BSMS Web">
+<meta property="og:description" content="The central digital hub for Boiling Springs Middle School.">
+<meta property="og:category" content="Education">
+<meta property="og:image" content="">
+<meta property="og:url" content="https://bsms-web.vercel.app/">
+<meta property="og:type" content="website">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="BSMS Web">
+<link rel="apple-touch-icon" href="">
+<title>BSMS Web | Home</title>
 <link rel="icon" type="image/png" href=""/>
+
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
-*,*::before,*::after{box-sizing:border-box}
-:root{
-  --theme-rgb:187,0,30;
-  --red:rgb(var(--theme-rgb));--red-h:#d10022;--red-glow:rgba(var(--theme-rgb),0.35);
-  --border:rgba(255,255,255,0.13);--font:'Patrick Hand',cursive;
+
+*,*::before,*::after { box-sizing:border-box; }
+:root {
+  --theme-rgb: 187,0,30;
+  --red: rgb(var(--theme-rgb));
+  --red-h: #d10022;
+  --red-glow: rgba(var(--theme-rgb), 0.35);
+  --border: rgba(255,255,255,0.13);
+  --msg-bg: rgba(255,255,255,0.04);
+  --font: 'Patrick Hand', cursive;
 }
-html,body{margin:0;padding:0;height:100%;width:100%;font-family:var(--font);background:#000;color:#fff;display:flex;align-items:center;justify-content:center;text-align:center}
-h1{font-size:48px;margin:0 0 12px}
-p{font-size:22px;color:rgba(255,255,255,0.65)}
+
+html, body {
+  margin: 0; padding: 0; height: 100%; width: 100%;
+  font-family: var(--font); background: #000; color: #fff;
+  overflow-x: hidden;
+}
+
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+@keyframes popIn { from { opacity:0; transform:scale(.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+@keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+/* Top Navigation */
+#topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 24px; border-bottom: 2px solid var(--border);
+  background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
+  position: sticky; top: 0; z-index: 100;
+}
+.logo-container { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.logo-icon { width: 32px; height: 32px; fill: var(--red); }
+.logo-text { font-size: 24px; font-weight: bold; letter-spacing: 1px; margin: 0; }
+
+/* Buttons */
+.btn {
+  display: inline-block; font-family: var(--font); font-size: 19px;
+  padding: 10px 18px; border-radius: 12px; border: 2px solid var(--red);
+  background: var(--red); color: #fff; cursor: pointer;
+  transition: transform .15s, background .15s, box-shadow .15s, border-color .15s;
+  text-decoration: none; text-align: center; line-height: 1.2;
+}
+.btn:hover { background: var(--red-h); transform: scale(1.03); box-shadow: 0 4px 18px var(--red-glow); }
+.btn:active { transform: scale(.97); }
+.btn.sec { background: transparent; border-color: rgba(255,255,255,0.4); color: #fff; }
+.btn.sec:hover { background: rgba(255,255,255,0.09); border-color: #fff; box-shadow: none; }
+
+/* Hero Section */
+.hero {
+  text-align: center; padding: 60px 20px 40px;
+  animation: fadeUp 0.6s ease forwards;
+}
+.hero h1 { font-size: 56px; margin: 0 0 10px; line-height: 1.1; }
+.hero h1 span { color: var(--red); }
+.hero p { font-size: 22px; color: rgba(255,255,255,0.65); max-width: 600px; margin: 0 auto; line-height: 1.5; }
+
+/* Launcher Grid */
+.launcher-container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+.launcher-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;
+}
+.app-card {
+  background: var(--msg-bg); border: 2px solid var(--border); border-radius: 20px;
+  padding: 30px 24px; display: flex; flex-direction: column; align-items: flex-start;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  animation: popIn 0.5s ease forwards; opacity: 0;
+}
+.app-card:nth-child(1) { animation-delay: 0.1s; }
+.app-card:nth-child(2) { animation-delay: 0.2s; }
+.app-card:nth-child(3) { animation-delay: 0.3s; }
+
+.app-card:hover {
+  border-color: var(--red); transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(var(--theme-rgb), 0.15);
+}
+.app-icon {
+  width: 54px; height: 54px; fill: var(--red); margin-bottom: 20px;
+  background: rgba(var(--theme-rgb), 0.1); padding: 12px; border-radius: 14px;
+}
+.app-title { font-size: 28px; margin: 0 0 8px; color: #fff; }
+.app-desc { font-size: 18px; color: rgba(255,255,255,0.6); margin: 0 0 24px; line-height: 1.4; flex: 1; }
+.app-card .btn { width: 100%; }
+
+/* Overlay & Modals */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  display: none; align-items: center; justify-content: center;
+  z-index: 2000; animation: fadeIn .2s ease; padding: 20px;
+}
+.overlay.show { display: flex; }
+.popup {
+  background: #080808; border: 3px solid var(--red); border-radius: 20px;
+  padding: 30px 24px 24px; width: min(440px, 100%); animation: popIn .22s ease;
+  text-align: center;
+}
+.popup p { font-size: 20px; color: rgba(255,255,255,0.85); margin: 0 0 24px; line-height: 1.5; }
+
+/* User Info specific */
+.user-pill {
+  display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.05);
+  border: 2px solid var(--border); padding: 4px 14px 4px 4px; border-radius: 50px;
+  cursor: pointer; transition: all 0.15s;
+}
+.user-pill:hover { border-color: var(--red); box-shadow: 0 0 12px var(--red-glow); background: rgba(255,255,255,0.1); }
+.user-pill .avatar {
+  width: 32px; height: 32px; border-radius: 50%; background: rgba(var(--theme-rgb), 0.2);
+  color: var(--red); display: flex; align-items: center; justify-content: center;
+  font-weight: bold; font-size: 16px; border: 2px solid transparent; overflow: hidden;
+}
+.user-pill .avatar img { width: 100%; height: 100%; object-fit: cover; }
+.user-pill span { font-size: 17px; font-family: var(--font); color: #fff; }
+
+@media (max-width: 600px) {
+  .hero h1 { font-size: 42px; }
+  .hero p { font-size: 18px; }
+  #topbar { padding: 12px 16px; }
+  .logo-text { display: none; } /* hide text on very small screens to save space */
+}
 </style>
 </head>
 <body>
 
-<div>
-  <h1>Welcome to BSMS Web</h1>
-  <p>Your gateway to BSMS applications and services.</p>
+<div id="topbar">
+  <div class="logo-container">
+    <svg class="logo-icon" viewBox="0 0 24 24"><path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z"/></svg>
+    <h2 class="logo-text">BSMS Web</h2>
+  </div>
+  <div id="topbar-right">
+    <!-- Populated by JS -->
+  </div>
+</div>
+
+<div class="hero">
+  <h1>Welcome to <span>BSMS Web</span></h1>
+  <p>Your unified digital ecosystem for Boiling Springs Middle School. Connect with classmates, manage your profile, and access all our apps in one place.</p>
+</div>
+
+<div class="launcher-container">
+  <div class="launcher-grid">
+    
+    <!-- Accounts Card -->
+    <div class="app-card">
+      <svg class="app-icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      <h3 class="app-title">Accounts</h3>
+      <p class="app-desc">Manage your public profile, security settings, and global preferences across all BSMS Web services.</p>
+      <a href="/accounts" class="btn">Manage Account</a>
+    </div>
+
+    <!-- Rooms Card -->
+    <div class="app-card">
+      <svg class="app-icon" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/></svg>
+      <h3 class="app-title">Rooms</h3>
+      <p class="app-desc">A fast, lightweight real-time chat platform. Create shared spaces to connect and talk with your friends.</p>
+      <a href="/rooms" class="btn">Open Rooms</a>
+    </div>
+
+    <!-- Countdown Card -->
+    <div class="app-card">
+      <svg class="app-icon" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+      <h3 class="app-title">Countdown</h3>
+      <p class="app-desc">Track your daily class schedule and know exactly how much time is left until the bell rings.</p>
+      <button class="btn sec" onclick="showCountdownAlert()">Launch Countdown</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Alert Modal -->
+<div id="alertOverlay" class="overlay">
+  <div class="popup">
+    <p id="alertText">Alert Message Here</p>
+    <button class="btn" onclick="closeAlert()">Understood</button>
+  </div>
 </div>
 
 <script>
-  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-</script>
-<script defer src="/_vercel/insights/script.js"></script>
+/*
+ * Jellyfish Jelly
+ * Copyright © 2026 Jellyfish Jelly
+ * SPDX-License-Identifier: MIT
+ */
 
+const SESSION_KEY = 'bsms_account_session';
+let currentUser = localStorage.getItem(SESSION_KEY);
+
+async function init() {
+    const topbarRight = document.getElementById('topbar-right');
+    
+    if (currentUser) {
+        // Optimistic UI update
+        const initial = currentUser.charAt(0).toUpperCase();
+        topbarRight.innerHTML = `
+            <div class="user-pill" onclick="window.location.href='/accounts'" title="Manage Account">
+                <div class="avatar" id="navAvatar">${initial}</div>
+                <span id="navUsername">${currentUser}</span>
+            </div>
+        `;
+
+        // Fetch actual profile data from the API to get Display Name and Avatar
+        try {
+            const response = await fetch(`/api/index?action=getAccount&username=${encodeURIComponent(currentUser)}`);
+            const data = await response.json();
+            
+            if (response.ok && data.success && data.accountData) {
+                const acc = data.accountData;
+                const dName = acc.displayName || currentUser;
+                document.getElementById('navUsername').textContent = dName;
+                
+                if (acc.avatar) {
+                    document.getElementById('navAvatar').innerHTML = `<img src="${acc.avatar}" alt="Avatar">`;
+                    document.getElementById('navAvatar').style.border = "none";
+                }
+                
+                // Apply global theme color if it exists
+                if (acc.theme) {
+                    let hex = acc.theme;
+                    document.documentElement.style.setProperty('--red', hex);
+                    if(hex.length === 7) {
+                        let r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
+                        document.documentElement.style.setProperty('--theme-rgb', `${r}, ${g}, ${b}`);
+                        document.documentElement.style.setProperty('--red-h', `rgb(${Math.min(255,r+20)},${Math.min(255,g+20)},${Math.min(255,b+20)})`);
+                        document.documentElement.style.setProperty('--red-glow', `rgba(${r},${g},${b},0.35)`);
+                    }
+                }
+            } else {
+                // If API says invalid account, clear local storage
+                localStorage.removeItem(SESSION_KEY);
+                currentUser = null;
+                renderLoggedOutState(topbarRight);
+            }
+        } catch (e) {
+            console.error("Failed to fetch user data for topbar", e);
+        }
+    } else {
+        renderLoggedOutState(topbarRight);
+    }
+}
+
+function renderLoggedOutState(container) {
+    container.innerHTML = `
+        <button class="btn" style="margin:0; padding: 6px 16px; font-size: 19px;" onclick="window.location.href='/accounts'">Sign In</button>
+    `;
+}
+
+function showCountdownAlert() {
+    document.getElementById('alertText').innerText = "BSMS Countdown is still being integrated with the BSMS Web ecosystem. It will be available soon.";
+    document.getElementById('alertOverlay').classList.add('show');
+}
+
+function closeAlert() {
+    document.getElementById('alertOverlay').classList.remove('show');
+}
+
+window.onload = init;
+</script>
 </body>
 </html>
