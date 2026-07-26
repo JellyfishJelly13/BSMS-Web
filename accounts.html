@@ -15,7 +15,7 @@ SPDX-License-Identifier: MIT
 <meta name="theme-color" content="#BB001E">
 <meta name="color-scheme" content="#BB001E">
 <meta name="application-name" content="BSMS Web Account Manager">
-<meta name="application-version" content="v1.6.0">
+<meta name="application-version" content="v3.2.0">
 <meta property="og:title" content="BSMS Web Account Manager">
 <meta property="og:description" content="BSMS Web Account Manager. Manage your profile, security, and settings across the BSMS Web ecosystem.">
 <meta property="og:category" content="Education">
@@ -27,6 +27,10 @@ SPDX-License-Identifier: MIT
 <link rel="apple-touch-icon" href="">
 <title>BSMS Web Account Manager</title>
 <link rel="icon" type="image/png" href=""/>
+
+<!-- Load Firebase SDK (Compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
@@ -395,6 +399,12 @@ textarea{resize:vertical;height:110px}
  * SPDX-License-Identifier: MIT
  */
 
+// ---------- FIREBASE INIT ----------
+firebase.initializeApp({
+  databaseURL: "https://bsms-web-default-rtdb.firebaseio.com"
+});
+const db = firebase.database();
+
 // ---------- GLOBALS ----------
 let currentUser = null;
 let currentAccountData = null;
@@ -402,8 +412,7 @@ let authMode = 'login'; // 'login' or 'signup'
 let pendingAvatarBase64 = null;
 let deleteInterval = null;
 let deleteTimer = 10;
-let pendingDeletePassword = null;
-const SESSION_KEY = 'bsms_account_session';
+const SESSION_KEY = 'bsms_web_config';
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 // ---------- UI HELPERS ----------
@@ -512,7 +521,7 @@ function toggleAuthMode() {
 
 async function handleAuth() {
     let user = document.getElementById('authUsername').value;
-    user = user.replace(/ /g, '_'); 
+    user = user.replace(/ /g, '_'); // Extra safety
     const pass = document.getElementById('authPassword').value.trim();
 
     if (user.length < 3 || user.length > 20) return showAlert("Username must be between 3 and 20 characters.");
@@ -522,27 +531,45 @@ async function handleAuth() {
     showActionLoader(authMode === 'signup' ? "Creating account..." : "Logging in...");
 
     try {
-        const endpoint = authMode === 'signup' ? "/api/index?action=register" : "/api/index?action=login";
-        const response = await fetch(endpoint, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                username: user,
-                password: pass
-            })
-        });
+        const ref = db.ref(`/accounts/${user}`);
+        const snap = await ref.once('value');
+        const data = snap.val();
 
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-            hideActionLoader();
-            return showAlert(data.error || "Authentication failed.");
+        if (authMode === 'signup') {
+            if (data) {
+                hideActionLoader();
+                return showAlert("That username is already taken. Please choose another.");
+            }
+            
+            const newAcc = {
+                password: btoa(encodeURIComponent(pass)), 
+                displayName: user,
+                bio: "",
+                avatar: "",
+                email: "",
+                phone: "",
+                theme: "#BB001E",
+                createdAt: Date.now(),
+                lastUsernameChange: 0
+            };
+            
+            await ref.set(newAcc);
+            completeLogin(user, newAcc);
+            
+        } else {
+            if (!data) {
+                hideActionLoader();
+                return showAlert("Account not found. Please check your username.");
+            }
+            let decodedPass = "";
+            try { decodedPass = decodeURIComponent(atob(data.password)); } catch(e) { decodedPass = data.password; }
+            
+            if (decodedPass !== pass) {
+                hideActionLoader();
+                return showAlert("Incorrect password.");
+            }
+            completeLogin(user, data);
         }
-
-        completeLogin(data.user, data.accountData);
-
     } catch (err) {
         hideActionLoader();
         showAlert("Connection error. Please try again.");
@@ -579,12 +606,11 @@ async function checkSession() {
     }
     
     try {
-        const response = await fetch(`/api/index?action=getAccount&username=${encodeURIComponent(savedUser)}`);
-        const data = await response.json();
-
-        if (response.ok && data.success && data.accountData) {
+        const snap = await db.ref(`/accounts/${savedUser}`).once('value');
+        const data = snap.val();
+        if (data) {
             currentUser = savedUser;
-            currentAccountData = data.accountData;
+            currentAccountData = data;
             loadDashboard();
         } else {
             localStorage.removeItem(SESSION_KEY);
@@ -635,7 +661,7 @@ function handleAvatarUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 500 * 1024) { 
+    if (file.size > 500 * 1024) { // 500KB limit to avoid RTDB string limits
         showAlert("Image size too large. Please select an image under 500KB.");
         e.target.value = "";
         return;
@@ -669,7 +695,6 @@ async function saveProfile() {
     showActionLoader("Saving profile...");
     try {
         const updateObj = {
-            username: currentUser,
             displayName: dName || currentUser,
             bio: bio,
             email: email,
@@ -677,18 +702,7 @@ async function saveProfile() {
             avatar: pendingAvatarBase64 || ""
         };
         
-        const response = await fetch("/api/index?action=updateProfile", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(updateObj)
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-            hideActionLoader();
-            return showAlert(data.error || "Failed to save profile.");
-        }
+        await db.ref(`/accounts/${currentUser}`).update(updateObj);
         
         Object.assign(currentAccountData, updateObj);
         
@@ -729,30 +743,28 @@ async function executeUsernameChange() {
     showActionLoader("Checking availability...");
 
     try {
-        const response = await fetch("/api/index?action=changeUsername", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                oldUsername: currentUser,
-                newUsername: newName
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
+        const existSnap = await db.ref(`/accounts/${newName}`).once('value');
+        if (existSnap.exists()) {
             hideActionLoader();
-            return showAlert(data.error || "Failed to change username.");
+            return showAlert("That username is already taken.");
         }
 
-        // Update local session
-        currentUser = data.user;
-        currentAccountData = data.accountData;
-        localStorage.setItem(SESSION_KEY, currentUser);
+        document.getElementById('actionLoadingText').textContent = "Migrating account...";
+        
+        const newData = { ...currentAccountData };
+        newData.lastUsernameChange = Date.now();
 
-        document.getElementById('profileUsername').value = currentUser;
-        document.getElementById('sidebarUsername').textContent = currentUser;
-        document.getElementById('mobileSidebarUsername').textContent = currentUser;
+        await db.ref(`/accounts/${newName}`).set(newData);
+        await db.ref(`/accounts/${currentUser}`).remove();
+
+        // Update local session
+        currentUser = newName;
+        currentAccountData = newData;
+        localStorage.setItem(SESSION_KEY, newName);
+
+        document.getElementById('profileUsername').value = newName;
+        document.getElementById('sidebarUsername').textContent = newName;
+        document.getElementById('mobileSidebarUsername').textContent = newName;
         
         closePopup('changeUsernameModal');
         hideActionLoader();
@@ -781,22 +793,17 @@ async function changePassword() {
     showActionLoader("Verifying...");
     
     try {
-        const response = await fetch("/api/index?action=changePassword", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                username: currentUser,
-                currentPassword: currentPass,
-                newPassword: newPass
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
+        let decodedOld = "";
+        try { decodedOld = decodeURIComponent(atob(currentAccountData.password)); } catch(e) { decodedOld = currentAccountData.password; }
+        
+        if (decodedOld !== currentPass) {
             hideActionLoader();
-            return showAlert(data.error || "Failed to change password.");
+            return showAlert("Incorrect current password.");
         }
+        
+        const newEncoded = btoa(encodeURIComponent(newPass));
+        await db.ref(`/accounts/${currentUser}`).update({ password: newEncoded });
+        currentAccountData.password = newEncoded;
         
         document.getElementById('secCurrentPass').value = '';
         document.getElementById('secNewPass').value = '';
@@ -823,23 +830,7 @@ async function savePreferences() {
     
     showActionLoader("Saving...");
     try {
-        const response = await fetch("/api/index?action=updateAccountSetting", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                username: currentUser,
-                key: 'theme',
-                value: theme
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-            hideActionLoader();
-            return showAlert(data.error || "Failed to save preferences.");
-        }
-
+        await db.ref(`/accounts/${currentUser}`).update({ theme: theme });
         currentAccountData.theme = theme;
         applyColor(theme);
         hideActionLoader();
@@ -851,7 +842,7 @@ async function savePreferences() {
 }
 
 // 5. Account Deletion
-async function verifyAccountDeletion() {
+function verifyAccountDeletion() {
     const inputUser = document.getElementById('delAuthUser').value.trim();
     const inputPass = document.getElementById('delAuthPass').value.trim();
 
@@ -859,43 +850,20 @@ async function verifyAccountDeletion() {
         return showAlert("Incorrect username entered.");
     }
 
-    if (!inputPass) {
-        return showAlert("Please enter your password.");
+    let decodedOld = "";
+    try { decodedOld = decodeURIComponent(atob(currentAccountData.password)); } catch(e) { decodedOld = currentAccountData.password; }
+    
+    if (inputPass !== decodedOld) {
+        return showAlert("Incorrect password entered.");
     }
 
-    showActionLoader("Verifying...");
+    closePopup('deleteAccountModal');
+    
+    // Clear inputs for security
+    document.getElementById('delAuthUser').value = '';
+    document.getElementById('delAuthPass').value = '';
 
-    try {
-        // Use the login endpoint to verify the credentials safely
-        const response = await fetch("/api/index?action=login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: inputUser, password: inputPass })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-            hideActionLoader();
-            return showAlert("Incorrect password entered.");
-        }
-
-        // Credentials verified successfully
-        hideActionLoader();
-        closePopup('deleteAccountModal');
-        
-        // Store password temporarily to pass to the deleteAccount API
-        pendingDeletePassword = inputPass;
-
-        // Clear inputs for security
-        document.getElementById('delAuthUser').value = '';
-        document.getElementById('delAuthPass').value = '';
-
-        startDeletionCountdown();
-    } catch(e) {
-        hideActionLoader();
-        showAlert("Error verifying credentials.");
-    }
+    startDeletionCountdown();
 }
 
 function startDeletionCountdown() {
@@ -916,38 +884,17 @@ function startDeletionCountdown() {
 
 function cancelDeletion() {
     if (deleteInterval) clearInterval(deleteInterval);
-    pendingDeletePassword = null;
     closePopup('deleteCountdownModal');
     showToast("Account deletion canceled.");
 }
 
 async function executeFinalDeletion() {
-    if (!pendingDeletePassword) return;
-
     try {
-        const response = await fetch("/api/index?action=deleteAccount", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                username: currentUser,
-                password: pendingDeletePassword
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-            closePopup('deleteCountdownModal');
-            pendingDeletePassword = null;
-            return showAlert(data.error || "Failed to delete account.");
-        }
-
-        pendingDeletePassword = null;
+        await db.ref(`/accounts/${currentUser}`).remove();
         closePopup('deleteCountdownModal');
         logout();
         showAlert("Your account has been successfully deleted.");
     } catch (err) {
-        pendingDeletePassword = null;
         closePopup('deleteCountdownModal');
         showAlert("Failed to delete account. Please try again.");
     }
@@ -959,11 +906,5 @@ setTimeout(() => {
 }, 800);
 
 </script>
-
-<script>
-  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-</script>
-<script defer src="/_vercel/insights/script.js"></script>
-
 </body>
 </html>
