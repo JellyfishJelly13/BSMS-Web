@@ -9,39 +9,61 @@ SPDX-License-Identifier: MIT
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="description" content="BSMS Web Account Manager. Manage your profile, security, and settings across the BSMS Web ecosystem."/>
+<meta name="description" content="BSMS Web Account Manager. Manage your profile, identity, and security across the BSMS Web ecosystem."/>
 <meta name="category" content="Education"/>
 <meta name="author" content="BSMS Web"/>
 <meta name="theme-color" content="#BB001E">
 <meta name="color-scheme" content="#BB001E">
-<meta name="application-name" content="BSMS Web Account Manager">
-<meta name="application-version" content="v3.2.0">
-<meta property="og:title" content="BSMS Web Account Manager">
-<meta property="og:description" content="BSMS Web Account Manager. Manage your profile, security, and settings across the BSMS Web ecosystem.">
+<meta name="application-name" content="BSMS Accounts">
+<meta name="application-version" content="v4.0.0">
+<meta property="og:title" content="BSMS Accounts">
+<meta property="og:description" content="Manage your unified profile and security settings.">
 <meta property="og:category" content="Education">
-<meta property="og:image" content="">
-<meta property="og:url" content="https://bsms-web.vercel.app/accounts">
+<meta property="og:url" content="https://bsms-web.page.gd/accounts">
 <meta property="og:type" content="website">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="BSMS Web Account Manager">
-<link rel="apple-touch-icon" href="">
-<title>BSMS Web Account Manager</title>
-<link rel="icon" type="image/png" href=""/>
+<title>BSMS Web Accounts</title>
 
-<!-- Load Firebase SDK (Compat) -->
+    <!-- Analytics -->
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "y87hnhpoob");
+    </script>
+
+<!-- Firebase SDK (Compat) -->
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+
 *,*::before,*::after{box-sizing:border-box}
 :root{
-  --theme-rgb:187,0,30;
-  --red:rgb(var(--theme-rgb));--red-h:#d10022;--red-glow:rgba(var(--theme-rgb),0.35);
-  --border:rgba(255,255,255,0.13);--msg-bg:rgba(255,255,255,0.06);
-  --input-bg:rgba(255,255,255,0.08);--font:'Patrick Hand',cursive;
+  --theme-rgb: 187,0,30;
+  --red: rgb(var(--theme-rgb));
+  --red-h: #d10022;
+  --red-glow: rgba(var(--theme-rgb), 0.35);
+  --bg: #000;
+  --fg: #fff;
+  --fg2: rgba(255,255,255,0.6);
+  --border: rgba(255,255,255,0.13);
+  --msg-bg: rgba(255,255,255,0.06);
+  --input-bg: rgba(255,255,255,0.08);
+  --font: 'Patrick Hand', cursive;
 }
-html,body{margin:0;padding:0;height:100%;width:100%;font-family:var(--font);background:#000;color:#fff;overflow:hidden}
+
+body.light-mode {
+  --bg: #f0f2f5;
+  --fg: #1c1e21;
+  --fg2: rgba(0,0,0,0.6);
+  --border: rgba(0,0,0,0.15);
+  --msg-bg: #fff;
+  --input-bg: #fff;
+}
+
+html,body{margin:0;padding:0;height:100%;width:100%;font-family:var(--font);background:var(--bg);color:var(--fg);overflow:hidden; transition:background 0.3s, color 0.3s;}
 
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes popIn{from{opacity:0;transform:scale(.92) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
@@ -49,140 +71,139 @@ html,body{margin:0;padding:0;height:100%;width:100%;font-family:var(--font);back
 @keyframes notifIn{from{opacity:0;transform:translateY(14px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}
 
 /* UI Elements */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.82);display:none;align-items:center;justify-content:center;z-index:800;animation:fadeIn .2s ease}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:3000;animation:fadeIn .2s ease; backdrop-filter:blur(4px);}
 .overlay.show{display:flex}
-.popup{background:#080808;border:3px solid var(--red);border-radius:20px;padding:26px 24px 20px;width:min(420px,92vw);animation:popIn .22s ease; display:flex; flex-direction:column; max-height: 90vh; overflow-y:auto;}
-.popup h2{font-size:26px;margin:0 0 8px}
-.popup p{font-size:18px;color:rgba(255,255,255,0.72);margin:0 0 14px;line-height:1.45}
+.popup{background:var(--bg);border:2px solid var(--red);border-radius:20px;padding:26px 24px 20px;width:min(420px,92vw);animation:popIn .22s ease; display:flex; flex-direction:column; max-height: 90vh; overflow-y:auto; box-shadow:0 10px 40px rgba(0,0,0,0.5);}
+.popup h2{font-size:28px;margin:0 0 8px; color:var(--fg);}
+.popup p{font-size:18px;color:var(--fg2);margin:0 0 14px;line-height:1.45}
 
-.btn{display:block;width:100%;font-family:var(--font);font-size:21px;padding:10px 14px;border-radius:12px;border:2px solid var(--red);background:var(--red);color:#fff;cursor:pointer;transition:transform .13s,background .13s,border-color .13s,box-shadow .13s;margin-bottom:9px;line-height:1.2}
+.btn{display:block;width:100%;font-family:var(--font);font-size:21px;padding:10px 14px;border-radius:12px;border:2px solid var(--red);background:var(--red);color:#fff;cursor:pointer;transition:transform .13s,background .13s,border-color .13s,box-shadow .13s;margin-bottom:9px;line-height:1.2; text-align:center;}
 .btn:last-child{margin-bottom:0}
 .btn:hover{background:var(--red-h);transform:scale(1.02);box-shadow:0 4px 18px var(--red-glow)}
 .btn:active{transform:scale(.97)}
-.btn.sec{background:transparent;border-color:rgba(255,255,255,0.4)}
-.btn.sec:hover{background:rgba(255,255,255,0.09);box-shadow:none}
-.btn.warn{background:#7a0010;border-color:#7a0010}
+.btn.sec{background:transparent;border-color:var(--border);color:var(--fg);}
+.btn.sec:hover{background:var(--msg-bg);border-color:var(--fg2);box-shadow:none}
+.btn.warn{background:#7a0010;border-color:#7a0010;color:#fff;}
 .btn.warn:hover{background:#9a0015;border-color:#9a0015}
 
-input,textarea{width:100%;font-family:var(--font);font-size:20px;padding:10px 13px;border-radius:12px;border:2px solid var(--border);background:var(--input-bg);color:#fff;margin:5px 0 12px;display:block;transition:border-color .2s,box-shadow .2s}
-input:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 14px var(--red-glow);outline:none}
+input,textarea{width:100%;font-family:var(--font);font-size:20px;padding:10px 13px;border-radius:12px;border:2px solid var(--border);background:var(--input-bg);color:var(--fg);margin:5px 0 12px;display:block;transition:border-color .2s,box-shadow .2s; outline:none;}
+input:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 14px var(--red-glow);}
 input:disabled{opacity:0.5;cursor:not-allowed}
-input::placeholder,textarea::placeholder{color:rgba(255,255,255,0.32)}
+input::placeholder,textarea::placeholder{color:var(--fg2)}
 textarea{resize:vertical;height:110px}
 
-/* Loaders */
-.spinner{width:50px;height:50px;border:4px solid rgba(255,255,255,0.1);border-top-color:var(--red);border-radius:50%;animation:spin 1s cubic-bezier(.4,0,.2,1) infinite;margin:0 auto 20px}
+.spinner{width:46px;height:46px;border:4px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin 1s cubic-bezier(.4,0,.2,1) infinite;margin:0 auto 20px}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* Screens */
 .screen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;animation:fadeIn .25s ease;overflow-y:auto;}
 .screen.show{display:flex}
-.card{width:min(420px,100%);background:rgba(0,0,0,0.97);border:3px solid var(--red);border-radius:26px;padding:32px 24px;animation:popIn .3s ease;text-align:center;box-shadow:0 0 60px rgba(var(--theme-rgb),0.12); position:relative;}
-.card h1{font-size:42px;margin:0 0 4px;line-height:1.1}
-.card>p{font-size:19px;color:rgba(255,255,255,0.65);margin:0 0 22px}
-.logo-img{width:72px;height:72px;object-fit:contain;margin:0 auto 15px;display:block;border-radius:14px; background: rgba(255,255,255,0.05); border: 2px solid var(--border);}
+.card{width:min(440px,100%);background:var(--bg);border:3px solid var(--red);border-radius:26px;padding:32px 26px;animation:popIn .3s ease;text-align:center;box-shadow:0 0 60px rgba(var(--theme-rgb),0.15); position:relative;}
+.card h1{font-size:42px;margin:0 0 4px;line-height:1.1; color:var(--fg);}
+.card>p{font-size:19px;color:var(--fg2);margin:0 0 24px}
+.logo-img{width:72px;height:72px;object-fit:contain;margin:0 auto 15px;display:block;border-radius:14px; background: var(--msg-bg); border: 2px solid var(--border);}
 
 /* Dashboard Shell */
 #appShell{position:fixed;inset:0;display:none;flex-direction:row}
 #appShell.show{display:flex;animation:fadeIn .3s ease}
-#sidebar{width:220px;min-width:220px;border-right:3px solid var(--red);padding:20px 14px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;background:rgba(0,0,0,0.98);}
-.sidebar-title { font-size: 26px; margin: 0 0 15px 5px; color: #fff; font-weight: bold; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
-.navBtn{width:100%;font-family:var(--font);font-size:18px;padding:12px 14px;border-radius:12px;border:2px solid transparent;background:transparent;color:rgba(255,255,255,0.7);cursor:pointer;text-align:left;transition:all .15s;display:flex;align-items:center;gap:10px;}
-.navBtn:hover{background:rgba(var(--theme-rgb),0.15);color:#fff;transform:translateX(4px);}
-.navBtn.active{background:rgba(var(--theme-rgb),0.25);border-color:var(--red);color:#fff;box-shadow:0 2px 12px rgba(var(--theme-rgb),0.2);}
+#sidebar{width:260px;min-width:260px;border-right:3px solid var(--red);padding:24px 16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;background:var(--bg);z-index:50;}
+.sidebar-title { font-size: 26px; margin: 0 0 15px 5px; color: var(--fg); font-weight: bold; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
+.navBtn{width:100%;font-family:var(--font);font-size:19px;padding:12px 16px;border-radius:12px;border:2px solid transparent;background:transparent;color:var(--fg2);cursor:pointer;text-align:left;transition:all .15s;display:flex;align-items:center;gap:12px;}
+.navBtn:hover{background:var(--msg-bg);color:var(--fg);transform:translateX(4px);}
+.navBtn.active{background:rgba(var(--theme-rgb),0.15);border-color:var(--red);color:var(--fg);box-shadow:0 2px 12px rgba(var(--theme-rgb),0.2);}
 .sidebar-gap{flex:1}
 
-/* Topbar for mobile */
-#mobileTopbar{display:none;height:55px;border-bottom:3px solid var(--red);padding:0 12px;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.98);flex-shrink:0;}
-#mobileMenuBtn{font-family:var(--font);font-size:20px;padding:6px 14px;border-radius:10px;border:2px solid var(--red);background:transparent;color:#fff;cursor:pointer;}
-#mobileMenuBtn:hover{background:rgba(var(--theme-rgb),0.22)}
-.mobile-title { font-size: 22px; color: #fff; font-weight: bold;}
+/* Mobile Topbar */
+#mobileTopbar{display:none;height:60px;border-bottom:3px solid var(--red);padding:0 16px;align-items:center;justify-content:space-between;background:var(--bg);flex-shrink:0;}
+#mobileMenuBtn{font-family:var(--font);font-size:20px;padding:6px 14px;border-radius:10px;border:2px solid var(--red);background:transparent;color:var(--fg);cursor:pointer;}
+#mobileMenuBtn:hover{background:rgba(var(--theme-rgb),0.1)}
+.mobile-title { font-size: 24px; color: var(--fg); font-weight: bold;}
 
-#mobileDrawerBackdrop{position:fixed;inset:0;top:55px;background:rgba(0,0,0,0.5);z-index:699;display:none;animation:fadeIn .2s ease}
+#mobileDrawerBackdrop{position:fixed;inset:0;top:60px;background:rgba(0,0,0,0.5);z-index:699;display:none;animation:fadeIn .2s ease}
 #mobileDrawerBackdrop.show{display:block}
-#mobileDrawer{position:fixed;top:55px;left:0;bottom:0;width:240px;background:rgba(0,0,0,0.98);border-right:3px solid var(--red);z-index:700;display:flex;flex-direction:column;gap:7px;padding:15px;overflow-y:auto;transform:translateX(-100%);transition:transform .25s cubic-bezier(.4,0,.2,1)}
+#mobileDrawer{position:fixed;top:60px;left:0;bottom:0;width:260px;background:var(--bg);border-right:3px solid var(--red);z-index:700;display:flex;flex-direction:column;gap:7px;padding:15px;overflow-y:auto;transform:translateX(-100%);transition:transform .25s cubic-bezier(.4,0,.2,1)}
 #mobileDrawer.open{transform:translateX(0)}
 
-/* Dashboard Main View */
-#mainView{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:24px;position:relative;}
-.panel{display:none;flex:1;flex-direction:column;overflow-y:auto;animation:slideLeft .2s ease; max-width: 600px; margin: 0 auto; width: 100%;}
+/* Main View */
+#mainView{flex:1;display:flex;flex-direction:column;overflow-y:auto;padding:30px;position:relative;}
+.panel{display:none;flex-direction:column;animation:slideLeft .2s ease; max-width: 650px; margin: 0 auto; width: 100%;}
 .panel.show{display:flex}
-.panel-header{margin-bottom:20px;}
-.panel-header h1{font-size:36px;margin:0 0 5px;}
-.panel-header p{font-size:18px;color:rgba(255,255,255,0.5);margin:0;}
+.panel-header{margin-bottom:24px;}
+.panel-header h1{font-size:42px;margin:0 0 5px; color:var(--fg);}
+.panel-header p{font-size:19px;color:var(--fg2);margin:0;}
 
-/* Form & Settings specifics */
-.form-group { margin-bottom: 20px; }
-.form-group label { display: block; font-size: 18px; margin-bottom: 6px; color: rgba(255,255,255,0.85); }
-.setting-row { display:flex; justify-content:space-between; align-items:center; background: var(--msg-bg); border: 2px solid var(--border); padding: 14px 18px; border-radius: 12px; margin-bottom: 12px; }
-.setting-row input[type="color"] { width:44px; height:44px; padding:0; border:2px solid var(--border); border-radius:10px; cursor:pointer; background:transparent; }
-.avatar-preview { width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--red); object-fit: cover; background: #111; margin-bottom: 15px; display:flex; align-items:center; justify-content:center; font-size: 40px; color: var(--red); overflow: hidden; transition: border-color 0.2s;}
+.form-group { margin-bottom: 22px; }
+.form-group label { display: block; font-size: 18px; margin-bottom: 8px; color: var(--fg); }
+.avatar-preview { width: 110px; height: 110px; border-radius: 50%; border: 3px solid var(--red); background: var(--input-bg); margin-bottom: 15px; display:flex; align-items:center; justify-content:center; font-size: 46px; color: var(--fg); font-weight:bold; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.2);}
 .avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
 
-/* Apps Section */
-.app-grid { display: flex; flex-direction: column; gap: 14px; }
-.app-card { background: var(--msg-bg); border: 2px solid var(--border); border-radius: 16px; padding: 20px; transition: transform 0.2s, border-color 0.2s; display: flex; flex-direction: column; gap: 10px; }
-.app-card:hover { border-color: var(--red); transform: translateY(-3px); box-shadow: 0 4px 20px rgba(var(--theme-rgb), 0.15); }
-.app-card h3 { margin: 0; font-size: 24px; color: #fff; }
-.app-card p { margin: 0; font-size: 16px; color: rgba(255,255,255,0.6); flex: 1; }
-
 /* Notifications */
-#notifContainer{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:7px;z-index:900;pointer-events:none;width:min(430px,92vw)}
-.notif{background:rgba(8,8,8,0.96);border:2px solid rgba(var(--theme-rgb),0.6);border-radius:11px;padding:9px 16px;font-size:16px;color:rgba(255,255,255,0.9);pointer-events:all;cursor:pointer;animation:notifIn .26s ease;width:100%;text-align:center;transition:opacity .28s,transform .28s; box-shadow: 0 4px 12px rgba(0,0,0,0.5);}
+#notifContainer{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:9000;pointer-events:none;width:min(400px,92vw)}
+.notif{background:rgba(20,20,20,0.96);border:2px solid var(--red);border-radius:12px;padding:10px 16px;font-size:17px;color:#fff;pointer-events:all;cursor:pointer;animation:notifIn .26s ease;width:100%;text-align:center;transition:opacity .28s,transform .28s; box-shadow: 0 6px 20px rgba(0,0,0,0.5);}
 
-/* Big Countdown */
-#deleteCountdownDisplay { font-size: 72px; font-weight: bold; color: #ff3333; margin: 20px 0; font-family: monospace; }
+/* Global User Button */
+#globalUserBtn { position: fixed; top: 16px; right: 20px; width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--border); background: var(--input-bg); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; z-index: 2000; overflow: hidden; color:var(--fg); font-weight:bold; font-size:22px; box-shadow: 0 4px 14px rgba(0,0,0,0.3);}
+#globalUserBtn:hover { border-color: var(--red); box-shadow: 0 8px 24px rgba(0,0,0,0.4); transform: scale(1.05); }
+#globalUserBtn svg { width: 24px; height: 24px; fill: var(--fg); transition: fill 0.2s; }
+#globalUserBtn img { width: 100%; height: 100%; object-fit: cover; }
+
+#deleteCountdownDisplay { font-size: 80px; font-weight: bold; color: #ff3333; margin: 10px 0 20px; font-family: 'VT323', monospace; line-height:1;}
 
 @media (max-width:768px){
     #sidebar{display:none;}
     #mobileTopbar{display:flex;}
-    #mainView{padding:16px;}
+    #mainView{padding:20px 16px;}
+    #globalUserBtn { top: 6px; right: 14px; width: 40px; height: 40px; }
 }
 </style>
 </head>
 <body>
 
+<!-- Global User Button (Disabled within Accounts dynamically if needed, but keeping for uniform structure) -->
+<div id="globalUserBtn" onclick="window.location.hash='#profile'" title="Profile">
+  <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+</div>
+
 <!-- Loaders & Modals -->
 <div id="initLoadingScreen" class="screen show">
   <div class="card" style="background:transparent; border:none; box-shadow:none;">
     <div class="spinner"></div>
-    <h1 style="font-size:42px;">BSMS Web</h1>
-    <div style="font-size:18px; color:var(--red);">Loading Accounts...</div>
+    <h1 style="font-size:46px;">BSMS Web</h1>
+    <div style="font-size:20px; color:var(--red);">Loading Account...</div>
   </div>
 </div>
 
-<div id="actionLoadingScreen" class="overlay" style="z-index:900;">
+<div id="actionLoadingScreen" class="overlay">
   <div class="popup" style="width: auto; background: transparent; border: none; align-items: center; box-shadow: none;">
     <div class="spinner"></div>
-    <div id="actionLoadingText" style="font-size: 22px; font-weight: bold; color:var(--red);">Please wait...</div>
+    <div id="actionLoadingText" style="font-size: 24px; font-weight: bold; color:var(--red);">Please wait...</div>
   </div>
 </div>
 
-<div id="alertOverlay" class="overlay">
+<div id="alertOverlay" class="overlay" onclick="if(event.target===this) closePopup('alertOverlay')">
   <div class="popup">
-    <p id="alertText" style="font-size:22px;margin-bottom:20px;color:rgba(255,255,255,.9)"></p>
-    <button class="btn" onclick="closeAlert()">OK</button>
+    <p id="alertText" style="font-size:22px;margin-bottom:24px;color:var(--fg)"></p>
+    <button class="btn" onclick="closePopup('alertOverlay')">OK</button>
   </div>
 </div>
 
-<!-- Change Username Modal -->
-<div id="changeUsernameModal" class="overlay">
+<!-- Modals -->
+<div id="changeUsernameModal" class="overlay" onclick="if(event.target===this) closePopup('changeUsernameModal')">
   <div class="popup">
     <h2>Change Username</h2>
     <p>You can only change your username once every 7 days. Your new username must not be taken.</p>
     <input type="text" id="newUsernameInput" placeholder="New Username (3-20 chars)" maxlength="20"/>
-    <p style="font-size: 14px; color:rgba(255,255,255,0.4); margin-top:-5px;">Spaces will be replaced with underscores.</p>
+    <p style="font-size: 15px; color:var(--fg2); margin-top:-5px;">Spaces will be replaced with underscores.</p>
     <button class="btn warn" onclick="executeUsernameChange()">Confirm Change</button>
     <button class="btn sec" onclick="closePopup('changeUsernameModal')">Cancel</button>
   </div>
 </div>
 
-<!-- Delete Account Setup Modal -->
-<div id="deleteAccountModal" class="overlay">
+<div id="deleteAccountModal" class="overlay" onclick="if(event.target===this) closePopup('deleteAccountModal')">
   <div class="popup">
     <h2 style="color:#ff3333;">Delete Account</h2>
     <p>This action is irreversible. All of your BSMS Web data will be permanently lost.</p>
-    <p style="font-size: 15px;">Please confirm your credentials to proceed.</p>
+    <p style="font-size: 16px;">Please confirm your credentials to proceed.</p>
     <input type="text" id="delAuthUser" placeholder="Enter your username"/>
     <input type="password" id="delAuthPass" placeholder="Enter your password"/>
     <button class="btn warn" onclick="verifyAccountDeletion()">Proceed</button>
@@ -190,17 +211,15 @@ textarea{resize:vertical;height:110px}
   </div>
 </div>
 
-<!-- Delete Account Countdown Modal -->
-<div id="deleteCountdownModal" class="overlay" style="z-index:999; background:rgba(20,0,0,0.95);">
+<div id="deleteCountdownModal" class="overlay" style="background:rgba(20,0,0,0.96);">
   <div class="popup" style="border-color:#ff3333; text-align:center;">
     <h2 style="color:#ff3333;">Account Deletion</h2>
     <p>Your account will be permanently deleted in:</p>
     <div id="deleteCountdownDisplay">10</div>
-    <p style="font-size:16px;">This is your last chance to abort.</p>
-    <button class="btn sec" style="border-color:#fff; color:#fff;" onclick="cancelDeletion()">Cancel Deletion</button>
+    <p style="font-size:18px;">This is your last chance to abort.</p>
+    <button class="btn sec" style="border-color:var(--border);" onclick="cancelDeletion()">Cancel Deletion</button>
   </div>
 </div>
-
 
 <!-- Authentication Screen (Login / Sign Up) -->
 <div id="authScreen" class="screen">
@@ -216,9 +235,9 @@ textarea{resize:vertical;height:110px}
       <input id="authPassword" type="password" placeholder="Password" autocomplete="current-password"/>
     </div>
     
-    <button class="btn" id="authSubmitBtn" onclick="handleAuth()" style="margin-top: 10px;">Login</button>
+    <button class="btn" id="authSubmitBtn" onclick="handleAuth()" style="margin-top: 14px;">Login</button>
     
-    <div style="margin-top: 18px; font-size: 17px; color: rgba(255,255,255,0.5);">
+    <div style="margin-top: 22px; font-size: 18px; color: var(--fg2);">
       <span id="authToggleText">Don't have an account?</span> 
       <strong style="color:var(--red); cursor:pointer;" onclick="toggleAuthMode()">Sign up here</strong>
     </div>
@@ -227,38 +246,33 @@ textarea{resize:vertical;height:110px}
 
 <!-- Logged In Dashboard -->
 <div id="appShell">
-  <!-- Desktop Sidebar -->
   <div id="sidebar">
-    <div class="sidebar-title">BSMS Web Accounts</div>
+    <div class="sidebar-title">Accounts</div>
     <button class="navBtn active" id="dock-profile" onclick="switchPanel('profile')">Profile</button>
     <button class="navBtn" id="dock-security" onclick="switchPanel('security')">Security</button>
-    <button class="navBtn" id="dock-settings" onclick="switchPanel('settings')">Preferences</button>
-    <button class="navBtn" id="dock-apps" onclick="switchPanel('apps')">Apps</button>
     <div class="sidebar-gap"></div>
-    <div style="font-size: 15px; color:rgba(255,255,255,0.4); text-align:center; margin-bottom:10px;">Logged in as <br><strong id="sidebarUsername" style="color:#fff;">---</strong></div>
-    <button class="navBtn" style="border-color:#555; color:#ff6666; justify-content:center;" onclick="logout()">Logout</button>
+    <div style="font-size: 15px; color:var(--fg2); text-align:center; margin-bottom:10px;">Logged in as <br><strong id="sidebarUsername" style="color:var(--fg);font-size:17px;">---</strong></div>
+    <button class="navBtn" style="border-color:var(--border); color:#ff4444; justify-content:center; font-weight:bold;" onclick="logout()">Logout</button>
   </div>
 
   <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;">
     
-    <!-- Mobile Topbar -->
     <div id="mobileTopbar">
-      <button id="mobileMenuBtn" onclick="toggleMobileDrawer()">Menu</button>
-      <div class="mobile-title">BSMS Web Accounts</div>
-      <div style="width: 60px;"></div> <!-- Spacer for centering -->
+      <button id="mobileMenuBtn" onclick="toggleMobileDrawer()">
+        <svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:var(--fg);"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+      </button>
+      <div class="mobile-title">Accounts</div>
+      <div style="width:40px;"></div> <!-- Spacer -->
     </div>
     
-    <!-- Mobile Drawer -->
     <div id="mobileDrawerBackdrop" onclick="closeMobileDrawer()"></div>
     <div id="mobileDrawer">
       <div class="sidebar-title">Menu</div>
       <button class="navBtn active" id="mob-profile" onclick="switchPanel('profile'); closeMobileDrawer()">Profile</button>
       <button class="navBtn" id="mob-security" onclick="switchPanel('security'); closeMobileDrawer()">Security</button>
-      <button class="navBtn" id="mob-settings" onclick="switchPanel('settings'); closeMobileDrawer()">Preferences</button>
-      <button class="navBtn" id="mob-apps" onclick="switchPanel('apps'); closeMobileDrawer()">Apps</button>
       <div class="sidebar-gap"></div>
-      <div style="font-size: 15px; color:rgba(255,255,255,0.4); text-align:center; margin-bottom:10px;">Logged in as <br><strong id="mobileSidebarUsername" style="color:#fff;">---</strong></div>
-      <button class="navBtn" style="border-color:#555; color:#ff6666; justify-content:center;" onclick="logout()">Logout</button>
+      <div style="font-size: 15px; color:var(--fg2); text-align:center; margin-bottom:10px;">Logged in as <br><strong id="mobileSidebarUsername" style="color:var(--fg);font-size:17px;">---</strong></div>
+      <button class="navBtn" style="border-color:var(--border); color:#ff4444; justify-content:center; font-weight:bold;" onclick="logout()">Logout</button>
     </div>
 
     <!-- Main Content Area -->
@@ -268,29 +282,27 @@ textarea{resize:vertical;height:110px}
       <div id="profilePanel" class="panel show">
         <div class="panel-header">
             <h1>Public Profile</h1>
-            <p>Manage your identity across BSMS Web apps.</p>
+            <p>Manage your identity across the BSMS Web ecosystem.</p>
         </div>
         
         <div class="form-group" style="display:flex; flex-direction:column; align-items:center;">
-            <div class="avatar-preview" id="avatarPreviewContainer">
-                <span id="avatarFallback">?</span>
-            </div>
+            <div class="avatar-preview" id="avatarPreviewContainer"></div>
             <input type="file" id="avatarUpload" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)"/>
-            <button class="btn sec" style="width:auto; padding: 6px 14px; font-size:16px;" onclick="document.getElementById('avatarUpload').click()">Upload Picture</button>
-            <p style="font-size:14px; color:rgba(255,255,255,0.4); margin: 10px 0 15px 0;">Account created: <span id="accountCreatedDate">---</span></p>
+            <button class="btn sec" style="width:auto; padding: 8px 18px; font-size:18px;" onclick="document.getElementById('avatarUpload').click()">Upload Picture</button>
+            <p style="font-size:15px; color:var(--fg2); margin: 12px 0 20px 0;">Account created: <strong id="accountCreatedDate">---</strong></p>
         </div>
 
         <div class="form-group">
-            <label>Username <span style="font-size:14px; color:rgba(255,255,255,0.4);">(Used for login)</span></label>
+            <label>Username <span style="font-size:14px; color:var(--fg2);">(Used for login)</span></label>
             <div style="display:flex; gap:10px;">
                 <input type="text" id="profileUsername" disabled style="margin:0;"/>
                 <button class="btn sec" style="width:auto; margin:0;" onclick="openUsernameModal()">Change</button>
             </div>
-            <div id="usernameCooldownText" style="font-size: 14px; color:var(--red); margin-top:6px; display:none;"></div>
+            <div id="usernameCooldownText" style="font-size: 15px; color:var(--red); margin-top:8px; display:none;"></div>
         </div>
 
         <div class="form-group">
-            <label>Display Name <span style="font-size:14px; color:rgba(255,255,255,0.4);">(Visible to others)</span></label>
+            <label>Display Name <span style="font-size:14px; color:var(--fg2);">(Visible to others)</span></label>
             <input type="text" id="profileDisplayName" placeholder="Your display name" maxlength="30"/>
         </div>
         
@@ -299,8 +311,8 @@ textarea{resize:vertical;height:110px}
             <textarea id="profileBio" placeholder="Tell us a bit about yourself..." maxlength="200"></textarea>
         </div>
 
-        <div class="panel-header" style="margin-top: 30px;">
-            <h2 style="margin:0; font-size: 28px;">Contact Information (Optional)</h2>
+        <div class="panel-header" style="margin-top: 40px;">
+            <h2 style="margin:0; font-size: 32px; color:var(--fg);">Contact Information (Optional)</h2>
         </div>
 
         <div class="form-group">
@@ -313,14 +325,14 @@ textarea{resize:vertical;height:110px}
             <input type="tel" id="profilePhone" placeholder="(123) 456-7890"/>
         </div>
 
-        <button class="btn" onclick="saveProfile()" style="margin-top: 10px; margin-bottom: 40px;">Save Profile Changes</button>
+        <button class="btn" onclick="saveProfile()" style="margin-top: 20px; margin-bottom: 60px;">Save Profile Changes</button>
       </div>
 
       <!-- Security Panel -->
       <div id="securityPanel" class="panel">
         <div class="panel-header">
             <h1>Security</h1>
-            <p>Update your password and secure your account.</p>
+            <p>Update your password and manage sensitive data.</p>
         </div>
         
         <div class="form-group">
@@ -336,52 +348,12 @@ textarea{resize:vertical;height:110px}
             <input type="password" id="secConfirmPass" placeholder="Confirm new password"/>
         </div>
         
-        <button class="btn warn" onclick="changePassword()" style="margin-top: 10px;">Update Password</button>
+        <button class="btn warn" onclick="changePassword()" style="margin-top: 14px;">Update Password</button>
 
-        <div style="margin-top: 60px; padding-top: 20px; border-top: 2px solid var(--border);">
-            <h2 style="color: #ff3333; margin: 0 0 10px;">Danger Zone</h2>
-            <p style="font-size:16px; color:rgba(255,255,255,0.6); margin:0 0 15px;">Once you delete your account, there is no going back. Please be certain.</p>
+        <div style="margin-top: 80px; padding-top: 30px; border-top: 2px solid var(--border);">
+            <h2 style="color: #ff3333; margin: 0 0 12px; font-size:32px;">Danger Zone</h2>
+            <p style="font-size:18px; color:var(--fg2); margin:0 0 20px;">Once you delete your account, there is no going back. Please be certain.</p>
             <button class="btn warn" style="background:transparent; color:#ff3333; border-color:#ff3333;" onclick="openPopup('deleteAccountModal')">Delete Account</button>
-        </div>
-      </div>
-
-      <!-- Settings Panel -->
-      <div id="settingsPanel" class="panel">
-        <div class="panel-header">
-            <h1>Preferences</h1>
-            <p>Customize your BSMS Web experience.</p>
-        </div>
-        
-        <div class="setting-row">
-            <div>
-                <div style="font-size: 20px;">Theme Color</div>
-                <div style="font-size: 15px; color:rgba(255,255,255,0.4);">Choose your primary accent color</div>
-            </div>
-            <input type="color" id="prefThemeColor" value="#BB001E" onchange="previewThemeColor(this.value)">
-        </div>
-
-        <button class="btn" onclick="savePreferences()" style="margin-top: 20px;">Save Preferences</button>
-      </div>
-
-      <!-- Apps Panel -->
-      <div id="appsPanel" class="panel">
-        <div class="panel-header">
-            <h1>Apps</h1>
-            <p>Manage app-specific settings across the ecosystem.</p>
-        </div>
-
-        <div class="app-grid">
-            <div class="app-card">
-                <h3>BSMS Web Rooms</h3>
-                <p>Real-time chat and communication platform for students.</p>
-                <button class="btn sec" style="margin:0;" onclick="window.location.href='https://bsms-web.vercel.app/rooms'">Go to App Settings</button>
-            </div>
-            
-            <div class="app-card" style="opacity: 0.6;">
-                <h3>BSMS Web Countdown</h3>
-                <p>Track important dates and times. (Coming Soon)</p>
-                <button class="btn sec" style="margin:0;" disabled>Not Available</button>
-            </div>
         </div>
       </div>
 
@@ -389,7 +361,6 @@ textarea{resize:vertical;height:110px}
   </div>
 </div>
 
-<!-- Notifications -->
 <div id="notifContainer"></div>
 
 <script>
@@ -399,105 +370,119 @@ textarea{resize:vertical;height:110px}
  * SPDX-License-Identifier: MIT
  */
 
-// ---------- FIREBASE INIT ----------
-firebase.initializeApp({
-  databaseURL: "https://bsms-web-default-rtdb.firebaseio.com"
-});
+firebase.initializeApp({ databaseURL: "https://bsms-web-default-rtdb.firebaseio.com" });
 const db = firebase.database();
 
-// ---------- GLOBALS ----------
-let currentUser = null;
+const SESSION_KEY = 'bsms_auth_session';
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+let authSession = null;
 let currentAccountData = null;
-let authMode = 'login'; // 'login' or 'signup'
+let authMode = 'login'; 
 let pendingAvatarBase64 = null;
 let deleteInterval = null;
 let deleteTimer = 10;
-const SESSION_KEY = 'bsms_web_config';
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
-// ---------- UI HELPERS ----------
-function showScreen(id) {
-  document.querySelectorAll('.screen, #appShell').forEach(s => s.classList.remove('show'));
-  document.getElementById(id).classList.add('show');
-}
+// ---------- INIT & ROUTING ----------
+window.addEventListener('hashchange', handleHash);
 
-function showActionLoader(text = "Please wait...") {
-    document.getElementById('actionLoadingText').textContent = text;
-    document.getElementById('actionLoadingScreen').classList.add('show');
-}
-function hideActionLoader() {
-    document.getElementById('actionLoadingScreen').classList.remove('show');
-}
-
-function showAlert(msg) {
-    document.getElementById('alertText').innerText = msg;
-    document.getElementById('alertOverlay').classList.add('show');
-}
-function closeAlert() {
-    document.getElementById('alertOverlay').classList.remove('show');
+function init() {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (raw) {
+        authSession = JSON.parse(raw);
+        if(authSession.loggedIn && authSession.uid) {
+            fetchCloudProfile();
+            return;
+        }
+    }
+    
+    // Logged out
+    authSession = null;
+    handleHash();
 }
 
-function openPopup(id) {
-    document.getElementById(id).classList.add('show');
-}
-function closePopup(id) {
-    document.getElementById(id).classList.remove('show');
-}
-
-function showToast(msg) {
-    const c = document.getElementById('notifContainer');
-    const n = document.createElement('div');
-    n.className = 'notif';
-    n.textContent = msg;
-    n.onclick = () => { n.style.opacity='0'; setTimeout(()=>n.remove(), 280); };
-    c.appendChild(n);
-    setTimeout(() => { if(n.parentNode) { n.style.opacity='0'; setTimeout(()=>n.remove(), 280); } }, 4000);
-}
-
-function applyColor(hex) {
-    if(!hex) hex = '#BB001E';
-    document.documentElement.style.setProperty('--red', hex);
-    if(hex.length === 7) {
-        let r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
-        document.documentElement.style.setProperty('--theme-rgb', `${r}, ${g}, ${b}`);
-        let hr = Math.min(255, r + 20), hg = Math.min(255, g + 20), hb = Math.min(255, b + 20);
-        document.documentElement.style.setProperty('--red-h', `rgb(${hr},${hg},${hb})`);
-        document.documentElement.style.setProperty('--red-glow', `rgba(${r},${g},${b},0.35)`);
+async function fetchCloudProfile() {
+    try {
+        const snap = await db.ref(`/accounts/${authSession.uid}`).once('value');
+        const data = snap.val();
+        if (data) {
+            currentAccountData = data;
+            loadDashboard();
+        } else {
+            // Invalid session
+            localStorage.removeItem(SESSION_KEY);
+            authSession = null;
+            handleHash();
+        }
+    } catch(err) {
+        handleHash();
     }
 }
 
-// Spaces to Underscores Input Listeners
-function preventSpaces(e) {
-    this.value = this.value.replace(/ /g, '_');
+function handleHash() {
+    let hash = window.location.hash || '#';
+    document.getElementById('initLoadingScreen').classList.remove('show');
+    
+    if (authSession && authSession.loggedIn) {
+        showScreen('appShell');
+        if (hash === '#security') switchPanel('security');
+        else switchPanel('profile');
+    } else {
+        showScreen('authScreen');
+        if (hash === '#signup') {
+            authMode = 'signup';
+        } else {
+            authMode = 'login';
+        }
+        updateAuthUI();
+    }
 }
+
+// ---------- UI HELPERS ----------
+function showScreen(id) {
+    document.querySelectorAll('.screen, #appShell').forEach(s => s.classList.remove('show'));
+    document.getElementById(id).classList.add('show');
+}
+function openPopup(id) { document.getElementById(id).classList.add('show'); }
+function closePopup(id) { document.getElementById(id).classList.remove('show'); }
+function showAction(msg) { document.getElementById('actionLoadingText').textContent = msg; document.getElementById('actionLoadingScreen').classList.add('show'); }
+function hideAction() { document.getElementById('actionLoadingScreen').classList.remove('show'); }
+function showAlert(msg) { document.getElementById('alertText').innerText = msg; openPopup('alertOverlay'); }
+function showToast(msg) {
+    const c = document.getElementById('notifContainer');
+    const n = document.createElement('div'); n.className = 'notif'; n.textContent = msg;
+    n.onclick = () => { n.style.opacity='0'; setTimeout(()=>n.remove(), 280); }; c.appendChild(n);
+    setTimeout(() => { if(n.parentNode) n.click(); }, 4000);
+}
+
+function preventSpaces(e) { this.value = this.value.replace(/ /g, '_'); }
 document.getElementById('authUsername').addEventListener('input', preventSpaces);
 document.getElementById('newUsernameInput').addEventListener('input', preventSpaces);
 
-
-// Mobile Menu
 function toggleMobileDrawer(){
     const d=document.getElementById('mobileDrawer'), bd=document.getElementById('mobileDrawerBackdrop');
-    const o=d.classList.toggle('open');
-    bd.classList.toggle('show',o);
+    const o=d.classList.toggle('open'); bd.classList.toggle('show',o);
 }
 function closeMobileDrawer(){
     document.getElementById('mobileDrawer').classList.remove('open');
     document.getElementById('mobileDrawerBackdrop').classList.remove('show');
 }
 
-// Panel Switching
 function switchPanel(name) {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('show'));
     document.querySelectorAll('.navBtn').forEach(b => b.classList.remove('active'));
-    
     document.getElementById(name + 'Panel').classList.add('show');
     if(document.getElementById('dock-' + name)) document.getElementById('dock-' + name).classList.add('active');
     if(document.getElementById('mob-' + name)) document.getElementById('mob-' + name).classList.add('active');
+    window.location.hash = `#${name}`;
 }
 
 // ---------- AUTHENTICATION ----------
 function toggleAuthMode() {
-    authMode = authMode === 'login' ? 'signup' : 'login';
+    window.location.hash = authMode === 'login' ? '#signup' : '#login';
+}
+
+function updateAuthUI() {
     const title = document.getElementById('authTitle');
     const subtitle = document.getElementById('authSubtitle');
     const btn = document.getElementById('authSubmitBtn');
@@ -505,30 +490,23 @@ function toggleAuthMode() {
     const toggleLink = toggleText.nextElementSibling;
 
     if (authMode === 'signup') {
-        title.textContent = 'Create Account';
-        subtitle.textContent = 'Join the BSMS Web ecosystem';
-        btn.textContent = 'Sign Up';
-        toggleText.textContent = 'Already have an account?';
-        toggleLink.textContent = 'Log in here';
+        title.textContent = 'Create Account'; subtitle.textContent = 'Join the BSMS Web ecosystem';
+        btn.textContent = 'Sign Up'; toggleText.textContent = 'Already have an account?'; toggleLink.textContent = 'Log in here';
     } else {
-        title.textContent = 'Sign In';
-        subtitle.textContent = 'Access your BSMS Web Account';
-        btn.textContent = 'Login';
-        toggleText.textContent = "Don't have an account?";
-        toggleLink.textContent = 'Sign up here';
+        title.textContent = 'Sign In'; subtitle.textContent = 'Access your BSMS Web Account';
+        btn.textContent = 'Login'; toggleText.textContent = "Don't have an account?"; toggleLink.textContent = 'Sign up here';
     }
 }
 
 async function handleAuth() {
-    let user = document.getElementById('authUsername').value;
-    user = user.replace(/ /g, '_'); // Extra safety
+    let user = document.getElementById('authUsername').value.replace(/ /g, '_');
     const pass = document.getElementById('authPassword').value.trim();
 
     if (user.length < 3 || user.length > 20) return showAlert("Username must be between 3 and 20 characters.");
     if (!/^[a-zA-Z0-9_]+$/.test(user)) return showAlert("Username can only contain letters, numbers, and underscores.");
     if (!pass) return showAlert("Password is required.");
 
-    showActionLoader(authMode === 'signup' ? "Creating account..." : "Logging in...");
+    showAction(authMode === 'signup' ? "Creating account..." : "Logging in...");
 
     try {
         const ref = db.ref(`/accounts/${user}`);
@@ -536,186 +514,117 @@ async function handleAuth() {
         const data = snap.val();
 
         if (authMode === 'signup') {
-            if (data) {
-                hideActionLoader();
-                return showAlert("That username is already taken. Please choose another.");
-            }
+            if (data) { hideAction(); return showAlert("Username is taken. Choose another."); }
             
             const newAcc = {
                 password: btoa(encodeURIComponent(pass)), 
-                displayName: user,
-                bio: "",
-                avatar: "",
-                email: "",
-                phone: "",
-                theme: "#BB001E",
-                createdAt: Date.now(),
-                lastUsernameChange: 0
+                displayName: user, bio: "", avatar: "", email: "", phone: "",
+                createdAt: Date.now(), lastUsernameChange: 0
             };
-            
             await ref.set(newAcc);
             completeLogin(user, newAcc);
-            
         } else {
-            if (!data) {
-                hideActionLoader();
-                return showAlert("Account not found. Please check your username.");
-            }
+            if (!data) { hideAction(); return showAlert("Account not found."); }
             let decodedPass = "";
             try { decodedPass = decodeURIComponent(atob(data.password)); } catch(e) { decodedPass = data.password; }
-            
-            if (decodedPass !== pass) {
-                hideActionLoader();
-                return showAlert("Incorrect password.");
-            }
+            if (decodedPass !== pass) { hideAction(); return showAlert("Incorrect password."); }
             completeLogin(user, data);
         }
-    } catch (err) {
-        hideActionLoader();
-        showAlert("Connection error. Please try again.");
-        console.error(err);
-    }
+    } catch (err) { hideAction(); showAlert("Connection error."); }
 }
 
 function completeLogin(username, data) {
-    currentUser = username;
+    const sessionObj = {
+        loggedIn: true, uid: username, username: username,
+        displayName: data.displayName || username, pfp: data.avatar || ""
+    };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(sessionObj));
+    authSession = sessionObj;
     currentAccountData = data;
-    localStorage.setItem(SESSION_KEY, username);
     
     document.getElementById('authPassword').value = '';
-    hideActionLoader();
+    hideAction();
+    window.location.hash = '#profile';
     loadDashboard();
 }
 
 function logout() {
-    currentUser = null;
-    currentAccountData = null;
-    pendingAvatarBase64 = null;
     localStorage.removeItem(SESSION_KEY);
-    applyColor('#BB001E'); 
-    showScreen('authScreen');
-    showToast("You have been logged out.");
+    authSession = null; currentAccountData = null; pendingAvatarBase64 = null;
+    showToast("Logged out.");
+    window.location.hash = '#login';
 }
 
-// ---------- DASHBOARD DATA ----------
-async function checkSession() {
-    const savedUser = localStorage.getItem(SESSION_KEY);
-    if (!savedUser) {
-        showScreen('authScreen');
-        return;
-    }
-    
-    try {
-        const snap = await db.ref(`/accounts/${savedUser}`).once('value');
-        const data = snap.val();
-        if (data) {
-            currentUser = savedUser;
-            currentAccountData = data;
-            loadDashboard();
-        } else {
-            localStorage.removeItem(SESSION_KEY);
-            showScreen('authScreen');
-        }
-    } catch(err) {
-        showScreen('authScreen');
-    }
-}
-
+// ---------- DASHBOARD POPULATION ----------
 function loadDashboard() {
+    document.getElementById('initLoadingScreen').classList.remove('show');
     showScreen('appShell');
-    switchPanel('profile');
     
-    document.getElementById('sidebarUsername').textContent = currentUser;
-    document.getElementById('mobileSidebarUsername').textContent = currentUser;
+    // Sidebar Updates
+    document.getElementById('sidebarUsername').textContent = authSession.username;
+    document.getElementById('mobileSidebarUsername').textContent = authSession.username;
     
-    // Populate form fields
-    document.getElementById('profileUsername').value = currentUser;
-    document.getElementById('profileDisplayName').value = currentAccountData.displayName || currentUser;
+    // Global User Icon Update
+    const gu = document.getElementById('globalUserBtn');
+    if(authSession.pfp) { gu.innerHTML = `<img src="${authSession.pfp}">`; gu.style.border = "none"; }
+    else { gu.innerHTML = authSession.displayName.charAt(0).toUpperCase(); gu.style.border = "2px solid var(--border)"; }
+    
+    // Form fields
+    document.getElementById('profileUsername').value = authSession.username;
+    document.getElementById('profileDisplayName').value = currentAccountData.displayName || authSession.username;
     document.getElementById('profileBio').value = currentAccountData.bio || "";
     document.getElementById('profileEmail').value = currentAccountData.email || "";
     document.getElementById('profilePhone').value = currentAccountData.phone || "";
-    document.getElementById('prefThemeColor').value = currentAccountData.theme || "#BB001E";
-    
     pendingAvatarBase64 = currentAccountData.avatar || null;
     
     const cd = currentAccountData.createdAt ? new Date(currentAccountData.createdAt).toLocaleDateString() : 'Unknown';
     document.getElementById('accountCreatedDate').textContent = cd;
     
-    applyColor(currentAccountData.theme || "#BB001E");
     renderAvatarPreview();
 }
 
 function renderAvatarPreview() {
     const container = document.getElementById('avatarPreviewContainer');
-    
-    if (pendingAvatarBase64) {
-        container.innerHTML = `<img src="${pendingAvatarBase64}" alt="Avatar">`;
-    } else {
-        const initial = (document.getElementById('profileDisplayName').value || currentUser || "?").charAt(0).toUpperCase();
-        container.innerHTML = `<span id="avatarFallback">${initial}</span>`;
-    }
+    if (pendingAvatarBase64) { container.innerHTML = `<img src="${pendingAvatarBase64}">`; container.style.border = "none"; }
+    else { container.innerHTML = (document.getElementById('profileDisplayName').value || authSession.username).charAt(0).toUpperCase(); container.style.border = "3px solid var(--red)"; }
 }
 
-// Avatar File Upload
 function handleAvatarUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
-
-    if (file.size > 500 * 1024) { // 500KB limit to avoid RTDB string limits
-        showAlert("Image size too large. Please select an image under 500KB.");
-        e.target.value = "";
-        return;
-    }
+    if (file.size > 500 * 1024) { showAlert("Image too large. Please select an image under 500KB."); e.target.value = ""; return; }
 
     const reader = new FileReader();
-    reader.onload = function(event) {
-        pendingAvatarBase64 = event.target.result;
-        renderAvatarPreview();
-    };
+    reader.onload = event => { pendingAvatarBase64 = event.target.result; renderAvatarPreview(); };
     reader.readAsDataURL(file);
 }
 
-// Add listeners for Enter key in auth
-document.getElementById('authUsername').addEventListener('keydown', e => { if(e.key === 'Enter') document.getElementById('authPassword').focus(); });
-document.getElementById('authPassword').addEventListener('keydown', e => { if(e.key === 'Enter') handleAuth(); });
-
-// ---------- ACCOUNT UPDATES ----------
-
-// 1. Save general profile
+// ---------- UPDATES ----------
 async function saveProfile() {
-    if (!currentUser) return;
-    
     const dName = document.getElementById('profileDisplayName').value.trim();
-    const bio = document.getElementById('profileBio').value.trim();
-    const email = document.getElementById('profileEmail').value.trim();
-    const phone = document.getElementById('profilePhone').value.trim();
-    
     if (dName.length > 30) return showAlert("Display name cannot exceed 30 characters.");
     
-    showActionLoader("Saving profile...");
+    showAction("Saving...");
     try {
         const updateObj = {
-            displayName: dName || currentUser,
-            bio: bio,
-            email: email,
-            phone: phone,
+            displayName: dName || authSession.username,
+            bio: document.getElementById('profileBio').value.trim(),
+            email: document.getElementById('profileEmail').value.trim(),
+            phone: document.getElementById('profilePhone').value.trim(),
             avatar: pendingAvatarBase64 || ""
         };
-        
-        await db.ref(`/accounts/${currentUser}`).update(updateObj);
-        
+        await db.ref(`/accounts/${authSession.uid}`).update(updateObj);
         Object.assign(currentAccountData, updateObj);
         
-        hideActionLoader();
-        showToast("Profile updated successfully!");
-        renderAvatarPreview();
-    } catch (err) {
-        hideActionLoader();
-        showAlert("Failed to save profile.");
-    }
+        // Update Local Session
+        authSession.displayName = updateObj.displayName;
+        authSession.pfp = updateObj.avatar;
+        localStorage.setItem(SESSION_KEY, JSON.stringify(authSession));
+        
+        hideAction(); showToast("Profile updated!"); loadDashboard();
+    } catch (err) { hideAction(); showAlert("Failed to save."); }
 }
 
-// 2. Change Username
 function openUsernameModal() {
     const lastChange = currentAccountData.lastUsernameChange || 0;
     const timeSince = Date.now() - lastChange;
@@ -723,7 +632,7 @@ function openUsernameModal() {
 
     if (timeSince < SEVEN_DAYS_MS) {
         const daysLeft = Math.ceil((SEVEN_DAYS_MS - timeSince) / (1000 * 60 * 60 * 24));
-        warnText.textContent = `You can change your username again in ${daysLeft} day(s).`;
+        warnText.textContent = `Cooldown active. Change available in ${daysLeft} day(s).`;
         warnText.style.display = 'block';
     } else {
         warnText.style.display = 'none';
@@ -733,178 +642,156 @@ function openUsernameModal() {
 }
 
 async function executeUsernameChange() {
-    let newName = document.getElementById('newUsernameInput').value;
-    newName = newName.replace(/ /g, '_');
+    let newName = document.getElementById('newUsernameInput').value.replace(/ /g, '_');
+    if (newName.length < 3 || newName.length > 20) return showAlert("3-20 characters required.");
+	if (!/^[a-zA-Z0-9_-]+$/.test(newName)) return showAlert("Letters, numbers, underscores, and dashes only.");
+    if (newName === authSession.username) return showAlert("That is already your username.");
 
-    if (newName.length < 3 || newName.length > 20) return showAlert("Username must be between 3 and 20 characters.");
-    if (!/^[a-zA-Z0-9_]+$/.test(newName)) return showAlert("Username can only contain letters, numbers, and underscores.");
-    if (newName === currentUser) return showAlert("That is already your username.");
-
-    showActionLoader("Checking availability...");
-
+    showAction("Checking...");
     try {
         const existSnap = await db.ref(`/accounts/${newName}`).once('value');
-        if (existSnap.exists()) {
-            hideActionLoader();
-            return showAlert("That username is already taken.");
-        }
+        if (existSnap.exists()) { hideAction(); return showAlert("Taken."); }
 
-        document.getElementById('actionLoadingText').textContent = "Migrating account...";
-        
+        document.getElementById('actionLoadingText').textContent = "Migrating...";
         const newData = { ...currentAccountData };
         newData.lastUsernameChange = Date.now();
 
         await db.ref(`/accounts/${newName}`).set(newData);
-        await db.ref(`/accounts/${currentUser}`).remove();
+        await db.ref(`/accounts/${authSession.uid}`).remove();
 
-        // Update local session
-        currentUser = newName;
+        authSession.uid = newName; authSession.username = newName;
+        localStorage.setItem(SESSION_KEY, JSON.stringify(authSession));
         currentAccountData = newData;
-        localStorage.setItem(SESSION_KEY, newName);
-
-        document.getElementById('profileUsername').value = newName;
-        document.getElementById('sidebarUsername').textContent = newName;
-        document.getElementById('mobileSidebarUsername').textContent = newName;
         
-        closePopup('changeUsernameModal');
-        hideActionLoader();
-        showToast("Username successfully changed!");
-
-    } catch (err) {
-        hideActionLoader();
-        showAlert("An error occurred while changing username.");
-        console.error(err);
-    }
+        closePopup('changeUsernameModal'); hideAction(); showToast("Username changed!");
+        loadDashboard();
+    } catch (err) { hideAction(); showAlert("Error changing username."); }
 }
 
-
-// 3. Security Updates
 async function changePassword() {
-    if (!currentUser) return;
+    const cp = document.getElementById('secCurrentPass').value, np = document.getElementById('secNewPass').value, cnp = document.getElementById('secConfirmPass').value;
+    if (!cp || !np || !cnp) return showAlert("All fields required.");
+    if (np.length < 6) return showAlert("New password min 6 characters.");
+    if (np !== cnp) return showAlert("Passwords do not match.");
     
-    const currentPass = document.getElementById('secCurrentPass').value;
-    const newPass = document.getElementById('secNewPass').value;
-    const confirmPass = document.getElementById('secConfirmPass').value;
-    
-    if (!currentPass || !newPass || !confirmPass) return showAlert("All fields are required.");
-    if (newPass.length < 6) return showAlert("New password must be at least 6 characters.");
-    if (newPass !== confirmPass) return showAlert("New passwords do not match.");
-    
-    showActionLoader("Verifying...");
-    
+    showAction("Verifying...");
     try {
-        let decodedOld = "";
-        try { decodedOld = decodeURIComponent(atob(currentAccountData.password)); } catch(e) { decodedOld = currentAccountData.password; }
+        let decodedOld = ""; try { decodedOld = decodeURIComponent(atob(currentAccountData.password)); } catch(e) { decodedOld = currentAccountData.password; }
+        if (decodedOld !== cp) { hideAction(); return showAlert("Incorrect current password."); }
         
-        if (decodedOld !== currentPass) {
-            hideActionLoader();
-            return showAlert("Incorrect current password.");
-        }
-        
-        const newEncoded = btoa(encodeURIComponent(newPass));
-        await db.ref(`/accounts/${currentUser}`).update({ password: newEncoded });
+        const newEncoded = btoa(encodeURIComponent(np));
+        await db.ref(`/accounts/${authSession.uid}`).update({ password: newEncoded });
         currentAccountData.password = newEncoded;
         
-        document.getElementById('secCurrentPass').value = '';
-        document.getElementById('secNewPass').value = '';
-        document.getElementById('secConfirmPass').value = '';
-        
-        hideActionLoader();
-        showToast("Password updated successfully.");
-        
-    } catch(err) {
-        hideActionLoader();
-        showAlert("Error updating password.");
-    }
+        document.getElementById('secCurrentPass').value = ''; document.getElementById('secNewPass').value = ''; document.getElementById('secConfirmPass').value = '';
+        hideAction(); showToast("Password updated.");
+    } catch(err) { hideAction(); showAlert("Error."); }
 }
 
-// 4. Preferences
-function previewThemeColor(hex) {
-    applyColor(hex);
-}
-
-async function savePreferences() {
-    if (!currentUser) return;
-    
-    const theme = document.getElementById('prefThemeColor').value;
-    
-    showActionLoader("Saving...");
-    try {
-        await db.ref(`/accounts/${currentUser}`).update({ theme: theme });
-        currentAccountData.theme = theme;
-        applyColor(theme);
-        hideActionLoader();
-        showToast("Preferences saved.");
-    } catch (err) {
-        hideActionLoader();
-        showAlert("Failed to save preferences.");
-    }
-}
-
-// 5. Account Deletion
 function verifyAccountDeletion() {
-    const inputUser = document.getElementById('delAuthUser').value.trim();
-    const inputPass = document.getElementById('delAuthPass').value.trim();
-
-    if (inputUser !== currentUser) {
-        return showAlert("Incorrect username entered.");
-    }
-
-    let decodedOld = "";
-    try { decodedOld = decodeURIComponent(atob(currentAccountData.password)); } catch(e) { decodedOld = currentAccountData.password; }
-    
-    if (inputPass !== decodedOld) {
-        return showAlert("Incorrect password entered.");
-    }
+    const iu = document.getElementById('delAuthUser').value.trim(), ip = document.getElementById('delAuthPass').value.trim();
+    if (iu !== authSession.username) return showAlert("Incorrect username.");
+    let decodedOld = ""; try { decodedOld = decodeURIComponent(atob(currentAccountData.password)); } catch(e) { decodedOld = currentAccountData.password; }
+    if (ip !== decodedOld) return showAlert("Incorrect password.");
 
     closePopup('deleteAccountModal');
+    document.getElementById('delAuthUser').value = ''; document.getElementById('delAuthPass').value = '';
     
-    // Clear inputs for security
-    document.getElementById('delAuthUser').value = '';
-    document.getElementById('delAuthPass').value = '';
-
-    startDeletionCountdown();
-}
-
-function startDeletionCountdown() {
     deleteTimer = 10;
     document.getElementById('deleteCountdownDisplay').textContent = deleteTimer;
     openPopup('deleteCountdownModal');
-
     deleteInterval = setInterval(() => {
-        deleteTimer--;
-        document.getElementById('deleteCountdownDisplay').textContent = deleteTimer;
-        
-        if (deleteTimer <= 0) {
-            clearInterval(deleteInterval);
-            executeFinalDeletion();
-        }
+        deleteTimer--; document.getElementById('deleteCountdownDisplay').textContent = deleteTimer;
+        if (deleteTimer <= 0) { clearInterval(deleteInterval); executeFinalDeletion(); }
     }, 1000);
 }
 
 function cancelDeletion() {
     if (deleteInterval) clearInterval(deleteInterval);
-    closePopup('deleteCountdownModal');
-    showToast("Account deletion canceled.");
+    closePopup('deleteCountdownModal'); showToast("Canceled.");
 }
 
 async function executeFinalDeletion() {
     try {
-        await db.ref(`/accounts/${currentUser}`).remove();
+        await db.ref(`/accounts/${authSession.uid}`).remove();
         closePopup('deleteCountdownModal');
-        logout();
-        showAlert("Your account has been successfully deleted.");
-    } catch (err) {
-        closePopup('deleteCountdownModal');
-        showAlert("Failed to delete account. Please try again.");
-    }
+        localStorage.removeItem(SESSION_KEY);
+        authSession = null;
+        showAlert("Account deleted.");
+        setTimeout(() => window.location.hash = '#login', 1500);
+    } catch (err) { closePopup('deleteCountdownModal'); showAlert("Failed."); }
 }
 
-// ---------- BOOT ----------
-setTimeout(() => {
-    checkSession();
-}, 800);
+// Add Enter listeners
+document.getElementById('authUsername').addEventListener('keydown', e => { if(e.key === 'Enter') document.getElementById('authPassword').focus(); });
+document.getElementById('authPassword').addEventListener('keydown', e => { if(e.key === 'Enter') handleAuth(); });
 
+setTimeout(init, 300);
 </script>
+    
+<script>
+const PAGE_VERSION="4.3";
+const PAGE_NAME="accounts";
+const FIREBASE_URL=`https://bsms-web-default-rtdb.firebaseio.com/config/versions/${encodeURIComponent(PAGE_NAME)}.json`;
+
+function isNewer(a,b){
+    a=a.split(".").map(Number);b=b.split(".").map(Number);
+    for(let i=0;i<Math.max(a.length,b.length);i++){
+        if((a[i]||0)>(b[i]||0))return true;
+        if((a[i]||0)<(b[i]||0))return false;
+    }
+    return false;
+}
+
+async function checkForUpdate(){
+    try{
+        const r=await fetch(FIREBASE_URL,{cache:"no-store"});
+        const latest=(await r.text()).replace(/"/g,"").trim();
+        if(!isNewer(latest,PAGE_VERSION)||document.getElementById("versionUpdatePopup"))return;
+
+        const s=document.createElement("style");
+        s.textContent=`
+            #versionUpdatePopup{
+                position:fixed!important;inset:0!important;z-index:2147483647!important;
+                display:flex!important;align-items:center!important;justify-content:center!important;
+                padding:20px!important;background:rgba(0,0,0,.85)!important;
+                backdrop-filter:blur(4px)!important;font-family:'Patrick Hand',cursive!important;
+            }
+            #versionUpdatePopup .version-popup{
+                background:var(--bg,#000);color:var(--fg,#fff);
+                border:2px solid var(--red,#bb001e);border-radius:20px;
+                padding:30px 24px 24px;width:min(400px,100%);
+                text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.5);
+                animation:versionPopIn .22s ease;
+            }
+            #versionUpdatePopup h2{font-size:28px;margin:0 0 8px;color:var(--fg,#fff)}
+            #versionUpdatePopup p{font-size:20px;color:var(--fg2,rgba(255,255,255,.6));margin:0 0 24px;line-height:1.5}
+            #versionUpdatePopup button{
+                display:inline-block;width:100%;font-family:'Patrick Hand',cursive;
+                font-size:19px;padding:10px 18px;border-radius:12px;
+                border:2px solid var(--red,#bb001e);background:var(--red,#bb001e);
+                color:#fff;cursor:pointer;transition:.15s;
+            }
+            #versionUpdatePopup button:hover{background:var(--red-h,#d10022);transform:scale(1.03)}
+            @keyframes versionPopIn{from{opacity:0;transform:scale(.92) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+        `;
+        document.head.appendChild(s);
+
+        const overlay=document.createElement("div");
+        overlay.id="versionUpdatePopup";
+        overlay.innerHTML=`
+            <div class="version-popup">
+                <h2>Update Available</h2>
+                <p>A newer version of this application is available. Please refresh to continue.</p>
+                <button onclick="location.reload()">Refresh</button>
+            </div>`;
+        document.body.appendChild(overlay);
+    }catch(e){console.error("Version check failed:",e);}
+}
+
+checkForUpdate();
+setInterval(checkForUpdate,1000);
+</script>
+    
 </body>
 </html>
