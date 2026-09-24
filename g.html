@@ -1,0 +1,710 @@
+<!--
+BSMS Web
+Copyright © 2026 Jellyfish Jelly
+SPDX-License-Identifier: MIT
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="BSMS Web is the central digital hub for Boiling Springs Middle School. Access your unified account, rooms, countdown, and more."/>
+<meta name="category" content="Education"/>
+<meta name="author" content="BSMS Web"/>
+<meta name="theme-color" content="#BB001E">
+<meta name="color-scheme" content="#BB001E">
+<meta name="application-name" content="BSMS Web">
+<meta name="application-version" content="v4.0.0">
+<meta property="og:title" content="BSMS Web">
+<meta property="og:description" content="The central digital hub for Boiling Springs Middle School.">
+<meta property="og:category" content="Education">
+<meta property="og:url" content="https://bsms-web.vercel.app/games">
+<meta property="og:type" content="website">
+<title>BSMS Web</title>
+
+    <!-- Microsoft Clarity Analytics -->
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "y87hnhpoob");
+    </script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+
+*,*::before,*::after { box-sizing:border-box; }
+:root {
+  --theme-rgb: 187,0,30;
+  --red: rgb(var(--theme-rgb));
+  --red-h: #d10022;
+  --red-glow: rgba(var(--theme-rgb), 0.35);
+  --bg: #000;
+  --fg: #fff;
+  --fg2: rgba(255,255,255,0.6);
+  --border: rgba(255,255,255,0.13);
+  --msg-bg: rgba(255,255,255,0.06);
+  --input-bg: rgba(255,255,255,0.08);
+  --font: 'Patrick Hand', cursive;
+}
+
+body.light-mode {
+  --bg: #f0f2f5;
+  --fg: #1c1e21;
+  --fg2: rgba(0,0,0,0.6);
+  --border: rgba(0,0,0,0.15);
+  --msg-bg: #fff;
+  --input-bg: #fff;
+}
+
+html, body {
+  margin: 0; padding: 0; height: 100%; width: 100%;
+  font-family: var(--font); background: var(--bg); color: var(--fg);
+  overflow-x: hidden; transition: background 0.3s, color 0.3s;
+}
+
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+@keyframes popIn { from { opacity:0; transform:scale(.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+@keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+/* Global User Button */
+#globalUserBtn { position: fixed; top: 16px; right: 20px; width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--border); background: var(--input-bg); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; z-index: 2000; overflow: hidden; color:var(--fg); font-weight:bold; font-size:22px; box-shadow: 0 4px 14px rgba(0,0,0,0.3);}
+#globalUserBtn:hover { border-color: var(--red); box-shadow: 0 8px 24px rgba(0,0,0,0.4); transform: scale(1.05); }
+#globalUserBtn svg { width: 24px; height: 24px; fill: var(--fg); transition: fill 0.2s; }
+#globalUserBtn img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Buttons */
+.btn {
+  display: inline-block; font-family: var(--font); font-size: 19px;
+  padding: 10px 18px; border-radius: 12px; border: 2px solid var(--red);
+  background: var(--red); color: #fff; cursor: pointer;
+  transition: transform .15s, background .15s, box-shadow .15s, border-color .15s;
+  text-decoration: none; text-align: center; line-height: 1.2; width:100%;
+}
+.btn:hover { background: var(--red-h); transform: scale(1.03); box-shadow: 0 4px 18px var(--red-glow); }
+.btn:active { transform: scale(.97); }
+.btn.sec { background: transparent; border-color: var(--border); color: var(--fg); }
+.btn.sec:hover { background: var(--msg-bg); border-color: var(--fg2); box-shadow: none; }
+
+/* Hero Section */
+.hero {
+  text-align: center; padding: 90px 20px 30px;
+  animation: fadeUp 0.6s ease forwards;
+}
+.hero h1 { font-size: 64px; margin: 0 0 10px; line-height: 1.1; color:var(--fg);}
+.hero h1 span { color: var(--red); }
+.hero p { font-size: 22px; color: var(--fg2); max-width: 600px; margin: 0 auto; line-height: 1.5; }
+
+/* Search & Filters */
+.search-container {
+  max-width: 1400px; margin: 0 auto 30px; padding: 0 20px;
+  display: flex; flex-direction: column; gap: 16px;
+  animation: fadeUp 0.7s ease forwards;
+}
+.search-bar {
+  width: 100%; padding: 14px 24px; font-size: 22px; font-family: var(--font);
+  border-radius: 16px; border: 2px solid var(--border);
+  background: var(--input-bg); color: var(--fg);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-bar:focus { outline: none; border-color: var(--red); box-shadow: 0 0 15px rgba(var(--theme-rgb), 0.2); }
+.search-bar::placeholder { color: var(--fg2); }
+
+.az-filters {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+}
+.az-btn {
+  background: var(--msg-bg); border: 2px solid var(--border); color: var(--fg);
+  border-radius: 8px; padding: 8px 14px; font-family: var(--font); font-size: 19px;
+  cursor: pointer; transition: all 0.2s;
+}
+.az-btn:hover, .az-btn.active {
+  background: var(--red); border-color: var(--red); color: #fff; transform: scale(1.05);
+}
+
+/* Launcher Grid (5 per row) */
+.launcher-container { max-width: 1400px; margin: 0 auto; padding: 0 20px 40px; }
+.launcher-grid {
+  display: grid; 
+  grid-template-columns: repeat(5, 1fr); 
+  gap: 24px;
+}
+.app-card {
+  background: var(--msg-bg); border: 2px solid var(--border); border-radius: 20px;
+  padding: 24px 20px; display: flex; flex-direction: column; align-items: center; text-align: center;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  animation: popIn 0.5s ease forwards; position:relative; overflow:hidden;
+}
+.app-card:hover {
+  border-color: var(--red); transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(var(--theme-rgb), 0.2);
+}
+.app-icon {
+  width: 58px; height: 58px; fill: var(--red); margin-bottom: 16px;
+  background: rgba(var(--theme-rgb), 0.1); padding: 12px; border-radius: 14px;
+  border: 1px solid rgba(var(--theme-rgb), 0.3);
+}
+.app-title { font-size: 26px; margin: 0 0 16px; color: var(--fg); text-transform: capitalize; flex: 1; }
+
+/* Overlays & Modals */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  display: none; align-items: center; justify-content: center;
+  z-index: 3000; animation: fadeIn .2s ease; padding: 20px; backdrop-filter:blur(4px);
+}
+.overlay.show { display: flex; }
+.popup {
+  background: var(--bg); border: 2px solid var(--red); border-radius: 20px;
+  padding: 30px 24px 24px; width: min(400px, 100%); animation: popIn .22s ease;
+  text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+.popup p { font-size: 20px; color: var(--fg2); margin: 0 0 24px; line-height: 1.5; }
+.popup h2 { font-size: 28px; margin: 0 0 8px; color:var(--fg); }
+
+/* Game Launcher Specifics */
+#loadingOverlay {
+  background: #000; /* Pure black overlay */
+}
+.spinner {
+  width: 60px; height: 60px; border: 6px solid var(--border);
+  border-top: 6px solid var(--red); border-radius: 50%;
+  animation: spin 1s linear infinite; margin: 20px auto;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+#gameContainer {
+  display: none; position: fixed; inset: 0; z-index: 2500; background: #000;
+}
+#gameIframe {
+  width: 100%; height: 100%; border: none; background: #000; display: block;
+}
+#toast {
+  position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,0.85); color: #fff; padding: 12px 24px;
+  border-radius: 30px; border: 2px solid var(--red); z-index: 5000;
+  opacity: 0; pointer-events: none; transition: opacity 0.5s ease, transform 0.5s ease;
+  font-size: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+#toast.show { opacity: 1; transform: translate(-50%, -10px); }
+
+/* Responsive Grid Adjustments */
+@media (max-width: 1300px) { .launcher-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 1000px) { .launcher-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 700px) { .launcher-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 500px) { .launcher-grid { grid-template-columns: 1fr; } }
+
+@media (max-width: 600px) {
+  .hero h1 { font-size: 48px; }
+  .hero p { font-size: 19px; }
+  #globalUserBtn { top: 10px; right: 14px; width:40px; height:40px; }
+  .az-btn { padding: 6px 10px; font-size: 17px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Global User Button -->
+<div id="globalUserBtn" onclick="handleUserIconClick()"></div>
+
+<!-- Global Account Popup -->
+<div id="accountPopup" class="overlay" onclick="if(event.target===this) closePopup('accountPopup')">
+  <div class="popup" style="align-items:center;">
+    <div id="accPopupAvatar" style="width:86px;height:86px;border-radius:50%;border:3px solid var(--red);margin:0 auto 12px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:36px;background:var(--msg-bg);font-weight:bold;color:var(--fg);"></div>
+    <h2 id="accPopupName" style="margin-bottom:2px;">---</h2>
+    <p style="font-size:16px; margin-bottom:22px;">@<span id="accPopupUser">---</span></p>
+    <a href="/accounts" class="btn">Manage Account</a>
+    <button class="btn sec" onclick="closePopup('accountPopup')" style="border:none; margin-top:6px;">Close</button>
+  </div>
+</div>
+
+<!-- Page Content -->
+<div id="mainContent">
+  <div class="hero">
+    <h1>Game <span>Vault</span></h1>
+    <p>Dive into our massive collection of interactive HTML5 games. Launch any game below to start playing in your browser.</p>
+  </div>
+
+  <div class="search-container">
+    <input type="text" id="gameSearch" class="search-bar" placeholder="Search for a game...">
+    <div class="az-filters" id="azFilters">
+      <!-- Letters injected by JS -->
+    </div>
+  </div>
+
+  <div class="launcher-container">
+    <div class="launcher-grid" id="gamesGrid">
+      <div style="text-align:center; grid-column: 1 / -1; color: var(--fg2); font-size: 22px;">
+        <div class="spinner" style="width: 40px; height: 40px; border-width: 4px;"></div>
+        Loading game library...
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="overlay" style="flex-direction: column; z-index: 3500;">
+  <h2 id="loadingText" style="color: #fff; font-size: 32px; margin-bottom: 20px;">Loading Game...</h2>
+  <div id="loadingSpinner" class="spinner"></div>
+  <button id="playBtn" class="btn" style="display: none; width: auto; font-size: 26px; padding: 12px 40px; border-radius: 30px;">Play Now</button>
+  <button id="cancelLoadBtn" class="btn sec" style="width: auto; margin-top: 20px; border: none;">Cancel</button>
+</div>
+
+<!-- Game Container (Iframe Wrapper) -->
+<div id="gameContainer">
+  <iframe id="gameIframe" allowfullscreen sandbox="allow-scripts allow-same-origin allow-pointer-lock"></iframe>
+</div>
+
+<!-- In-Game Menu -->
+<div id="inGameMenu" class="overlay" style="z-index: 4000;">
+  <div class="popup" style="align-items:center;">
+    <h2 style="margin-bottom: 24px;">Game Menu</h2>
+    <button class="btn" onclick="resumeGame()" style="margin-bottom:12px;">Resume Game</button>
+    <button class="btn sec" onclick="quitGame(false)">Quit Game & Save</button>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast">Press the <b>Escape</b> key to show menu</div>
+
+<!-- Core Application Script -->
+<script>
+/*
+ * BSMS Web
+ * Copyright © 2026 Jellyfish Jelly
+ * SPDX-License-Identifier: MIT
+ */
+
+// === Authentication & Cloud Saves ===
+const SESSION_KEY = 'bsms_auth_session';
+let authSession = null;
+let isGuest = true;
+let cloudSyncDone = false; // Tracks if we've safely pulled their cloud data
+
+function syncAuthSession() {
+    const raw = localStorage.getItem(SESSION_KEY);
+    const wasGuest = isGuest;
+    
+    if (raw) {
+        authSession = JSON.parse(raw);
+        isGuest = !authSession.loggedIn;
+    } else {
+        authSession = null;
+        isGuest = true;
+    }
+    
+    renderUserIcon();
+    
+    // Pull saves only when they transition to logged-in state or reload page while logged in
+    if (!isGuest && !cloudSyncDone) {
+        pullCloudSaves();
+    }
+}
+
+window.addEventListener('storage', (e) => {
+    if (e.key === SESSION_KEY) syncAuthSession();
+});
+
+function renderUserIcon() {
+    const btn = document.getElementById('globalUserBtn');
+    if (isGuest) {
+        btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
+        btn.style.border = "2px solid var(--border)";
+    } else {
+        if (authSession.pfp) {
+            btn.innerHTML = `<img src="${authSession.pfp}" alt="Avatar">`;
+            btn.style.border = "none";
+        } else {
+            btn.innerHTML = (authSession.displayName || authSession.username || "?").charAt(0).toUpperCase();
+            btn.style.border = "2px solid var(--border)";
+        }
+    }
+}
+
+function handleUserIconClick() {
+    if (isGuest) {
+        window.location.href = '/accounts#signup';
+    } else {
+        document.getElementById('accPopupName').textContent = authSession.displayName || authSession.username;
+        document.getElementById('accPopupUser').textContent = authSession.username;
+        const ava = document.getElementById('accPopupAvatar');
+        if(authSession.pfp) ava.innerHTML = `<img src="${authSession.pfp}" style="width:100%;height:100%;object-fit:cover;">`;
+        else ava.innerHTML = (authSession.displayName || authSession.username).charAt(0).toUpperCase();
+        openPopup('accountPopup');
+    }
+}
+
+async function pullCloudSaves() {
+    if (isGuest || !authSession || !authSession.username) return;
+    try {
+        const res = await fetch(`https://bsms-web-default-rtdb.firebaseio.com/accounts/${authSession.username}/game_saves.json`);
+        const data = await res.json();
+        if (data) {
+            for (const [key, value] of Object.entries(data)) {
+                localStorage.setItem(key, value);
+            }
+        }
+        cloudSyncDone = true;
+        console.log("Cloud saves successfully loaded.");
+    } catch (err) {
+        console.error("Failed to pull cloud saves", err);
+        // We still set it to true so they can write over failing reads, keeping game active.
+        cloudSyncDone = true; 
+    }
+}
+
+async function pushCloudSaves() {
+    if (isGuest || !authSession || !authSession.username || !cloudSyncDone) return;
+    try {
+        const dump = {};
+        // Serialize local storage, strictly avoiding auth session leaks
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key !== SESSION_KEY && !key.startsWith('firebase')) {
+                dump[key] = localStorage.getItem(key);
+            }
+        }
+        
+        await fetch(`https://bsms-web-default-rtdb.firebaseio.com/accounts/${authSession.username}/game_saves.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dump)
+        });
+        console.log("Progress saved to the cloud.");
+    } catch (err) {
+        console.error("Failed to push cloud saves", err);
+    }
+}
+
+function openPopup(id) { document.getElementById(id).classList.add('show'); }
+function closePopup(id) { document.getElementById(id).classList.remove('show'); }
+
+// Execute Auth setup
+syncAuthSession();
+
+
+// === Game Launcher Logic ===
+const GITHUB_API_URL = "https://api.github.com/repos/JellyfishJelly13/HTML5-Games/contents/offline";
+let allGamesList = [];
+let currentGameBlobUrl = null;
+let currentFetchController = null;
+let isGameRunning = false;
+let currentLetterFilter = 'All';
+
+// DOM Elements
+const gamesGrid = document.getElementById('gamesGrid');
+const loadingOverlay = document.getElementById('loadingOverlay');
+const loadingText = document.getElementById('loadingText');
+const loadingSpinner = document.getElementById('loadingSpinner');
+const playBtn = document.getElementById('playBtn');
+const cancelLoadBtn = document.getElementById('cancelLoadBtn');
+const gameContainer = document.getElementById('gameContainer');
+const gameIframe = document.getElementById('gameIframe');
+const inGameMenu = document.getElementById('inGameMenu');
+const toast = document.getElementById('toast');
+const searchInput = document.getElementById('gameSearch');
+const azFiltersContainer = document.getElementById('azFilters');
+
+
+// Initialize A-Z Filters
+function initFilters() {
+    const letters = ["All", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")];
+    letters.forEach(letter => {
+        const btn = document.createElement('button');
+        btn.className = `az-btn ${letter === 'All' ? 'active' : ''}`;
+        btn.textContent = letter;
+        btn.onclick = () => {
+            currentLetterFilter = letter;
+            document.querySelectorAll('.az-btn').forEach(b => b.classList.toggle('active', b.textContent === letter));
+            filterAndRenderGames();
+        };
+        azFiltersContainer.appendChild(btn);
+    });
+
+    searchInput.addEventListener('input', filterAndRenderGames);
+}
+initFilters();
+
+async function fetchGames() {
+    try {
+        const response = await fetch(GITHUB_API_URL);
+        if (!response.ok) throw new Error("Failed to fetch games list.");
+        const data = await response.json();
+        
+        allGamesList = data.filter(item => item.type === 'file' && item.name.endsWith('.html'));
+        filterAndRenderGames();
+        handleHashChange();
+    } catch (err) {
+        console.error(err);
+        gamesGrid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--red);">Failed to load games list. Please try again later.</div>`;
+    }
+}
+
+function filterAndRenderGames() {
+    const query = searchInput.value.toLowerCase().trim();
+    
+    const filtered = allGamesList.filter(game => {
+        const name = game.name.replace('.html', '').replace(/([A-Z])/g, ' $1').trim().toLowerCase();
+        
+        const matchesLetter = currentLetterFilter === 'All' ? true : name.startsWith(currentLetterFilter.toLowerCase());
+        const matchesSearch = name.includes(query);
+        
+        return matchesLetter && matchesSearch;
+    });
+
+    renderGamesGrid(filtered);
+}
+
+function renderGamesGrid(listToRender) {
+    gamesGrid.innerHTML = ''; 
+    
+    if (listToRender.length === 0) {
+        gamesGrid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--fg2); padding: 40px; font-size: 22px;">No games found matching your criteria.</div>`;
+        return;
+    }
+
+    listToRender.forEach((game, index) => {
+        const displayName = game.name.replace('.html', '').replace(/([A-Z])/g, ' $1').trim();
+
+        const card = document.createElement('div');
+        card.className = 'app-card';
+        card.style.animationDelay = `${(index % 20) * 0.03}s`; // Stagger animation for visibility
+        
+        card.innerHTML = `
+            <svg class="app-icon" viewBox="0 0 24 24">
+                <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 6.5 18.5 6.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+            </svg>
+            <h3 class="app-title">${displayName}</h3>
+            <button class="btn">Play</button>
+        `;
+        
+        card.querySelector('.btn').addEventListener('click', () => {
+            history.pushState(null, null, `#${game.name}`);
+            triggerLoadGame(game);
+        });
+
+        gamesGrid.appendChild(card);
+    });
+}
+
+async function triggerLoadGame(game) {
+    // Reset UI
+    playBtn.style.display = 'none';
+    cancelLoadBtn.style.display = 'inline-block';
+    loadingSpinner.style.display = 'block';
+    loadingText.textContent = `Loading ${game.name}...`;
+    openPopup('loadingOverlay');
+    
+    currentFetchController = new AbortController();
+    
+    try {
+        // Enforce a minimum wait of 2 seconds for the sleek loading transition
+        const delayPromise = new Promise(resolve => setTimeout(resolve, 2000));
+        const fetchPromise = fetch(game.download_url, { signal: currentFetchController.signal });
+
+        const [res] = await Promise.all([fetchPromise, delayPromise]);
+        
+        if (!res.ok) throw new Error("Network response was not ok");
+        const htmlContent = await res.text();
+        
+        // Inject Escape Key Listener into iframe context
+        const scriptToInject = `
+            <script>
+                window.addEventListener('keydown', function(e) {
+                    if(e.key === 'Escape') {
+                        window.parent.postMessage({ type: 'bsms-esc' }, '*');
+                    }
+                });
+                window.addEventListener('mousedown', function() {
+                    window.focus();
+                });
+            <\/script>
+        `;
+        
+        let finalHtml = htmlContent;
+        if (finalHtml.includes('</head>')) {
+            finalHtml = finalHtml.replace('</head>', scriptToInject + '</head>');
+        } else {
+            finalHtml += scriptToInject;
+        }
+
+        const blob = new Blob([finalHtml], { type: 'text/html' });
+        if (currentGameBlobUrl) URL.revokeObjectURL(currentGameBlobUrl);
+        currentGameBlobUrl = URL.createObjectURL(blob);
+        
+        // Game Ready State - Hide Cancel, Show Play
+        loadingSpinner.style.display = 'none';
+        cancelLoadBtn.style.display = 'none';
+        loadingText.textContent = `${game.name.replace('.html', '')} is ready!`;
+        playBtn.style.display = 'inline-block';
+        
+        playBtn.onclick = () => startGame();
+
+    } catch (err) {
+        if (err.name === 'AbortError') {
+            console.log("Game loading cancelled.");
+        } else {
+            console.error("Game Load Error: ", err);
+            loadingText.textContent = "Error loading game.";
+            loadingSpinner.style.display = 'none';
+        }
+    }
+}
+
+cancelLoadBtn.addEventListener('click', () => {
+    if (currentFetchController) currentFetchController.abort();
+    closePopup('loadingOverlay');
+    if (!isGameRunning) {
+        history.pushState('', document.title, window.location.pathname + window.location.search);
+    }
+});
+
+function startGame() {
+    closePopup('loadingOverlay');
+    isGameRunning = true;
+    gameIframe.src = currentGameBlobUrl;
+    gameContainer.style.display = 'block';
+    
+    setTimeout(() => { 
+        gameIframe.focus(); 
+        showToast(); 
+    }, 200);
+}
+
+function showToast() {
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 4500);
+}
+
+// In-Game Escape Listener Map
+window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'bsms-esc') toggleInGameMenu();
+});
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isGameRunning) toggleInGameMenu();
+});
+
+function toggleInGameMenu() {
+    if (inGameMenu.classList.contains('show')) {
+        resumeGame();
+    } else {
+        openPopup('inGameMenu');
+        // Good time to backup to the cloud silently when they pause
+        pushCloudSaves(); 
+    }
+}
+
+function resumeGame() {
+    closePopup('inGameMenu');
+    gameIframe.focus();
+}
+
+function quitGame(skipHistoryAction = false) {
+    closePopup('inGameMenu');
+    gameContainer.style.display = 'none';
+    isGameRunning = false;
+    
+    // Hard Save to Cloud upon Quit
+    pushCloudSaves(); 
+    
+    // Free Memory 
+    gameIframe.src = 'about:blank';
+    if (currentGameBlobUrl) {
+        URL.revokeObjectURL(currentGameBlobUrl);
+        currentGameBlobUrl = null;
+    }
+    
+    if (!skipHistoryAction) {
+        history.pushState('', document.title, window.location.pathname + window.location.search);
+    }
+}
+
+// Background Auto-Save Loop (Runs every 30 seconds while in a game)
+setInterval(() => {
+    if (isGameRunning) pushCloudSaves();
+}, 30000);
+
+// Hash Route Control
+function handleHashChange() {
+    const hash = window.location.hash.substring(1);
+    if (!hash && isGameRunning) {
+        quitGame(true);
+    } else if (hash && !isGameRunning && allGamesList.length > 0) {
+        const game = allGamesList.find(g => g.name === hash);
+        if (game) triggerLoadGame(game);
+    }
+}
+window.addEventListener('hashchange', handleHashChange);
+
+// Run Application
+fetchGames();
+</script>
+
+<!-- Version Updater Script (Maintained) -->
+<script>
+const PAGE_VERSION="4.4";
+const PAGE_NAME="games";
+const FIREBASE_URL=`https://bsms-web-default-rtdb.firebaseio.com/config/versions/${encodeURIComponent(PAGE_NAME)}.json`;
+
+function isNewer(a,b){
+    a=a.split(".").map(Number);b=b.split(".").map(Number);
+    for(let i=0;i<Math.max(a.length,b.length);i++){
+        if((a[i]||0)>(b[i]||0))return true;
+        if((a[i]||0)<(b[i]||0))return false;
+    }
+    return false;
+}
+
+async function checkForUpdate(){
+    try{
+        const r=await fetch(FIREBASE_URL,{cache:"no-store"});
+        const latest=(await r.text()).replace(/"/g,"").trim();
+        if(!isNewer(latest,PAGE_VERSION)||document.getElementById("versionUpdatePopup"))return;
+
+        const s=document.createElement("style");
+        s.textContent=`
+            #versionUpdatePopup{
+                position:fixed!important;inset:0!important;z-index:2147483647!important;
+                display:flex!important;align-items:center!important;justify-content:center!important;
+                padding:20px!important;background:rgba(0,0,0,.85)!important;
+                backdrop-filter:blur(4px)!important;font-family:'Patrick Hand',cursive!important;
+            }
+            #versionUpdatePopup .version-popup{
+                background:var(--bg,#000);color:var(--fg,#fff);
+                border:2px solid var(--red,#bb001e);border-radius:20px;
+                padding:30px 24px 24px;width:min(400px,100%);
+                text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.5);
+                animation:versionPopIn .22s ease;
+            }
+            #versionUpdatePopup h2{font-size:28px;margin:0 0 8px;color:var(--fg,#fff)}
+            #versionUpdatePopup p{font-size:20px;color:var(--fg2,rgba(255,255,255,.6));margin:0 0 24px;line-height:1.5}
+            #versionUpdatePopup button{
+                display:inline-block;width:100%;font-family:'Patrick Hand',cursive;
+                font-size:19px;padding:10px 18px;border-radius:12px;
+                border:2px solid var(--red,#bb001e);background:var(--red,#bb001e);
+                color:#fff;cursor:pointer;transition:.15s;
+            }
+            #versionUpdatePopup button:hover{background:var(--red-h,#d10022);transform:scale(1.03)}
+            @keyframes versionPopIn{from{opacity:0;transform:scale(.92) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+        `;
+        document.head.appendChild(s);
+
+        const overlay=document.createElement("div");
+        overlay.id="versionUpdatePopup";
+        overlay.innerHTML=`
+            <div class="version-popup">
+                <h2>Update Available</h2>
+                <p>A newer version of this application is available. Please refresh to continue.</p>
+                <button onclick="location.reload()">Refresh</button>
+            </div>`;
+        document.body.appendChild(overlay);
+    }catch(e){console.error("Version check failed:",e);}
+}
+
+checkForUpdate();
+setInterval(checkForUpdate,1000);
+</script>
+    
+</body>
+</html>
