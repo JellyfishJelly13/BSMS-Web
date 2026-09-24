@@ -3,7 +3,6 @@ BSMS Web
 Copyright © 2026 Jellyfish Jelly
 SPDX-License-Identifier: MIT
 -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,7 +14,7 @@ SPDX-License-Identifier: MIT
 <meta name="theme-color" content="#BB001E">
 <meta name="color-scheme" content="#BB001E">
 <meta name="application-name" content="BSMS Web">
-<meta name="application-version" content="v4.0.0">
+<meta name="application-version" content="v5.0.0">
 <meta property="og:title" content="BSMS Web">
 <meta property="og:description" content="The central digital hub for Boiling Springs Middle School.">
 <meta property="og:category" content="Education">
@@ -23,14 +22,19 @@ SPDX-License-Identifier: MIT
 <meta property="og:type" content="website">
 <title>BSMS Web</title>
 
-    <!-- Analytics -->
-    <script type="text/javascript">
-        (function(c,l,a,r,i,t,y){
-            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-        })(window, document, "clarity", "script", "y87hnhpoob");
-    </script>
+<!-- Favicons -->
+<link rel="icon" href="/img/icon.png">
+<link rel="apple-touch-icon" href="/img/app-icon.png">
+
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2TKPQV995W"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-2TKPQV995W');
+</script>
+<script src="/analytics.js"></script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
@@ -69,6 +73,14 @@ html, body {
 @keyframes popIn { from { opacity:0; transform:scale(.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
 @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
 
+/* Offline Banner */
+#offlineBanner {
+  position: fixed; top: 0; left: 0; width: 100%; background: #ef4444; color: #fff;
+  text-align: center; padding: 10px; font-family: var(--font); font-size: 18px;
+  z-index: 10000; transform: translateY(-100%); transition: transform 0.3s ease;
+}
+#offlineBanner.show { transform: translateY(0); }
+
 /* Global User Button */
 #globalUserBtn { position: fixed; top: 16px; right: 20px; width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--border); background: var(--input-bg); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; z-index: 2000; overflow: hidden; color:var(--fg); font-weight:bold; font-size:22px; box-shadow: 0 4px 14px rgba(0,0,0,0.3);}
 #globalUserBtn:hover { border-color: var(--red); box-shadow: 0 8px 24px rgba(0,0,0,0.4); transform: scale(1.05); }
@@ -85,6 +97,7 @@ html, body {
 .logo-container { display: flex; align-items: center; gap: 12px; cursor: pointer; }
 .logo-icon { width: 34px; height: 34px; fill: var(--red); }
 .logo-text { font-size: 26px; font-weight: bold; letter-spacing: 1px; margin: 0; color:var(--fg); }
+.center-logo { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 44px; height: 44px; border-radius: 8px; z-index: 105; }
 
 /* Buttons */
 .btn {
@@ -148,19 +161,29 @@ html, body {
 .popup p { font-size: 20px; color: var(--fg2); margin: 0 0 24px; line-height: 1.5; }
 .popup h2 { font-size: 28px; margin: 0 0 8px; color:var(--fg); }
 
+/* Footer */
+.footer {
+  text-align: center; padding: 40px 20px 20px; color: var(--fg2); font-size: 16px;
+}
+.footer a { color: var(--red); text-decoration: none; transition: opacity 0.2s; }
+.footer a:hover { opacity: 0.8; }
+
 @media (max-width: 600px) {
   .hero h1 { font-size: 48px; }
   .hero p { font-size: 19px; }
   #topbar { padding: 14px 16px; }
   .logo-text { display: none; }
+  .center-logo { width: 36px; height: 36px; top: 14px; }
   #globalUserBtn { top: 10px; right: 14px; width:40px; height:40px; }
 }
 </style>
 </head>
 <body>
 
+<div id="offlineBanner">You are currently offline</div>
+
 <!-- Global User Button -->
-<div id="globalUserBtn" onclick="handleUserIconClick()"></div>
+<div id="globalUserBtn" onclick="handleUserIconClick()" data-ga="global_user_btn"></div>
 
 <!-- Global Account Popup -->
 <div id="accountPopup" class="overlay" onclick="if(event.target===this) closePopup('accountPopup')">
@@ -168,21 +191,23 @@ html, body {
     <div id="accPopupAvatar" style="width:86px;height:86px;border-radius:50%;border:3px solid var(--red);margin:0 auto 12px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:36px;background:var(--msg-bg);font-weight:bold;color:var(--fg);"></div>
     <h2 id="accPopupName" style="margin-bottom:2px;">---</h2>
     <p style="font-size:16px; margin-bottom:22px;">@<span id="accPopupUser">---</span></p>
-    <a href="/accounts" class="btn">Manage Account</a>
+    <a href="/accounts" class="btn" data-ga="manage_account_popup">Manage Account</a>
     <button class="btn sec" onclick="closePopup('accountPopup')" style="border:none; margin-top:6px;">Close</button>
   </div>
 </div>
 
 <div id="topbar">
-  <div class="logo-container">
+  <div class="logo-container" data-ga="logo_home">
     <svg class="logo-icon" viewBox="0 0 24 24"><path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z"/></svg>
     <h2 class="logo-text">BSMS Web</h2>
   </div>
+  <img src="/img/icon.png" alt="BSMS Web" class="center-logo">
 </div>
 
 <div class="hero">
   <h1>Welcome to <span>BSMS Web</span></h1>
   <p>The unified digital ecosystem for Boiling Springs Middle School. Connect with classmates, track your schedule, and manage your account in one seamless suite.</p>
+  <div id="heroAuthContainer" style="margin-top: 30px;"></div>
 </div>
 
 <div class="launcher-container">
@@ -193,7 +218,7 @@ html, body {
       <svg class="app-icon" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
       <h3 class="app-title">Countdown</h3>
       <p class="app-desc">Track how much time is left until the next period with beautiful, visual customization.</p>
-      <a href="/countdown" class="btn">Launch Countdown</a>
+      <a href="/countdown" class="btn" data-ga="launch_countdown">Launch Countdown</a>
     </div>
 
     <!-- Rooms Card -->
@@ -201,7 +226,7 @@ html, body {
       <svg class="app-icon" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/></svg>
       <h3 class="app-title">Chat</h3>
       <p class="app-desc">A lightning-fast real-time chat platform. Create shared spaces to connect and talk with friends instantly.</p>
-      <a href="/c" class="btn">Launch Chat</a>
+      <a href="/chat" class="btn" data-ga="launch_chat">Launch Chat</a>
     </div>
 
     <!-- Games Card -->
@@ -211,10 +236,14 @@ html, body {
       </svg>
       <h3 class="app-title">Games</h3>
       <p class="app-desc">A massive collection of interactive HTML5 games.</p>
-      <a href="/g" class="btn">Launch Games</a>
+      <a href="/g" class="btn" data-ga="launch_games">Launch Games</a>
     </div>
 
   </div>
+</div>
+
+<div class="footer">
+  &copy; 2026 Jellyfish Jelly. <a href="/privacy.html" data-ga="footer_privacy">Privacy Policy</a>
 </div>
 
 <script>
@@ -223,6 +252,20 @@ html, body {
  * Copyright © 2026 Jellyfish Jelly
  * SPDX-License-Identifier: MIT
  */
+
+// Initialize standard offline checking
+window.addEventListener('offline', () => document.getElementById('offlineBanner').classList.add('show'));
+window.addEventListener('online', () => document.getElementById('offlineBanner').classList.remove('show'));
+if (!navigator.onLine) document.getElementById('offlineBanner').classList.add('show');
+
+// Establish global session ID
+if (!localStorage.getItem('session_id')) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let sid = '';
+    for (let i = 0; i < 10; i++) sid += chars.charAt(Math.floor(Math.random() * chars.length));
+    localStorage.setItem('session_id', sid);
+    console.log("[BSMS Web :: System] Generated new session_id.");
+}
 
 const SESSION_KEY = 'bsms_auth_session';
 let authSession = null;
@@ -246,9 +289,11 @@ window.addEventListener('storage', (e) => {
 
 function renderUserIcon() {
     const btn = document.getElementById('globalUserBtn');
+    const heroAuth = document.getElementById('heroAuthContainer');
     if (isGuest) {
         btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
         btn.style.border = "2px solid var(--border)";
+        heroAuth.innerHTML = `<a href="/accounts#signup" class="btn" style="width: auto; padding: 12px 30px;" data-ga="hero_login_btn">Login / Sign Up</a>`;
     } else {
         if (authSession.pfp) {
             btn.innerHTML = `<img src="${authSession.pfp}" alt="Avatar">`;
@@ -257,6 +302,7 @@ function renderUserIcon() {
             btn.innerHTML = (authSession.displayName || authSession.username || "?").charAt(0).toUpperCase();
             btn.style.border = "2px solid var(--border)";
         }
+        heroAuth.innerHTML = `<a href="/chat" class="btn" style="width: auto; padding: 12px 30px;" data-ga="hero_chat_btn">Go to Chat / Dashboard</a>`;
     }
 }
 
@@ -276,16 +322,17 @@ function handleUserIconClick() {
 function openPopup(id) { document.getElementById(id).classList.add('show'); }
 function closePopup(id) { document.getElementById(id).classList.remove('show'); }
 
-// Run
+// Run standard init
 syncAuthSession();
+console.log("[BSMS Web :: System] Frontend initialized.");
 </script>
     
 <script>
     window.BSMS_WEB_PAGE_VERSION = "5.0";
-    window.BSMS_WEB_PAGE_NAME = "home";
+    window.BSMS_WEB_PAGE_NAME = "accounts";
 </script>
 
 <script src="/version-check.js"></script>
-    
+
 </body>
 </html>
