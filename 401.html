@@ -5,15 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>401 - Access Unauthorized</title>
 
-    <!-- Analytics -->
-    <script type="text/javascript">
-        (function(c,l,a,r,i,t,y){
-            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-        })(window, document, "clarity", "script", "y87hnhpoob");
-    </script>
-
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
 
@@ -60,12 +51,6 @@ body{
   }
 }
 
-@keyframes glowPulse{
-  0%{box-shadow:0 0 20px rgba(187,0,30,0.18);}
-  50%{box-shadow:0 0 60px rgba(187,0,30,0.45);}
-  100%{box-shadow:0 0 20px rgba(187,0,30,0.18);}
-}
-
 /* CARD */
 .card{
   width:min(560px,100%);
@@ -75,10 +60,6 @@ body{
   padding:40px 30px;
   text-align:center;
   animation:fadeIn .25s ease, popIn .3s ease;
-}
-
-.card.glow{
-  animation:fadeIn .25s ease, popIn .3s ease, glowPulse 3s infinite ease-in-out;
 }
 
 .error-code{
@@ -101,37 +82,6 @@ body{
   margin:0;
 }
 
-/* BACKGROUND GLOW (now controlled) */
-.bg-glow{
-  position:fixed;
-  width:600px;
-  height:600px;
-  background:radial-gradient(circle, rgba(187,0,30,0.2) 0%, transparent 70%);
-  pointer-events:none;
-  filter:blur(30px);
-  animation:fadeIn 1s ease;
-  display:none; /* OFF by default */
-}
-
-body.glow .bg-glow{
-  display:block;
-}
-
-.bg-glow.one{
-  top:-220px;
-  left:-160px;
-}
-
-.bg-glow.two{
-  bottom:-240px;
-  right:-160px;
-}
-
-/* remove everything if glow is off */
-body:not(.glow) .card{
-  box-shadow:none;
-}
-
 @media(max-width:600px){
   .error-code{font-size:90px;}
   .title{font-size:34px;}
@@ -142,35 +92,16 @@ body:not(.glow) .card{
 
 <body>
 
-<div class="bg-glow one"></div>
-<div class="bg-glow two"></div>
-
-<div class="card" id="card">
+<div class="card">
   <h1 class="error-code">401</h1>
 
   <div class="title">Access Unauthorized</div>
 
   <p class="desc">
-    You are not authorized to access this<br>
-    page or resource.
+    You are not authorized to<br>
+    access this page or resource.
   </p>
 </div>
-
-<script>
-const GLOW_ENABLED = false;
-
-const card = document.getElementById("card");
-
-if (GLOW_ENABLED) {
-  document.body.classList.add("glow");
-  card.classList.add("glow");
-}
-</script>
-
-<script>
-  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-</script>
-<script defer src="/_vercel/insights/script.js"></script>
 
 </body>
 </html>
