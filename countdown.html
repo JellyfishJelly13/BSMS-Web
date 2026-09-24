@@ -2,8 +2,25 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>BSMS Countdown - 7th Grade</title>
+<title>Choose a Grade | BSMS Countdown</title>
+
+    <!-- Analytics -->
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "y87hnhpoob");
+    </script>
+
 <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Fredoka+One&family=Bubblegum+Sans&family=Boogaloo&family=Caveat:wght@700&family=Comfortaa:wght@700&family=Architects+Daughter&family=Permanent+Marker&family=Rock+Salt&family=Special+Elite&family=VT323&family=Press+Start+2P&family=Cinzel:wght@700&family=Playfair+Display:wght@700&family=Raleway:wght@800&family=Oswald:wght@700&family=Bebas+Neue&family=Righteous&family=Titan+One&family=Russo+One&family=Monoton&display=swap" rel="stylesheet">
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+  firebase.initializeApp({ databaseURL: "https://bsms-web-default-rtdb.firebaseio.com/" });
+  const db = firebase.database();
+</script>
 <style>
 :root {
   --bg: #000;--fg: #fff;--fg2: rgba(255, 255, 255, 0.52);
@@ -38,6 +55,25 @@ body{
 @keyframes subtabSlideLeft { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes btnPop { 0% { transform: scale(1); } 50% { transform: scale(0.93); } 100% { transform: scale(1); } }
 
+#grade-selection-screen {
+  position: fixed; inset: 0; background: var(--bg); z-index: 10005;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 50px;
+  opacity: 1; transition: opacity 0.5s ease, background 0.4s ease;
+}
+#grade-selection-screen.hidden { display: none; opacity: 0; pointer-events: none; }
+.grade-title { font-family: 'Patrick Hand', cursive; font-size: calc(64px * var(--text-scale)); color: var(--fg); letter-spacing: 0.04em; animation: fadeInDown 0.7s var(--anim-ease) both; }
+.grade-title span { color: #BB001E; }
+.grade-cards { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; animation: fadeInUp 0.7s var(--anim-ease) 0.1s both; }
+.grade-card {
+  width: 160px; height: 160px; border-radius: 24px; background: rgba(255, 255, 255, 0.04); border: 2px solid rgba(255, 255, 255, 0.08);
+  display: flex; align-items: center; justify-content: center; font-size: calc(64px * var(--text-scale));
+  font-family: var(--font); color: var(--fg); cursor: pointer; transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15); user-select: none;
+}
+body.light-theme .grade-card { background: rgba(0, 0, 0, 0.04); border-color: rgba(0, 0, 0, 0.08); }
+.grade-card:hover { transform: scale(1.1) translateY(-8px); background: #BB001E; border-color: #BB001E; color: #fff; box-shadow: 0 12px 30px rgba(187,0,30,0.4); }
+.grade-card:active { transform: scale(0.95); }
+
 #splash-screen {
   position: fixed; inset: 0; background: #000; z-index: 9999;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px;
@@ -66,7 +102,7 @@ body{
 #permission-gate { position: fixed; inset: 0; background: #000; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; opacity: 1; transition: opacity 0.5s ease; }
 #permission-gate.hidden { display: none; }
 #permission-gate.fade-out { opacity: 0; pointer-events: none; }
-.gate-icon { font-size: calc(72px * var(--text-scale)); animation: fadeInDown 0.7s var(--anim-ease) both; filter: drop-shadow(0 0 18px rgba(187,0,30,0.5)); }
+.gate-icon { font-size: calc(72px * var(--text-scale)); animation: fadeInDown 0.7s var(--anim-ease) both; filter: drop-shadow(0 0 18px rgba(187,0,30,0.5)); display: flex; align-items: center; justify-content: center; }
 .gate-title { font-family: 'Patrick Hand', cursive; font-size: calc(42px * var(--text-scale)); color: #fff; letter-spacing: 0.04em; animation: fadeInDown 0.7s var(--anim-ease) 0.1s both; }
 .gate-title span { color: #BB001E; }
 .gate-subtitle { font-family: 'Patrick Hand', cursive; font-size: calc(20px * var(--text-scale)); color: rgba(255,255,255,0.6); letter-spacing: 0.06em; max-width: 440px; line-height: 1.5; animation: fadeIn 0.8s ease 0.3s both; }
@@ -103,14 +139,6 @@ body{
 #panel-restart-btn { font-family: var(--font); font-size: calc(15px * var(--text-scale)); background: rgba(187,0,30,0.13); border: 1.5px solid rgba(187,0,30,0.35); color: #e05070; border-radius: 8px; padding: 4px 14px; cursor: pointer; transition: background .2s, color .2s, transform .12s; line-height: 1; }
 #panel-restart-btn:hover { background: #BB001E; border-color: #BB001E; color: #fff; transform: scale(1.06); }
 
-/* Restore Customizations Prompt */
-#restore-prompt { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: var(--ctrl-bg); border: 1.5px solid var(--accent); border-radius: 14px; padding: 14px 24px; z-index: 10002; display: flex; flex-direction: column; align-items: center; gap: 14px; box-shadow: 0 6px 28px rgba(0,0,0,0.5); transition: top 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease; opacity: 0; pointer-events: none; width: max-content; max-width: 90vw; }
-#restore-prompt.show { top: 26px; opacity: 1; pointer-events: all; }
-.restore-prompt-content { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-@media(min-width: 600px) { .restore-prompt-content { flex-direction: row; gap: 20px; } }
-.restore-prompt-text { font-family: var(--font); font-size: calc(18px * var(--text-scale)); color: var(--fg); text-align: center; }
-.restore-btns { display: flex; gap: 10px; }
-
 body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after { animation: none !important; transition: none !important; animation-duration: 0s !important; transition-duration: 0s !important; }
 body.reduce-motion canvas { display: none !important; }
 body.reduce-motion .balloon, body.reduce-motion .emoji-drop, body.reduce-motion .ghost-float { display: none !important; }
@@ -134,11 +162,12 @@ body.reduce-motion #bar { transition: none !important; }
 @keyframes lowTimePulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(220, 60, 0, 0); } 50% { box-shadow: 0 0 0 10px rgba(220, 60, 0, .28); } }
 #bar-container.warn-pulse { animation: lowTimePulse 1s ease infinite; }
 
-#controls-btn { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%); z-index: 200; font-family: var(--font); font-size: calc(19px * var(--text-scale)); background: var(--ctrl-bg); color: var(--fg); border: 1.5px solid var(--ctrl-border); border-radius: 50px; padding: 9px 28px; cursor: pointer; letter-spacing: .05em; transition: background .2s ease, border-color .2s ease, box-shadow .2s ease, color .3s ease; box-shadow: 0 2px 14px rgba(0, 0, 0, .32); opacity: 1; pointer-events: all; white-space: nowrap; }
-#controls-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 8px 28px rgba(0, 0, 0, .42); transform: translateX(-50%) translateY(-3px) scale(1.04); }
-#controls-btn:active { transform: translateX(-50%) translateY(-1px) scale(1.01); }
+#controls-btn { position: fixed; top: 20px; right: 20px; z-index: 200; background: var(--ctrl-bg); color: var(--fg); border: 1.5px solid var(--ctrl-border); border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .2s ease, border-color .2s ease, box-shadow .2s ease, color .3s ease, transform .2s ease; box-shadow: 0 2px 14px rgba(0, 0, 0, .32); opacity: 1; pointer-events: all; overflow: hidden; padding: 0; }
+#controls-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 8px 28px rgba(0, 0, 0, .42); transform: translateY(-3px) scale(1.06); }
+#controls-btn:active { transform: translateY(-1px) scale(1.01); }
 
-/* Help Button Additions */
+.header-avatar { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+
 #help-btn { position: fixed; bottom: 26px; right: 26px; z-index: 200; width: 44px; height: 44px; border-radius: 50%; background: #BB001E; color: #fff; font-size: 24px; font-weight: bold; border: 2px solid rgba(255,255,255,0.2); cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-family: var(--font); display: none; align-items: center; justify-content: center; transition: transform 0.2s, box-shadow 0.2s, background 0.2s; outline: none; }
 #help-btn:hover { transform: scale(1.1); box-shadow: 0 6px 16px rgba(0,0,0,0.4); background: #d4001f; }
 #top-toast { position: fixed; top: -60px; left: 50%; transform: translateX(-50%); background: var(--ctrl-bg); border: 1.5px solid var(--ctrl-border); border-radius: 50px; padding: 8px 24px; font-size: calc(18px * var(--text-scale)); color: var(--fg); opacity: 0; pointer-events: none; z-index: 9000; transition: opacity 0.3s ease, top 0.3s cubic-bezier(0.22, 1, 0.36, 1); box-shadow: 0 6px 20px rgba(0,0,0,0.3); font-family: var(--font); white-space: nowrap; }
@@ -153,7 +182,7 @@ body.reduce-motion #bar { transition: none !important; }
 #controls-panel.closing { animation: panelSlideDown .28s cubic-bezier(.64, 0, .78, 0) forwards; }
 #panel-header { display: flex; align-items: center; justify-content: space-between; padding: 17px 22px 13px; border-bottom: 1px solid var(--section-border); flex-shrink: 0; animation: fadeInDown 0.3s var(--anim-ease) 0.1s both; }
 #panel-title { font-size: calc(22px * var(--text-scale)); color: var(--fg); letter-spacing: .03em; }
-#panel-close { font-size: calc(20px * var(--text-scale)); background: none; border: none; color: var(--fg2); cursor: pointer; padding: 4px 8px; border-radius: 7px; transition: background .15s, color .15s, transform .2s var(--anim-ease); font-family: var(--font); line-height: 1; }
+#panel-close { background: none; border: none; color: var(--fg2); cursor: pointer; padding: 4px; border-radius: 7px; transition: background .15s, color .15s, transform .2s var(--anim-ease); display: flex; align-items: center; justify-content: center; }
 #panel-close:hover { background: var(--section-bg); color: var(--fg); transform: scale(1.15) rotate(90deg); }
 #panel-tabs { display: flex; gap: 0; padding: 0 18px; border-bottom: 1px solid var(--section-border); flex-shrink: 0; overflow-x: auto; scrollbar-width: none; cursor: grab; user-select: none; animation: fadeIn 0.3s ease 0.15s both; }
 #panel-tabs:active { cursor: grabbing; }
@@ -269,15 +298,7 @@ body.reduce-motion #bar { transition: none !important; }
 .modal-btn.danger { border-color: rgba(200, 60, 0, .28); color: #d97040; }
 .modal-btn.danger:hover { background: rgba(200, 60, 0, .07); }
 
-.lang-option { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 9px; cursor: pointer; border: 1.5px solid transparent; margin-bottom: 4px; transition: background .2s ease, border-color .2s ease, transform .15s var(--anim-ease); }
-.lang-option:hover { background: var(--section-bg); transform: translateX(4px); }
-.lang-option:active { transform: translateX(2px) scale(0.99); animation: btnPop 0.15s ease; }
-.lang-option.active { border-color: var(--accent); background: var(--section-bg); }
-.lang-flag { font-size: calc(22px * var(--text-scale)); }
-.lang-name { font-size: calc(18px * var(--text-scale)); color: var(--fg); }
-.lang-native { font-size: calc(13px * var(--text-scale)); color: var(--fg2); margin-left: auto; }
-
-.egg-item { display: flex; align-items: center; gap: 11px; padding: 8px 11px; border-radius: 9px; background: var(--section-sg); margin-bottom: 6px; animation: slideInRight 0.3s var(--anim-ease) both; transition: background .2s ease, transform .15s ease; border: 1px solid var(--section-border); }
+.egg-item { display: flex; align-items: center; gap: 11px; padding: 8px 11px; border-radius: 9px; background: var(--section-bg); margin-bottom: 6px; animation: slideInRight 0.3s var(--anim-ease) both; transition: background .2s ease, transform .15s ease; border: 1px solid var(--section-border); }
 .egg-item:hover { background: var(--section-bg); transform: translateX(2px); }
 .egg-icon { font-size: calc(24px * var(--text-scale)); flex-shrink: 0; }
 .egg-info { flex: 1; }
@@ -295,7 +316,7 @@ body.reduce-motion #bar { transition: none !important; }
 #scheduleCard { width: min(450px, 96vw); max-height: 84vh; background: var(--ctrl-bg); border: 1.5px solid var(--ctrl-border); border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow); animation: popIn .26s cubic-bezier(.22, 1, .36, 1); }
 #scheduleCard-header { padding: 15px 18px 12px; border-bottom: 1px solid var(--section-border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
 #scheduleCard-title { font-size: calc(22px * var(--text-scale)); letter-spacing: .02em; }
-#scheduleCard-close { background: none; border: none; color: var(--fg2); font-size: calc(19px * var(--text-scale)); cursor: pointer; font-family: var(--font); padding: 4px 8px; border-radius: 7px; transition: background .15s ease, transform .2s var(--anim-ease); }
+#scheduleCard-close { background: none; border: none; color: var(--fg2); cursor: pointer; padding: 4px; border-radius: 7px; transition: background .15s ease, transform .2s var(--anim-ease); display: flex; align-items: center; justify-content: center; }
 #scheduleCard-close:hover { background: var(--section-bg); transform: scale(1.15) rotate(90deg); }
 #scheduleCard-body { overflow-y: auto; padding: 11px 13px 16px; }
 
@@ -339,11 +360,6 @@ body.fire-drill-mode #label { color: #ff2200 !important; }
 #egg-mode-indicator.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 #resync-indicator { position: fixed; top: 13px; right: 13px; font-size: calc(13px * var(--text-scale)); color: var(--fg2); font-family: var(--font); opacity: 0; transition: opacity .3s ease; z-index: 50; }
 #resync-indicator.show { opacity: 1; }
-#font-warning-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9); background: var(--ctrl-bg); border: 1.5px solid var(--ctrl-border); border-radius: 15px; padding: 20px; width: 300px; z-index: 1000; box-shadow: var(--shadow); display: none; opacity: 0; transition: opacity 0.2s ease, transform 0.2s var(--anim-ease); }
-#font-warning-popup.show { display: block; opacity: 1; transform: translate(-50%, -50%) scale(1); animation: popIn 0.2s var(--anim-ease); }
-#font-warning-popup p { margin: 0 0 15px; font-size: calc(18px * var(--text-scale)); }
-#font-warning-popup button { background: var(--accent); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-family: var(--font); font-size: calc(16px * var(--text-scale)); transition: background .15s, transform .12s; }
-#font-warning-popup button:hover { background: var(--accent2); transform: scale(1.05); }
 
 #console-log { background: #1a1a1a; border-radius: 8px; padding: 12px; height: 220px; overflow-y: auto; font-family: 'VT323', monospace; font-size: calc(15px * var(--text-scale)); text-align: left; color: #d4d4d4; margin-bottom: 12px; border: 1px solid var(--section-border); white-space: pre-wrap; word-break: break-word; scroll-behavior: smooth; }
 #console-log::-webkit-scrollbar { width: 5px; }
@@ -378,20 +394,41 @@ body.fire-drill-mode #label { color: #ff2200 !important; }
 .test-dt-desc { font-size: calc(13px * var(--text-scale)); color: var(--fg2); margin-bottom: 8px; line-height: 1.5; }
 
 .unavailable-section { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; gap: 16px; }
-.unavailable-icon { font-size: calc(52px * var(--text-scale)); opacity: 0.6; }
+.unavailable-icon { display: flex; align-items: center; justify-content: center; opacity: 0.6; }
 .unavailable-title { font-size: calc(26px * var(--text-scale)); color: var(--fg); letter-spacing: 0.02em; }
 .unavailable-desc { font-size: calc(16px * var(--text-scale)); color: var(--fg2); line-height: 1.65; max-width: 340px; }
 .unavailable-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--section-bg); border: 1.5px solid var(--ctrl-border); border-radius: 50px; padding: 7px 20px; font-size: calc(14px * var(--text-scale)); color: var(--fg2); letter-spacing: 0.1em; text-transform: uppercase; font-family: 'VT323', monospace; }
 .unavailable-badge-dot { width: 8px; height: 8px; border-radius: 50%; background: #f90; box-shadow: 0 0 6px #f90; animation: dotPulse 1.5s ease-in-out infinite; }
 .unavailable-badge.active-test .dot { background: #f90; box-shadow: 0 0 5px #f90; animation: dotPulse 1.5s ease-in-out infinite; }
+
+/* Accounts Profile */
+.account-profile { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px 20px; text-align: center; }
+.account-avatar { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent); margin-bottom: 16px; box-shadow: 0 6px 20px rgba(0,0,0,0.25); background: var(--section-bg); }
+.account-name { font-family: var(--font); font-size: calc(28px * var(--text-scale)); color: var(--fg); margin-bottom: 4px; }
+.account-username { font-family: 'VT323', monospace; font-size: calc(18px * var(--text-scale)); color: var(--fg2); margin-bottom: 24px; letter-spacing: 0.05em; }
+
 </style>
 </head>
 <body>
 
+<div id="grade-selection-screen" class="hidden">
+  <div class="grade-title">Choose a <span>Grade</span></div>
+  <div class="grade-cards">
+    <div class="grade-card" data-grade="6">6th</div>
+    <div class="grade-card" data-grade="7">7th</div>
+    <div class="grade-card" data-grade="8">8th</div>
+  </div>
+</div>
+
 <div id="splash-flyout"><div id="splash-flyout-title">BSMS <span>Countdown</span></div></div>
 
 <div id="permission-gate" class="hidden">
-  <div class="gate-icon">⛔️</div>
+  <div class="gate-icon">
+    <svg viewBox="0 0 24 24" width="72" height="72" stroke="#BB001E" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+    </svg>
+  </div>
   <div class="gate-title">BSMS <span>Countdown</span></div>
   <div class="gate-subtitle" id="gate-subtitle">It appears that this countdown was shared without permission. If this is a mistake, enter the access code below.</div>
   <div class="gate-code-container">
@@ -400,20 +437,10 @@ body.fire-drill-mode #label { color: #ff2200 !important; }
     <button class="gate-submit-btn" id="gate-submit-btn" onclick="checkGateCode()">Enter</button>
     <div class="gate-error" id="gate-error">Incorrect code. Try again.</div>
   </div>
-  <div class="gate-bypass-hint" id="gate-bypass-hint">Contact your administrator for access.</div>
+  <div class="gate-bypass-hint" id="gate-bypass-hint">Contact BSMS Countdown for access.</div>
 </div>
 
-<div id="restore-prompt" class="hidden">
-  <div class="restore-prompt-content">
-    <span class="restore-prompt-text" data-i18n="restorePromptText">Would you like to restore your previous customizations? (BETA)</span>
-    <div class="restore-btns">
-      <button id="restore-yes" class="modal-btn primary" data-i18n="yes">Yes</button>
-      <button id="restore-no" class="modal-btn" data-i18n="no">No</button>
-    </div>
-  </div>
-</div>
-
-<div id="splash-screen">
+<div id="splash-screen" class="hidden">
   <div class="splash-title-live" id="splash-title-el">BSMS <span>Countdown</span></div>
   <div class="dot-loader" id="splash-dot-loader"></div>
   <div class="splash-subtitle" id="splash-subtitle-text">Loading assets...</div>
@@ -429,7 +456,7 @@ body.fire-drill-mode #label { color: #ff2200 !important; }
 <div id="restart-confirm-modal">
   <div id="restart-confirm-card">
     <h2 id="restart-confirm-title">Restart everything?</h2>
-    <p id="restart-confirm-desc">This will reset all settings — theme, font, colors, language, and easter eggs — back to defaults, exactly as if you just opened the page.</p>
+    <p id="restart-confirm-desc">This will reset all settings — theme, font, colors, and easter eggs — back to defaults, exactly as if you just opened the page.</p>
     <div class="restart-confirm-btns">
       <button id="restart-cancel-btn">Cancel</button>
       <button id="restart-proceed-btn">Yes, Restart</button>
@@ -446,7 +473,11 @@ body.fire-drill-mode #label { color: #ff2200 !important; }
   <div id="next-preview"></div>
 </div>
 <div id="resync-indicator">Resyncing...</div>
-<button id="controls-btn">Controls</button>
+<button id="controls-btn">
+  <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>
+  </svg>
+</button>
 
 <div id="top-toast"></div>
 <button id="help-btn">?</button>
@@ -457,7 +488,12 @@ body.fire-drill-mode #label { color: #ff2200 !important; }
       <div id="panel-title">Controls</div>
       <div style="display:flex;align-items:center;gap:8px;">
         <button id="panel-restart-btn">Restart</button>
-        <button id="panel-close">✕</button>
+        <button id="panel-close">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
       </div>
     </div>
     <div id="panel-tabs">
@@ -465,8 +501,8 @@ body.fire-drill-mode #label { color: #ff2200 !important; }
       <button class="tab-btn" data-tab="settings">Settings</button>
       <button class="tab-btn" id="tab-btn-keyboard" data-tab="keyboard">Keyboard Shortcuts</button>
       <button class="tab-btn" data-tab="easter">Easter Eggs</button>
-      <button class="tab-btn" id="tab-btn-custkey" data-tab="custkey">Customization Key</button>
       <button class="tab-btn" data-tab="console">Console</button>
+      <button class="tab-btn" data-tab="accounts">Accounts</button>
     </div>
     <div id="panel-body">
 
@@ -480,22 +516,22 @@ body.fire-drill-mode #label { color: #ff2200 !important; }
         <!-- THEME SUBTAB -->
         <div class="subtab-pane active" id="subtab-theme">
           <div class="ctrl-section" id="section-theme-presets">
-            <div class="ctrl-section-title" data-i18n="themeSectionTitle">Theme Presets</div>
+            <div class="ctrl-section-title">Theme Presets</div>
             <div id="theme-swatches">
               <div class="theme-swatch-wrap">
                 <div class="theme-swatch active" data-theme="" style="background: linear-gradient(135deg, #000 50%, #BB001E 50%)" title="Dark"></div>
-                <div class="theme-swatch-label" data-i18n="dark">Dark</div>
+                <div class="theme-swatch-label">Dark</div>
               </div>
               <div class="theme-swatch-wrap">
                 <div class="theme-swatch" data-theme="light-theme" style="background: linear-gradient(135deg, #f0ebe5 50%, #BB001E 50%)" title="Light"></div>
-                <div class="theme-swatch-label" data-i18n="light">Light</div>
+                <div class="theme-swatch-label">Light</div>
               </div>
             </div>
           </div>
 
           <div class="ctrl-section" id="section-primary-color">
-            <div class="ctrl-section-title" data-i18n="primaryColorTitle">Primary Color</div>
-            <div class="color-section-label" data-i18n="primaryColorDesc">Background &amp; Menus</div>
+            <div class="ctrl-section-title">Primary Color</div>
+            <div class="color-section-label">Background &amp; Menus</div>
             <div class="color-wheel-row">
               <canvas id="primary-wheel" width="110" height="110"></canvas>
               <div class="color-inputs-col">
@@ -504,22 +540,22 @@ body.fire-drill-mode #label { color: #ff2200 !important; }
                   <input class="hex-input" id="primaryHexInput" type="text" maxlength="7" placeholder="#000000" value="#000000">
                 </div>
                 <div class="hsl-sliders">
-                  <label data-i18n="sliderHue">Hue</label><input type="range" id="primaryHue" min="0" max="360" value="0">
-                  <label data-i18n="sliderSat">Saturation</label><input type="range" id="primarySat" min="0" max="100" value="0">
-                  <label data-i18n="sliderBright">Brightness</label><input type="range" id="primaryLit" min="0" max="100" value="0">
+                  <label>Hue</label><input type="range" id="primaryHue" min="0" max="360" value="0">
+                  <label>Saturation</label><input type="range" id="primarySat" min="0" max="100" value="0">
+                  <label>Brightness</label><input type="range" id="primaryLit" min="0" max="100" value="0">
                 </div>
               </div>
             </div>
             <div id="primaryColorPreview" style="background:#000"></div>
             <div class="action-row">
-              <button class="modal-btn primary" id="applyPrimaryColor" data-i18n="applyPrimaryColor">Apply Primary</button>
-              <button class="modal-btn" id="resetPrimaryColor" data-i18n="resetPrimaryColor">Reset Primary</button>
+              <button class="modal-btn primary" id="applyPrimaryColor">Apply Primary</button>
+              <button class="modal-btn" id="resetPrimaryColor">Reset Primary</button>
             </div>
           </div>
 
           <div class="ctrl-section" id="section-secondary-color">
-            <div class="ctrl-section-title" data-i18n="secondaryColorTitle">Secondary Color</div>
-            <div class="color-section-label" data-i18n="secondaryColorDesc">Buttons, Borders &amp; Accents</div>
+            <div class="ctrl-section-title">Secondary Color</div>
+            <div class="color-section-label">Buttons, Borders &amp; Accents</div>
             <div class="color-wheel-row">
               <canvas id="secondary-wheel" width="110" height="110"></canvas>
               <div class="color-inputs-col">
@@ -528,23 +564,23 @@ body.fire-drill-mode #label { color: #ff2200 !important; }
                   <input class="hex-input" id="secondaryHexInput" type="text" maxlength="7" placeholder="#BB001E" value="#BB001E">
                 </div>
                 <div class="hsl-sliders">
-                  <label data-i18n="sliderHue">Hue</label><input type="range" id="secondaryHue" min="0" max="360" value="348">
-                  <label data-i18n="sliderSat">Saturation</label><input type="range" id="secondarySat" min="10" max="100" value="100">
-                  <label data-i18n="sliderBright">Brightness</label><input type="range" id="secondaryLit" min="10" max="80" value="37">
+                  <label>Hue</label><input type="range" id="secondaryHue" min="0" max="360" value="348">
+                  <label>Saturation</label><input type="range" id="secondarySat" min="10" max="100" value="100">
+                  <label>Brightness</label><input type="range" id="secondaryLit" min="10" max="80" value="37">
                 </div>
               </div>
             </div>
             <div id="secondaryColorPreview" style="background:#BB001E"></div>
             <div class="action-row">
-              <button class="modal-btn primary" id="applySecondaryColor" data-i18n="applySecondaryColor">Apply Secondary</button>
-              <button class="modal-btn" id="resetSecondaryColor" data-i18n="resetSecondaryColor">Reset Secondary</button>
+              <button class="modal-btn primary" id="applySecondaryColor">Apply Secondary</button>
+              <button class="modal-btn" id="resetSecondaryColor">Reset Secondary</button>
             </div>
           </div>
 
           <div style="border-top:1px solid var(--section-border);margin:4px 0 12px;opacity:0.4;"></div>
 
           <div class="ctrl-section" id="section-bar-color">
-            <div class="ctrl-section-title" data-i18n="barColorSectionTitle">Progress Bar Color</div>
+            <div class="ctrl-section-title">Progress Bar Color</div>
             <div class="color-wheel-row">
               <canvas id="bar-wheel" width="110" height="110"></canvas>
               <div class="color-inputs-col">
@@ -553,16 +589,16 @@ body.fire-drill-mode #label { color: #ff2200 !important; }
                   <input class="hex-input" id="barHexInput" type="text" maxlength="7" placeholder="#BB001E" value="#BB001E">
                 </div>
                 <div class="hsl-sliders">
-                  <label data-i18n="sliderHue">Hue</label><input type="range" id="barHue" min="0" max="360" value="348">
-                  <label data-i18n="sliderSat">Saturation</label><input type="range" id="barSat" min="0" max="100" value="100">
-                  <label data-i18n="sliderBright">Brightness</label><input type="range" id="barLit" min="10" max="90" value="37">
+                  <label>Hue</label><input type="range" id="barHue" min="0" max="360" value="348">
+                  <label>Saturation</label><input type="range" id="barSat" min="0" max="100" value="100">
+                  <label>Brightness</label><input type="range" id="barLit" min="10" max="90" value="37">
                 </div>
               </div>
             </div>
             <div id="barColorPreview" style="background:#BB001E"></div>
             <div class="action-row">
-              <button class="modal-btn primary" id="saveBarColor" data-i18n="saveBarColor">Save Bar Color</button>
-              <button class="modal-btn" id="resetBarColor" data-i18n="resetBarColor">Reset to Default</button>
+              <button class="modal-btn primary" id="saveBarColor">Save Bar Color</button>
+              <button class="modal-btn" id="resetBarColor">Reset to Default</button>
             </div>
           </div>
         </div>
@@ -571,7 +607,7 @@ body.fire-drill-mode #label { color: #ff2200 !important; }
         <div class="subtab-pane" id="subtab-text">
 
           <div class="ctrl-section" id="section-text-color">
-            <div class="ctrl-section-title" data-i18n="textColorTitle">Text Color</div>
+            <div class="ctrl-section-title">Text Color</div>
             <div class="color-wheel-row">
               <canvas id="text-color-wheel" width="110" height="110"></canvas>
               <div class="color-inputs-col">
@@ -580,35 +616,35 @@ body.fire-drill-mode #label { color: #ff2200 !important; }
                   <input class="hex-input" id="textHexInput" type="text" maxlength="7" placeholder="#ffffff" value="#ffffff">
                 </div>
                 <div class="hsl-sliders">
-                  <label data-i18n="sliderHue">Hue</label><input type="range" id="textHue" min="0" max="360" value="0">
-                  <label data-i18n="sliderSat">Saturation</label><input type="range" id="textSat" min="0" max="100" value="0">
-                  <label data-i18n="sliderBright">Brightness</label><input type="range" id="textLit" min="0" max="100" value="100">
+                  <label>Hue</label><input type="range" id="textHue" min="0" max="360" value="0">
+                  <label>Saturation</label><input type="range" id="textSat" min="0" max="100" value="0">
+                  <label>Brightness</label><input type="range" id="textLit" min="0" max="100" value="100">
                 </div>
               </div>
             </div>
             <div id="textColorPreview" style="background:#fff"></div>
             <div class="action-row" style="margin-top:8px;">
-              <button class="modal-btn primary" id="saveTextColor" data-i18n="saveTextColor">Apply Text Color</button>
-              <button class="modal-btn" id="resetTextColor" data-i18n="resetTextColor">Reset Text Color</button>
-              <button class="modal-btn" id="autoTextColor" data-i18n="automatic">Auto</button>
+              <button class="modal-btn primary" id="saveTextColor">Apply Text Color</button>
+              <button class="modal-btn" id="resetTextColor">Reset Text Color</button>
+              <button class="modal-btn" id="autoTextColor">Auto</button>
             </div>
-            <div style="font-size:12px;color:var(--fg2);margin-top:6px;" id="textAutoNote" data-i18n="textAutoNote">Auto: picks white or black based on background brightness.</div>
+            <div style="font-size:12px;color:var(--fg2);margin-top:6px;" id="textAutoNote">Auto: picks white or black based on background brightness.</div>
           </div>
 
           <!-- TEXT SIZE SECTION -->
           <div class="ctrl-section" id="section-text-size">
-            <div class="ctrl-section-title" data-i18n="textSizeTitle">Text Size</div>
+            <div class="ctrl-section-title">Text Size</div>
             <div class="text-size-row">
               <button class="text-size-btn" id="textSizeDown" title="Decrease text size">A−</button>
               <input type="text" class="text-size-display" id="textSizeDisplay" value="100%" autocomplete="off">
               <button class="text-size-btn" id="textSizeUp" title="Increase text size">A+</button>
               <button class="text-size-reset" id="textSizeReset">Reset</button>
             </div>
-            <div class="text-size-desc" id="textSizeDesc" data-i18n="textSizeDesc">Scales all text on the countdown and menus.</div>
+            <div class="text-size-desc" id="textSizeDesc">Scales all text on the countdown and menus.</div>
           </div>
 
           <div class="ctrl-section" id="section-font">
-            <div class="ctrl-section-title" data-i18n="fontSectionTitle">Font</div>
+            <div class="ctrl-section-title">Font</div>
             <input class="font-preview-input" id="fontPreviewText" type="text" placeholder="I hate school!" value="I hate school!" maxlength="60" autocomplete="off">
             <div id="font-list"></div>
           </div>
@@ -619,38 +655,31 @@ body.fire-drill-mode #label { color: #ff2200 !important; }
       <!-- SETTINGS TAB -->
       <div class="tab-pane" id="tab-settings">
         <div class="ctrl-section">
-          <div class="ctrl-section-title" data-i18n="displaySectionTitle">Display</div>
-          <div class="toggle-row"><span class="toggle-label" data-i18n="showNext">Show next period preview</span><label class="toggle-switch"><input type="checkbox" id="tog-nextperiod" checked><span class="toggle-slider"></span></label></div>
-          <div class="toggle-row"><span class="toggle-label" data-i18n="barPulse">Progress bar pulse near end of period</span><label class="toggle-switch"><input type="checkbox" id="tog-warnpulse" checked><span class="toggle-slider"></span></label></div>
-          <div class="toggle-row"><span class="toggle-label" data-i18n="reduceMotion">Reduce Motion</span><label class="toggle-switch"><input type="checkbox" id="tog-reducemotion"><span class="toggle-slider"></span></label></div>
+          <div class="ctrl-section-title">Display</div>
+          <div class="toggle-row"><span class="toggle-label">Show next period preview</span><label class="toggle-switch"><input type="checkbox" id="tog-nextperiod" checked><span class="toggle-slider"></span></label></div>
+          <div class="toggle-row"><span class="toggle-label">Progress bar pulse near end of current period</span><label class="toggle-switch"><input type="checkbox" id="tog-warnpulse" checked><span class="toggle-slider"></span></label></div>
+          <div class="toggle-row"><span class="toggle-label">Live Tab Title</span><label class="toggle-switch"><input type="checkbox" id="tog-livetitle" checked><span class="toggle-slider"></span></label></div>
+          <div class="toggle-row"><span class="toggle-label">Reduce Motion</span><label class="toggle-switch"><input type="checkbox" id="tog-reducemotion"><span class="toggle-slider"></span></label></div>
         </div>
         <div class="ctrl-section">
-          <div class="ctrl-section-title" data-i18n="audioSectionTitle">Audio</div>
-          <div class="toggle-row"><span class="toggle-label" data-i18n="soundFX">Sound Effects</span><label class="toggle-switch"><input type="checkbox" id="tog-horn" checked><span class="toggle-slider"></span></label></div>
+          <div class="ctrl-section-title">Audio</div>
+          <div class="toggle-row"><span class="toggle-label">Sound Effects</span><label class="toggle-switch"><input type="checkbox" id="tog-horn" checked><span class="toggle-slider"></span></label></div>
         </div>
         <div class="ctrl-section">
-          <div class="ctrl-section-title" data-i18n="effectsSectionTitle">Effects</div>
-          <div class="toggle-row"><span class="toggle-label" data-i18n="endOfDay">End of Day Celebration</span><label class="toggle-switch"><input type="checkbox" id="tog-celebration" checked><span class="toggle-slider"></span></label></div>
+          <div class="ctrl-section-title">Effects</div>
+          <div class="toggle-row"><span class="toggle-label">End of Day Celebration</span><label class="toggle-switch"><input type="checkbox" id="tog-celebration" checked><span class="toggle-slider"></span></label></div>
         </div>
         <div class="ctrl-section">
-          <div class="ctrl-section-title" data-i18n="timeSyncSectionTitle">Time Sync</div>
-          <p style="font-size: 15px;color: var(--fg2);margin: 0 0 10px;line-height: 1.5;" data-i18n="syncDesc">Sync the timer with internet time to keep all devices accurate.</p>
-          <button class="modal-btn primary" id="syncTimeBtn" data-i18n="syncBtn">Sync Time Now</button>
-        </div>
-        <div class="ctrl-section">
-          <div class="ctrl-section-title" data-i18n="languageSectionTitle">Language</div>
-          <div id="lang-list">
-            <div class="lang-option active" data-lang="en"><span class="lang-flag">🇺🇸</span><span class="lang-name">English</span><span class="lang-native">English</span></div>
-            <div class="lang-option" data-lang="es"><span class="lang-flag">🇪🇸</span><span class="lang-name">Spanish</span><span class="lang-native">Español</span></div>
-            <div class="lang-option" data-lang="ru"><span class="lang-flag">🇷🇺</span><span class="lang-name">Russian</span><span class="lang-native">Русский</span></div>
-          </div>
+          <div class="ctrl-section-title">Time Sync</div>
+          <p style="font-size: 15px;color: var(--fg2);margin: 0 0 10px;line-height: 1.5;">Sync the timer with internet time to keep all devices accurate.</p>
+          <button class="modal-btn primary" id="syncTimeBtn">Sync Time Now</button>
         </div>
       </div>
 
       <!-- KEYBOARD SHORTCUTS TAB -->
       <div class="tab-pane" id="tab-keyboard">
         <div class="ctrl-section">
-          <div class="ctrl-section-title" data-i18n="keyboardTabTitle">Keyboard Shortcuts</div>
+          <div class="ctrl-section-title">Keyboard Shortcuts</div>
           <div id="keyboard-binds-container" style="display: flex; flex-direction: column; gap: 4px;"></div>
           <button class="modal-btn danger" id="reset-keybinds-btn" style="margin-top: 14px;">Reset to Defaults</button>
         </div>
@@ -659,11 +688,11 @@ body.fire-drill-mode #label { color: #ff2200 !important; }
       <!-- EASTER EGGS TAB -->
       <div class="tab-pane" id="tab-easter">
         <div class="ctrl-section">
-          <div class="ctrl-section-title" data-i18n="activeEggsTitle">Currently Active</div>
-          <div id="active-eggs-list"><p style="font-size: 16px;color: var(--fg2);margin: 0;" data-i18n="noEggs">No Easter Eggs active.</p></div>
+          <div class="ctrl-section-title">Currently Active</div>
+          <div id="active-eggs-list"><p style="font-size: 16px;color: var(--fg2);margin: 0;">No Easter Eggs active. Use the buttons below or type "/" then a code.</p></div>
         </div>
         <div class="ctrl-section" id="quick-activate-section">
-          <div class="ctrl-section-title" data-i18n="quickActivateTitle">Quick Activate</div>
+          <div class="ctrl-section-title">Quick Activate</div>
           <div class="pill-grid" id="egg-pills">
             <button class="pill" data-egg="party" id="egg-pill-party">PARTY</button>
             <button class="pill" data-egg="ghost" id="egg-pill-ghost">GHOST</button>
@@ -676,65 +705,56 @@ body.fire-drill-mode #label { color: #ff2200 !important; }
           </div>
         </div>
         <div class="ctrl-section">
-          <div class="ctrl-section-title" data-i18n="keyboardCodesTitle">Keyboard Codes — type "/" then a code</div>
-          <div class="code-row"><span class="kbd">/PARTY</span><span class="code-desc" data-i18n="eggDescParty">Start celebration mode early</span></div>
-          <div class="code-row"><span class="kbd">/GHOST</span><span class="code-desc" data-i18n="eggDescGhost">Floating ghost + fade</span></div>
-          <div class="code-row"><span class="kbd">/RAIN</span><span class="code-desc" data-i18n="eggDescRain">Emoji rain</span></div>
-          <div class="code-row"><span class="kbd">/FLIP</span><span class="code-desc" data-i18n="eggDescFlip">Turn the world upside down</span></div>
-          <div class="code-row"><span class="kbd">/BIG-CLOCK</span><span class="code-desc" data-i18n="eggDescBig">Giant clock mode</span></div>
-          <div class="code-row"><span class="kbd">/RAINBOW</span><span class="code-desc" data-i18n="eggDescRainbow">Rainbow everything</span></div>
-          <div class="code-row"><span class="kbd">/FLASH</span><span class="code-desc" data-i18n="eggDescFlash">Lightning storm</span></div>
-          <div class="code-row"><span class="kbd">/FIRE-DRILL</span><span class="code-desc" data-i18n="eggDescFiredrill">Fire drill mode</span></div>
+          <div class="ctrl-section-title">Keyboard Codes — type "/" then a code</div>
+          <div class="code-row"><span class="kbd">/PARTY</span><span class="code-desc">Start celebration mode early</span></div>
+          <div class="code-row"><span class="kbd">/GHOST</span><span class="code-desc">Floating ghost + fade</span></div>
+          <div class="code-row"><span class="kbd">/RAIN</span><span class="code-desc">Emoji rain</span></div>
+          <div class="code-row"><span class="kbd">/FLIP</span><span class="code-desc">Turn the world upside down</span></div>
+          <div class="code-row"><span class="kbd">/BIG-CLOCK</span><span class="code-desc">Giant clock mode</span></div>
+          <div class="code-row"><span class="kbd">/RAINBOW</span><span class="code-desc">Rainbow everything</span></div>
+          <div class="code-row"><span class="kbd">/FLASH</span><span class="code-desc">Lightning storm</span></div>
+          <div class="code-row"><span class="kbd">/FIRE-DRILL</span><span class="code-desc">Fire drill mode</span></div>
         </div>
         <div class="ctrl-section">
-          <div class="ctrl-section-title" data-i18n="resetSectionTitle">Reset</div>
-          <button class="modal-btn danger" id="resetAllEggs" data-i18n="deactivateAll">Deactivate All Easter Eggs</button>
-        </div>
-      </div>
-
-      <!-- CUSTOMIZATION KEY TAB -->
-      <div class="tab-pane" id="tab-custkey">
-        <div class="ctrl-section">
-          <div class="ctrl-section-title" data-i18n="custKeyTitle">Customization Key</div>
-          <div class="unavailable-section">
-            <div class="unavailable-icon">🔑</div>
-            <div class="unavailable-title" data-i18n="custKeyUnavailableTitle">Customization Key</div>
-            <div class="unavailable-desc" data-i18n="custKeyUnavailableDesc">
-              Generate a shareable key that encodes all your customization settings — theme, colors, font, and more — so you can restore or share your setup instantly.
-            </div>
-            <div class="unavailable-badge">
-              <div class="unavailable-badge-dot"></div>
-              <span data-i18n="featureUnavailable">This feature is not available yet</span>
-            </div>
-            <div style="font-size:13px;color:var(--fg2);margin-top:8px;" data-i18n="comingSoon">Coming in a future update.</div>
-          </div>
+          <div class="ctrl-section-title">Reset</div>
+          <button class="modal-btn danger" id="resetAllEggs">Deactivate All Easter Eggs</button>
         </div>
       </div>
 
       <!-- CONSOLE TAB -->
       <div class="tab-pane" id="tab-console">
         <div class="ctrl-section">
-          <div class="ctrl-section-title" data-i18n="testDTTitle">Test Date / Time Override</div>
-          <div class="test-dt-desc" data-i18n="testDTDesc">Set a specific date and time to preview the countdown at that moment. Leave blank to use real time.</div>
+          <div class="ctrl-section-title">Test Date / Time Override</div>
+          <div class="test-dt-desc">Set a specific date and time to preview the countdown at that moment. Leave blank to use real time.</div>
           <div class="test-dt-row">
             <input class="test-dt-input" id="testDateInput" type="text" placeholder="MM/DD/YYYY HH:MM:SS AM" maxlength="22" autocomplete="off" spellcheck="false">
-            <button class="console-btn primary" id="applyTestDate" data-i18n="applyBtn">Apply</button>
-            <button class="console-btn danger" id="clearTestDate" data-i18n="clearBtn">Clear</button>
+            <button class="console-btn primary" id="applyTestDate">Apply</button>
+            <button class="console-btn danger" id="clearTestDate">Clear</button>
           </div>
           <div id="testDateBadge" class="test-dt-badge">
             <div class="dot"></div>
-            <span id="testDateBadgeText" data-i18n="usingRealTime">Using real time</span>
+            <span id="testDateBadgeText">Using real time</span>
           </div>
         </div>
         <div class="ctrl-section">
-          <div class="ctrl-section-title" data-i18n="debugConsoleTitle">Debug Console</div>
+          <div class="ctrl-section-title">Debug Console</div>
           <div id="console-log"></div>
           <div class="console-controls">
-            <button class="console-btn danger" id="clearConsole" data-i18n="consoleClear">Clear</button>
-            <button class="console-btn" id="toggleLogging" data-i18n="consolePause">Pause</button>
-            <button class="console-btn" id="exportConsole" data-i18n="consoleExport">Export</button>
-            <button class="console-btn" id="scrollBottomConsole" data-i18n="consoleLatest">↓ Latest</button>
+            <button class="console-btn danger" id="clearConsole">Clear</button>
+            <button class="console-btn" id="toggleLogging">Pause</button>
+            <button class="console-btn" id="exportConsole">Export</button>
+            <button class="console-btn" id="scrollBottomConsole">↓ Latest</button>
           </div>
+        </div>
+      </div>
+      
+      <!-- ACCOUNTS TAB -->
+      <div class="tab-pane" id="tab-accounts">
+        <div class="account-profile">
+          <img id="account-avatar-img" src="" class="account-avatar" onerror="this.style.display='none'" alt="Avatar">
+          <div id="account-display-name" class="account-name"></div>
+          <div id="account-username-text" class="account-username"></div>
+          <button class="modal-btn primary" onclick="window.location.href='/accounts'">Manage Account</button>
         </div>
       </div>
 
@@ -746,15 +766,15 @@ body.fire-drill-mode #label { color: #ff2200 !important; }
   <div id="scheduleCard">
     <div id="scheduleCard-header">
       <div id="scheduleCard-title">Today's Schedule</div>
-      <button id="scheduleCard-close">✕</button>
+      <button id="scheduleCard-close">
+        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
     </div>
     <div id="scheduleCard-body"></div>
   </div>
-</div>
-
-<div id="font-warning-popup">
-  <p id="font-warning-text">Some fonts may not display correctly for this language.</p>
-  <button id="close-font-warning">OK</button>
 </div>
 
 <canvas id="fireworks"></canvas>
@@ -773,7 +793,7 @@ const GATE_PASSCODE = "IDCABOUTBSMSWEB";
 const FEATURE_SPLASH_TITLE_ANIMATION = false;
 const SHIMMER_SPEED_MS = 1000;
 
-const FEATURE_EGG_PARTY    = false;
+const FEATURE_EGG_PARTY    = true;
 const FEATURE_EGG_GHOST    = true;
 const FEATURE_EGG_RAIN     = true;
 const FEATURE_EGG_FLIP     = true;
@@ -783,7 +803,6 @@ const FEATURE_EGG_FLASH    = true;
 const FEATURE_EGG_FIREDRILL = true;
 
 const FEATURE_QUICK_ACTIVATE = true;
-const FEATURE_CUSTKEY_TAB   = false;
 const FEATURE_KEYBOARD_TAB  = true;
 const FEATURE_KEYBOARD_SHORTCUTS = true;
 const FEATURE_TEXT_SIZE = true;
@@ -791,6 +810,8 @@ const FEATURE_HELP_BUTTON = false;
 
 const LOADING_SCREEN_MS = 5000;
 const RESTART_SCREEN_MS = 4000;
+
+let GRADE = null;
 
 // ============================================================
 // KEYBOARD SHORTCUTS ENGINE
@@ -802,8 +823,7 @@ const defaultKeybinds = {
   keyboardTab: 'k',
   schedule: 's',
   easterEggs: 'e',
-  restart: 'delete',
-  custKey: 'c'
+  restart: 'delete'
 };
 let keybinds = {...defaultKeybinds};
 let listeningForKeybind = null;
@@ -815,8 +835,7 @@ const keybindLabels = {
   keyboardTab: "Open Keyboard Shortcuts tab",
   schedule: "Open Schedule panel",
   easterEggs: "Open Easter Eggs tab",
-  restart: "Restart",
-  custKey: "Open Customization Key tab"
+  restart: "Restart"
 };
 
 function renderKeybinds() {
@@ -872,22 +891,24 @@ function applyTextSize(scale) {
   const pct = Math.round(currentTextScale * 100);
   const disp = document.getElementById('textSizeDisplay');
   if (disp) disp.value = pct + '%';
-  saveConfig();
   logToConsole('Text size changed to ' + pct + '%', 'action');
 }
 
 function resetTextSize() {
   applyTextSize(TEXT_SIZE_DEFAULT);
-  showToast('Text size reset to 100%');
+  saveConfig();
+  showToast("Text size reset to 100%");
 }
 
 if (FEATURE_TEXT_SIZE) {
   document.getElementById('textSizeUp').addEventListener('click', () => {
     applyTextSize(currentTextScale + TEXT_SIZE_STEP);
+    saveConfig();
     showToast('Text size: ' + Math.round(currentTextScale * 100) + '%');
   });
   document.getElementById('textSizeDown').addEventListener('click', () => {
     applyTextSize(currentTextScale - TEXT_SIZE_STEP);
+    saveConfig();
     showToast('Text size: ' + Math.round(currentTextScale * 100) + '%');
   });
   document.getElementById('textSizeReset').addEventListener('click', resetTextSize);
@@ -899,6 +920,7 @@ if (FEATURE_TEXT_SIZE) {
       let parsed = parseFloat(val);
       if (!isNaN(parsed) && parsed > 0) {
         applyTextSize(parsed / 100);
+        saveConfig();
         showToast('Text size: ' + Math.round(parsed) + '%');
       } else {
         e.target.value = Math.round(currentTextScale * 100) + '%';
@@ -908,17 +930,68 @@ if (FEATURE_TEXT_SIZE) {
 }
 
 // ============================================================
+// BOOT & ROUTING LOGIC
+// ============================================================
+function checkRouting() {
+  const hash = window.location.hash.replace('#', '');
+  if (['6', '7', '8'].includes(hash)) {
+    GRADE = parseInt(hash);
+    document.getElementById('grade-selection-screen').classList.add('hidden');
+    
+    if(!testStartFake){
+      (async()=>{
+        const ok=await fetchSyncedTime();
+        syncedOffsetMs=ok?syncedOffsetMs:0;
+        lastPeriod=""; updateLabel(); updateBar();
+        if(ok) logToConsole("Time synced on load. Offset: "+syncedOffsetMs+"ms","info");
+        else logToConsole("Time sync failed — using local time","warn");
+      })();
+    }
+    checkCelebration();
+    initGate();
+  } else {
+    GRADE = null;
+    document.getElementById('grade-selection-screen').classList.remove('hidden');
+    document.getElementById('splash-screen').classList.add('hidden');
+    document.getElementById('permission-gate').classList.add('hidden');
+    updateDocumentTitle(null);
+  }
+}
+
+document.querySelectorAll('.grade-card').forEach(card => {
+  card.addEventListener('click', () => {
+    window.location.hash = card.dataset.grade;
+  });
+});
+
+window.addEventListener('hashchange', () => {
+  const newHash = window.location.hash.replace('#', '');
+  if (['6', '7', '8'].includes(newHash)) {
+    if (GRADE === null) {
+      checkRouting();
+    } else if (GRADE !== parseInt(newHash)) {
+      window.location.reload(); 
+    }
+  } else {
+    if (GRADE !== null) {
+      window.location.reload(); 
+    }
+  }
+});
+
+// ============================================================
 // PERMISSION GATE LOGIC
 // ============================================================
-(function initGate() {
+function initGate() {
   const gate = document.getElementById('permission-gate');
   if (!FEATURE_PERMISSION_GATE) {
     gate.classList.add('hidden');
+    initSplash();
     return;
   }
   document.getElementById('splash-screen').classList.add('hidden');
   gate.classList.remove('hidden');
-})();
+}
 
 function checkGateCode() {
   const inp = document.getElementById('gate-code-input');
@@ -930,8 +1003,7 @@ function checkGateCode() {
     logToConsole('Permission gate passed — access granted', 'info');
     setTimeout(() => {
       gate.classList.add('hidden');
-      document.getElementById('splash-screen').classList.remove('hidden');
-      startSplash();
+      initSplash();
     }, 550);
   } else {
     err.classList.add('show');
@@ -957,8 +1029,6 @@ function checkGateCode() {
   if (qa && !FEATURE_QUICK_ACTIVATE) qa.style.display = 'none';
   const kbTab = document.getElementById('tab-btn-keyboard');
   if (kbTab && !FEATURE_KEYBOARD_TAB) kbTab.style.display = 'none';
-  const ckTab = document.getElementById('tab-btn-custkey');
-  if (ckTab && !FEATURE_CUSTKEY_TAB) ckTab.style.display = 'none';
 
   const tsSection = document.getElementById('section-text-size');
   if (tsSection) tsSection.style.display = FEATURE_TEXT_SIZE ? 'block' : 'none';
@@ -970,7 +1040,7 @@ function checkGateCode() {
 })();
 
 // ============================================================
-// SPLASH SCREEN & RESTORE PROMPT
+// SPLASH SCREEN
 // ============================================================
 const SPLASH_ASSETS = ["color-picker-ui","font-loader","theme-engine","schedule-parser","audio-context","fireworks-engine"].sort(() => Math.random() - 0.5);
 let pendingConfig = null;
@@ -992,37 +1062,7 @@ function buildDotLoader(containerId, count = 10) {
   }
 }
 
-function isConfigDefault(conf) {
-  if (!conf) return true;
-  if (conf.language && conf.language !== "en") return false;
-  if (conf.settings) {
-    if (conf.settings.nextPeriod === false) return false;
-    if (conf.settings.warnPulse === false) return false;
-    if (conf.settings.horn === false) return false;
-    if (conf.settings.celebration === false) return false;
-    if (conf.settings.reduceMotion === true) return false;
-  }
-  if (conf.keybinds) {
-    for (let k in defaultKeybinds) {
-      if (conf.keybinds[k] !== defaultKeybinds[k]) return false;
-    }
-  }
-  if (conf.currentTextScale && conf.currentTextScale !== 1.0) return false;
-  if (conf.currentFont && conf.currentFont !== "Patrick Hand") return false;
-  if (conf.periodNames && Object.keys(conf.periodNames).length > 0) return false;
-  if (conf.primaryHex && conf.primaryHex.toUpperCase() !== "#000000") return false;
-  if (conf.secondaryHex && conf.secondaryHex.toUpperCase() !== "#BB001E") return false;
-  if (conf.barColorHex && conf.barColorHex.toUpperCase() !== "#BB001E") return false;
-  if (conf.textColorHex && conf.textColorHex.toUpperCase() !== "#FFFFFF") return false;
-  if (conf.useAutoText === false) return false;
-  if (conf.themeClass) return false;
-  if (conf.isCustom) return false;
-  
-  return true;
-}
-
 function startSplash() {
-  buildDotLoader("splash-dot-loader", 10);
   const splash = document.getElementById("splash-screen");
   setTimeout(() => {
     splash.style.background = 'transparent';
@@ -1031,371 +1071,51 @@ function startSplash() {
     setTimeout(() => { 
       splash.classList.add("hidden"); 
       splash.style.background = ''; 
-      if (pendingConfig && !isConfigDefault(pendingConfig)) {
-         showRestorePrompt();
-      } else {
-         saveConfig();
-      }
     }, 580);
   }, 1200);
 }
 
-function showRestorePrompt() {
-  document.getElementById('restore-prompt').classList.add('show');
-  logToConsole('Restore prompt shown', 'info');
-}
-
-document.getElementById('restore-yes').addEventListener('click', () => {
-  document.getElementById('restore-prompt').classList.remove('show');
-  if (pendingConfig) {
-    applySavedConfig(pendingConfig);
-    showToast(t("restoredMsg") || "Preferences restored!");
-    logToConsole('User restored previous customizations', 'action');
-  }
-});
-
-document.getElementById('restore-no').addEventListener('click', () => {
-  document.getElementById('restore-prompt').classList.remove('show');
-  saveConfig();
-  showToast(t("defaultsMsg") || "Using default settings.");
-  logToConsole('User declined restore, using defaults', 'action');
-});
-
-(function initSplash() {
+function initSplash() {
+  document.getElementById('splash-screen').classList.remove('hidden');
   buildDotLoader("splash-dot-loader", 10);
   buildDotLoader("restart-dot-loader", 10);
-  if (!FEATURE_PERMISSION_GATE) startSplash();
-})();
-
-// ============================================================
-// TRANSLATIONS
-// ============================================================
-const LANGS = {
-  en: {
-    controls: "Controls", appearance: "Appearance", settings: "Settings", easterEggs: "Easter Eggs", console: "Console",
-    theme: "Theme", text: "Text",
-    saveBarColor: "Save Bar Color", resetBarColor: "Reset to Default",
-    saveTextColor: "Apply Text Color", resetTextColor: "Reset Text Color",
-    applyPrimaryColor: "Apply Primary", resetPrimaryColor: "Reset Primary",
-    applySecondaryColor: "Apply Secondary", resetSecondaryColor: "Reset Secondary",
-    dark: "Dark", light: "Light",
-    resyncing: "Resyncing…", synced: "Time synced.", syncFail: "Sync failed.",
-    barSaved: "Bar color saved.", barReset: "Bar color reset.",
-    textSaved: "Text color applied.", textReset: "Text color reset.",
-    primaryApplied: "Primary color applied!", primaryReset: "Primary color reset.",
-    secondaryApplied: "Secondary color applied!", secondaryReset: "Secondary color reset.",
-    allEggsOff: "All eggs deactivated.", deactivate: "Deactivate",
-    noEggs: "No Easter Eggs active. Use the buttons below or type \"/\" then a code.",
-    today: "Today's Schedule", weekend: "No school today — enjoy your weekend!",
-    next: "Next", schoolStartsIn: "School starts in", afterSchool: "School has ended.",
-    fontChanged: "Font changed to", themeApplied: "Theme applied.", 
-    fontPreviewDefault: "I hate school!",
-    classChange: "Class Change",
-    syncDesc: "Sync the timer with internet time to keep all devices accurate.",
-    syncBtn: "Sync Time Now",
-    showNext: "Show next period preview", barPulse: "Progress bar pulse near end of current period",
-    reduceMotion: "Reduce Motion", soundFX: "Sound Effects", endOfDay: "End of Day Celebration",
-    language: "Language",
-    themeSectionTitle: "Theme Presets",
-    fontSectionTitle: "Font",
-    barColorSectionTitle: "Progress Bar Color",
-    primaryColorTitle: "Primary Color",
-    primaryColorDesc: "Background & Menus",
-    secondaryColorTitle: "Secondary Color",
-    secondaryColorDesc: "Buttons, Borders & Accents",
-    textColorTitle: "Text Color",
-    textAutoNote: "Auto: picks white or black based on background brightness.",
-    displaySectionTitle: "Display",
-    audioSectionTitle: "Audio",
-    effectsSectionTitle: "Effects",
-    timeSyncSectionTitle: "Time Sync",
-    languageSectionTitle: "Language",
-    activeEggsTitle: "Currently Active",
-    quickActivateTitle: "Quick Activate",
-    keyboardCodesTitle: "Keyboard Codes — type \"/\" then a code",
-    resetSectionTitle: "Reset",
-    deactivateAll: "Deactivate All Easter Eggs",
-    testDTTitle: "Test Date / Time Override",
-    testDTDesc: "Set a specific date and time to preview the countdown at that moment. Leave blank to use real time.",
-    applyBtn: "Apply", clearBtn: "Clear",
-    usingRealTime: "Using real time",
-    debugConsoleTitle: "Debug Console",
-    consoleClear: "Clear", consolePause: "Pause", consoleResume: "Resume",
-    consoleExport: "Export", consoleLatest: "↓ Latest",
-    sliderHue: "Hue", sliderSat: "Saturation", sliderBright: "Brightness",
-    automatic: "Auto",
-    eggDescParty: "Start celebration mode early",
-    eggDescGhost: "Floating ghost + fade",
-    eggDescRain: "Emoji rain",
-    eggDescFlip: "Turn the world upside down",
-    eggDescBig: "Giant clock mode",
-    eggDescRainbow: "Rainbow everything",
-    eggDescFlash: "Lightning storm",
-    eggDescFiredrill: "Fire drill mode",
-    eggNameParty: "PARTY", eggNameGhost: "GHOST", eggNameRain: "RAIN", eggNameFlip: "FLIP",
-    eggNameBig: "BIG-CLOCK", eggNameRainbow: "RAINBOW", eggNameFlash: "FLASH", eggNameFiredrill: "FIRE-DRILL",
-    period1: "1st Period", period2: "2nd Period", period3: "3rd Period", period4: "4th Period",
-    period5: "5th Period", period6: "6th Period", period7: "7th Period",
-    lunch: "Lunch",
-    restartTitle: "Restart everything?",
-    restartDesc: "This will reset all settings — theme, font, colors, language, and easter eggs — back to defaults.",
-    restartCancel: "Cancel", restartProceed: "Yes, Restart",
-    fontWarningText: "Some fonts may not display correctly for this language.",
-    fontWarningOk: "OK",
-    panelTitle: "Controls", restartBtn: "Restart",
-    resyncText: "Resyncing...",
-    testTimeSet: "Test time set!", usingRealTimeToast: "Using real time.", clearTestFirst: "Clear test time first to sync.", enterDateFirst: "Enter a date/time first.", invalidFormat: "Invalid format. Use MM/DD/YYYY HH:MM:SS AM/PM",
-    partyOn: "Party mode!", partyOff: "Party stopped.",
-    ghostOn: "Ghost mode on.", ghostOff: "Ghost mode off.",
-    rainOn: "Emoji rain!", rainOff: "Rain stopped.",
-    flipOn: "Upside down!", flipOff: "Right-side up.",
-    bigOn: "Big clock!", bigOff: "Normal clock.",
-    rainbowOn: "Rainbow mode!", rainbowOff: "Rainbow off.",
-    flashOn: "Lightning storm!", flashOff: "Storm passed.",
-    fireDrillOn: "FIRE DRILL!", fireDrillOff: "Fire drill ended.",
-    keyboardTabTitle: "Keyboard Shortcuts",
-    keyboardUnavailableTitle: "Keyboard Shortcuts",
-    keyboardUnavailableDesc: "Configure custom keyboard shortcuts to control the countdown, activate easter eggs, and navigate menus.",
-    featureUnavailable: "This feature is not available yet",
-    comingSoon: "Coming in a future update.",
-    custKeyTitle: "Customization Key",
-    custKeyUnavailableTitle: "Customization Key",
-    custKeyUnavailableDesc: "Generate a shareable key that encodes all your customization settings — theme, colors, font, and more — so you can restore or share your setup instantly.",
-    gateSubtitle: "It appears that this countdown was shared without permission. If this is a mistake, enter the access code below.",
-    gateCodeLabel: "Access Code",
-    gateError: "Incorrect code. Try again.",
-    gateBypassHint: "Contact BSMS Countdown for access.",
-    gateSubmitBtn: "Enter",
-    textSizeTitle: "Text Size",
-    textSizeDesc: "Scales all text on the countdown and menus.",
-    clickToRename: "Click any period name to rename it.",
-    restorePromptText: "Would you like to restore your previous customizations? (BETA)",
-    yes: "Yes", no: "No", restoredMsg: "Preferences restored!", defaultsMsg: "Using default settings."
-  },
-  es: {
-    controls: "Controles", appearance: "Apariencia", settings: "Ajustes", easterEggs: "Huevos de Pascua", console: "Consola",
-    theme: "Tema", text: "Texto",
-    saveBarColor: "Guardar Color de Barra", resetBarColor: "Restablecer",
-    saveTextColor: "Aplicar Color de Texto", resetTextColor: "Restablecer Texto",
-    applyPrimaryColor: "Aplicar Primario", resetPrimaryColor: "Restablecer Primario",
-    applySecondaryColor: "Aplicar Secundario", resetSecondaryColor: "Restablecer Secundario",
-    dark: "Oscuro", light: "Claro",
-    resyncing: "Sincronizando…", synced: "Hora sincronizada.", syncFail: "Fallo de sincronización.",
-    barSaved: "Color guardado.", barReset: "Color restablecido.",
-    textSaved: "Color de texto aplicado.", textReset: "Color de texto restablecido.",
-    primaryApplied: "¡Color primario aplicado!", primaryReset: "Color primario restablecido.",
-    secondaryApplied: "¡Color secundario aplicado!", secondaryReset: "Color secundario restablecido.",
-    allEggsOff: "Todos los huevos desactivados.", deactivate: "Desactivar",
-    noEggs: "Sin Easter Eggs activos. Usa los botones o escribe \"/\" y un código.",
-    today: "Horario de Hoy", weekend: "Sin escuela hoy — ¡disfruta tu fin de semana!",
-    next: "Siguiente", schoolStartsIn: "La escuela empieza en", afterSchool: "La escuela ha terminado.",
-    fontChanged: "Fuente cambiada a", themeApplied: "Tema aplicado.", 
-    fontPreviewDefault: "¡Odio la escuela!",
-    classChange: "Cambio de Clase",
-    syncDesc: "Sincroniza el temporizador con la hora de internet.",
-    syncBtn: "Sincronizar Ahora",
-    showNext: "Mostrar vista previa del siguiente período", barPulse: "Pulso de barra al final del período",
-    reduceMotion: "Reducir Movimiento", soundFX: "Efectos de sonido", endOfDay: "Celebración de fin de día",
-    language: "Idioma",
-    themeSectionTitle: "Temas Predefinidos",
-    fontSectionTitle: "Fuente",
-    barColorSectionTitle: "Color de la Barra",
-    primaryColorTitle: "Color Primario",
-    primaryColorDesc: "Fondo y Menús",
-    secondaryColorTitle: "Color Secundario",
-    secondaryColorDesc: "Botones, Bordes y Acentos",
-    textColorTitle: "Color del Texto",
-    textAutoNote: "Auto: elige blanco o negro según el brillo del fondo.",
-    displaySectionTitle: "Pantalla",
-    audioSectionTitle: "Audio",
-    effectsSectionTitle: "Efectos",
-    timeSyncSectionTitle: "Sincronización",
-    languageSectionTitle: "Idioma",
-    activeEggsTitle: "Actualmente Activos",
-    quickActivateTitle: "Activar Rápido",
-    keyboardCodesTitle: "Códigos de Teclado — escribe \"/\" y un código",
-    resetSectionTitle: "Restablecer",
-    deactivateAll: "Desactivar Todos los Huevos",
-    testDTTitle: "Prueba de Fecha / Hora",
-    testDTDesc: "Establece una fecha y hora específicas para previsualizar. Deja en blanco para hora real.",
-    applyBtn: "Aplicar", clearBtn: "Borrar",
-    usingRealTime: "Usando hora real",
-    debugConsoleTitle: "Consola de Depuración",
-    consoleClear: "Borrar", consolePause: "Pausar", consoleResume: "Reanudar",
-    consoleExport: "Exportar", consoleLatest: "↓ Último",
-    sliderHue: "Tono", sliderSat: "Saturación", sliderBright: "Brillo",
-    automatic: "Auto",
-    eggDescParty: "Iniciar modo celebración",
-    eggDescGhost: "Fantasma flotante + desvanecimiento",
-    eggDescRain: "Lluvia de emojis",
-    eggDescFlip: "Dar vuelta al mundo",
-    eggDescBig: "Modo reloj gigante",
-    eggDescRainbow: "Arco iris en todo",
-    eggDescFlash: "Tormenta eléctrica",
-    eggDescFiredrill: "Modo simulacro de incendio",
-    eggNameParty: "FIESTA", eggNameGhost: "FANTASMA", eggNameRain: "LLUVIA", eggNameFlip: "VOLTEAR",
-    eggNameBig: "RELOJ-GRANDE", eggNameRainbow: "ARCOÍRIS", eggNameFlash: "RAYO", eggNameFiredrill: "SIMULACRO",
-    period1: "1er Período", period2: "2do Período", period3: "3er Período", period4: "4to Período",
-    period5: "5to Período", period6: "6to Período", period7: "7mo Período",
-    lunch: "Almuerzo",
-    restartTitle: "¿Reiniciar todo?",
-    restartDesc: "Esto restablecerá todos los ajustes a los valores predeterminados.",
-    restartCancel: "Cancelar", restartProceed: "Sí, Reiniciar",
-    fontWarningText: "Algunos tipos de letra pueden no mostrarse correctamente en este idioma.",
-    fontWarningOk: "Entendido",
-    panelTitle: "Controles", restartBtn: "Reiniciar",
-    resyncText: "Sincronizando...",
-    testTimeSet: "¡Hora de prueba establecida!", usingRealTimeToast: "Usando hora real.", clearTestFirst: "Borra la hora de prueba primero.", enterDateFirst: "Ingresa fecha/hora primero.", invalidFormat: "Formato inválido. Usa MM/DD/AAAA HH:MM:SS AM/PM",
-    partyOn: "¡Modo fiesta!", partyOff: "Fiesta detenida.",
-    ghostOn: "Modo fantasma activado.", ghostOff: "Modo fantasma desactivado.",
-    rainOn: "¡Lluvia de emojis!", rainOff: "Lluvia detenida.",
-    flipOn: "¡Al revés!", flipOff: "De vuelta al derecho.",
-    bigOn: "¡Reloj grande!", bigOff: "Reloj normal.",
-    rainbowOn: "¡Modo arcoíris!", rainbowOff: "Arcoíris desactivado.",
-    flashOn: "¡Tormenta eléctrica!", flashOff: "Tormenta pasó.",
-    fireDrillOn: "¡SIMULACRO DE INCENDIO!", fireDrillOff: "Simulacro terminado.",
-    keyboardTabTitle: "Atajos de Teclado",
-    keyboardUnavailableTitle: "Atajos de Teclado",
-    keyboardUnavailableDesc: "Configura atajos de teclado personalizados para controlar el contador.",
-    featureUnavailable: "Esta función no está disponible aún",
-    comingSoon: "Próximamente en una actualización futura.",
-    custKeyTitle: "Clave de Personalización",
-    custKeyUnavailableTitle: "Clave de Personalización",
-    custKeyUnavailableDesc: "Genera una clave compartible que codifica todos tus ajustes de personalización.",
-    gateSubtitle: "Necesitas permiso para acceder a esta página. Ingresa el código de acceso.",
-    gateCodeLabel: "Código de Acceso",
-    gateError: "Código incorrecto. Inténtalo de nuevo.",
-    gateBypassHint: "Contacta a tu administrador para acceder.",
-    gateSubmitBtn: "Entrar",
-    textSizeTitle: "Tamaño de Texto",
-    textSizeDesc: "Escala todo el texto del contador y menús.",
-    clickToRename: "Haz clic en cualquier período para renombrarlo.",
-    restorePromptText: "¿Deseas restaurar tus personalizaciones anteriores?",
-    yes: "Sí", no: "No", restoredMsg: "¡Preferencias restauradas!", defaultsMsg: "Usando configuración predeterminada."
-  },
-  ru: {
-    controls: "Настройки", appearance: "Внешний вид", settings: "Параметры", easterEggs: "Пасхалки", console: "Консоль",
-    theme: "Тема", text: "Текст",
-    saveBarColor: "Сохранить цвет полосы", resetBarColor: "Сбросить",
-    saveTextColor: "Применить цвет текста", resetTextColor: "Сбросить текст",
-    applyPrimaryColor: "Применить основной", resetPrimaryColor: "Сбросить основной",
-    applySecondaryColor: "Применить вторичный", resetSecondaryColor: "Сбросить вторичный",
-    dark: "Тёмная", light: "Светлая",
-    resyncing: "Синхронизация…", synced: "Время синхронизировано.", syncFail: "Ошибка синхронизации.",
-    barSaved: "Цвет сохранён.", barReset: "Цвет сброшен.",
-    textSaved: "Цвет текста применён.", textReset: "Цвет текста сброшен.",
-    primaryApplied: "Основной цвет применён!", primaryReset: "Основной цвет сброшен.",
-    secondaryApplied: "Вторичный цвет применён!", secondaryReset: "Вторичный цвет сброшен.",
-    allEggsOff: "Все пасхалки деактивированы.", deactivate: "Отключить",
-    noEggs: "Пасхалки не активны. Нажмите \"/\" и введите код.",
-    today: "Расписание", weekend: "Сегодня нет уроков — хороших выходных!",
-    next: "Далее", schoolStartsIn: "Школа начнётся через", afterSchool: "Школа закончилась.",
-    fontChanged: "Шрифт изменён на", themeApplied: "Тема применена.", 
-    fontPreviewDefault: "Ненавижу школу!",
-    classChange: "Смена класса",
-    syncDesc: "Синхронизировать таймер с интернет-временем.",
-    syncBtn: "Синхронизировать",
-    showNext: "Показать следующий период", barPulse: "Пульс полосы в конце периода",
-    reduceMotion: "Уменьшить движение", soundFX: "Звуковые эффекты", endOfDay: "Праздник конца дня",
-    language: "Язык",
-    themeSectionTitle: "Готовые темы",
-    fontSectionTitle: "Шрифт",
-    barColorSectionTitle: "Цвет полосы",
-    primaryColorTitle: "Основной цвет",
-    primaryColorDesc: "Фон и меню",
-    secondaryColorTitle: "Вторичный цвет",
-    secondaryColorDesc: "Кнопки, границы и акценты",
-    textColorTitle: "Цвет текста",
-    textAutoNote: "Авто: выбирает белый или чёрный в зависимости от яркости фона.",
-    displaySectionTitle: "Дисплей",
-    audioSectionTitle: "Звук",
-    effectsSectionTitle: "Эффекты",
-    timeSyncSectionTitle: "Синхронизация",
-    languageSectionTitle: "Язык",
-    activeEggsTitle: "Активные пасхалки",
-    quickActivateTitle: "Быстрая активация",
-    keyboardCodesTitle: "Коды клавиатуры — нажмите \"/\" затем код",
-    resetSectionTitle: "Сброс",
-    deactivateAll: "Деактивировать все пасхалки",
-    testDTTitle: "Тест даты / времени",
-    testDTDesc: "Установите дату и время для предпросмотра. Оставьте пустым для реального времени.",
-    applyBtn: "Применить", clearBtn: "Очистить",
-    usingRealTime: "Реальное время",
-    debugConsoleTitle: "Консоль отладки",
-    consoleClear: "Очистить", consolePause: "Пауза", consoleResume: "Возобновить",
-    consoleExport: "Экспорт", consoleLatest: "↓ Последнее",
-    sliderHue: "Оттенок", sliderSat: "Насыщенность", sliderBright: "Яркость",
-    automatic: "Авто",
-    eggDescParty: "Режим праздника",
-    eggDescGhost: "Летающий призрак + затухание",
-    eggDescRain: "Дождь из эмодзи",
-    eggDescFlip: "Перевернуть мир вверх ногами",
-    eggDescBig: "Режим гигантских часов",
-    eggDescRainbow: "Радуга везде",
-    eggDescFlash: "Гроза",
-    eggDescFiredrill: "Режим пожарной тревоги",
-    eggNameParty: "ВЕЧЕРИНКА", eggNameGhost: "ПРИЗРАК", eggNameRain: "ДОЖДЬ", eggNameFlip: "ПЕРЕВОРОТ",
-    eggNameBig: "БОЛЬШИЕ-ЧАСЫ", eggNameRainbow: "РАДУГА", eggNameFlash: "МОЛНИЯ", eggNameFiredrill: "ПОЖАР",
-    period1: "1-й урок", period2: "2-й урок", period3: "3-й урок", period4: "4-й урок",
-    period5: "5-й урок", period6: "6-й урок", period7: "7-й урок",
-    lunch: "Обед",
-    restartTitle: "Перезапустить всё?",
-    restartDesc: "Это сбросит все настройки до значений по умолчанию.",
-    restartCancel: "Отмена", restartProceed: "Да, перезапустить",
-    fontWarningText: "Некоторые шрифты могут неправильно отображаться на этом языке.",
-    fontWarningOk: "Понятно",
-    panelTitle: "Настройки", restartBtn: "Перезапуск",
-    resyncText: "Синхронизация...",
-    testTimeSet: "Тестовое время установлено!", usingRealTimeToast: "Реальное время.", clearTestFirst: "Сначала очистите тестовое время.", enterDateFirst: "Сначала введите дату/время.", invalidFormat: "Неверный формат. Используйте ДД.ММ.ГГГГ ЧЧ:ММ:СС",
-    partyOn: "Режим вечеринки!", partyOff: "Вечеринка окончена.",
-    ghostOn: "Режим призрака вкл.", ghostOff: "Режим призрака выкл.",
-    rainOn: "Дождь из эмодзи!", rainOff: "Дождь остановлен.",
-    flipOn: "Вверх ногами!", flipOff: "Снова правильно.",
-    bigOn: "Большие часы!", bigOff: "Обычные часы.",
-    rainbowOn: "Режим радуги!", rainbowOff: "Радуга выкл.",
-    flashOn: "Гроза!", flashOff: "Гроза прошла.",
-    fireDrillOn: "ПОЖАРНАЯ ТРЕВОГА!", fireDrillOff: "Тревога окончена.",
-    keyboardTabTitle: "Горячие клавиши",
-    keyboardUnavailableTitle: "Горячие клавиши",
-    keyboardUnavailableDesc: "Настройте горячие клавиши для управления таймером.",
-    featureUnavailable: "Эта функция пока недоступна",
-    comingSoon: "Появится в будущем обновлении.",
-    custKeyTitle: "Ключ настройки",
-    custKeyUnavailableTitle: "Ключ настройки",
-    custKeyUnavailableDesc: "Создайте общий ключ, который кодирует все настройки персонализации.",
-    gateSubtitle: "Вам нужно разрешение для доступа. Введите код доступа.",
-    gateCodeLabel: "Код доступа",
-    gateError: "Неверный код. Попробуйте ещё раз.",
-    gateBypassHint: "Свяжитесь с администратором для получения доступа.",
-    gateSubmitBtn: "Войти",
-    textSizeTitle: "Размер текста",
-    textSizeDesc: "Масштабирует весь текст таймера и меню.",
-    clickToRename: "Нажмите на любой период, чтобы переименовать его.",
-    restorePromptText: "Хотите восстановить предыдущие настройки?",
-    yes: "Да", no: "Нет", restoredMsg: "Настройки восстановлены!", defaultsMsg: "Используются настройки по умолчанию."
-  }
-};
-let currentLang = "en";
-function t(key) { return LANGS[currentLang][key] || LANGS.en[key] || key; }
+  startSplash();
+}
 
 // ============================================================
 // SCHEDULE / TIME LOGIC
 // ============================================================
-const GRADE = 7;
-const lunchTimes = { 6: {start: "10:45", end: "11:15"}, 7: {start: "11:20", end: "11:50"}, 8: {start: "11:55", end: "12:25"} };
-const lunchStart = lunchTimes[GRADE].start, lunchEnd = lunchTimes[GRADE].end;
+const lunchTimes = { 6: {start: "10:45", end: "11:15"}, 7: {start: "11:20", end: "11:50"} };
+
 function getSchedule() {
+  if (GRADE === null) return [];
+  
+  if (GRADE === 8) {
+    return [
+      {name: "1st Period", start: "08:00", end: "08:50"},
+      {name: "2nd Period", start: "08:55", end: "09:45"},
+      {name: "3rd Period", start: "09:50", end: "10:40"},
+      {name: "4th Period", start: "10:45", end: "11:35"},
+      {name: "5th Period", start: "11:40", end: "11:55"},
+      {name: "Lunch",      start: "11:55", end: "12:25"},
+      {name: "5th Period", start: "12:30", end: "13:20"},
+      {name: "6th Period", start: "13:25", end: "14:15"},
+      {name: "7th Period", start: "14:20", end: "15:10"}
+    ];
+  }
+
+  const lunchStart = lunchTimes[GRADE].start, lunchEnd = lunchTimes[GRADE].end;
   return [
-    {nameKey: "period1", start: "08:00", end: "08:50"},
-    {nameKey: "period2", start: "08:55", end: "09:45"},
-    {nameKey: "period3", start: "09:50", end: "10:40"},
-    {nameKey: "period4", start: "10:45", end: lunchStart},
-    {nameKey: "lunch",   start: lunchStart, end: lunchEnd},
-    {nameKey: "period4", start: lunchEnd, end: "12:25"},
-    {nameKey: "period5", start: "12:30", end: "13:20"},
-    {nameKey: "period6", start: "13:25", end: "14:15"},
-    {nameKey: "period7", start: "14:20", end: "15:10"}
-  ].filter(b => b.start !== b.end).map(b => ({ ...b, name: t(b.nameKey) }));
+    {name: "1st Period", start: "08:00", end: "08:50"},
+    {name: "2nd Period", start: "08:55", end: "09:45"},
+    {name: "3rd Period", start: "09:50", end: "10:40"},
+    {name: "4th Period", start: "10:45", end: lunchStart},
+    {name: "Lunch",      start: lunchStart, end: lunchEnd},
+    {name: "4th Period", start: lunchEnd, end: "12:25"},
+    {name: "5th Period", start: "12:30", end: "13:20"},
+    {name: "6th Period", start: "13:25", end: "14:15"},
+    {name: "7th Period", start: "14:20", end: "15:10"}
+  ].filter(b => b.start !== b.end);
 }
 
 const FONTS = ["Patrick Hand", "Fredoka One", "Bubblegum Sans", "Boogaloo", "Caveat", "Comfortaa", "Architects Daughter", "Permanent Marker", "Rock Salt", "Special Elite", "VT323", "Press Start 2P", "Cinzel", "Playfair Display", "Raleway", "Oswald", "Bebas Neue", "Righteous", "Titan One", "Russo One", "Monoton"];
@@ -1437,7 +1157,7 @@ function setTestDateTime(str) {
     if (typeof checkCelebration === 'function') checkCelebration();
     updateTestDateBadge(true, str.trim());
     logToConsole('Test time set: ' + str.trim(), 'test');
-    showToast(t("testTimeSet"));
+    showToast("Test time set!");
     return true;
   }
   return false;
@@ -1450,15 +1170,15 @@ function clearTestDateTime() {
   if (typeof checkCelebration === 'function') checkCelebration();
   updateTestDateBadge(false, "");
   logToConsole("Test time cleared — using real time", 'test');
-  showToast(t("usingRealTimeToast"));
+  showToast("Using real time.");
 }
 function updateTestDateBadge(active, str) {
   const badge = document.getElementById("testDateBadge"), text = document.getElementById("testDateBadgeText");
-  if (active) { badge.classList.add("active-test"); text.textContent = (currentLang==='en'?'Testing: ':currentLang==='es'?'Probando: ':'Тест: ')+str; }
-  else { badge.classList.remove("active-test"); text.textContent = t("usingRealTime"); }
+  if (active) { badge.classList.add("active-test"); text.textContent = "Testing: " + str; }
+  else { badge.classList.remove("active-test"); text.textContent = "Using real time"; }
 }
 async function fetchSyncedTime() {
-  if (testStartFake) return false;
+  if (testStartFake || GRADE === null) return false;
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone||"America/New_York";
   const ctrl = new AbortController(), tid = setTimeout(()=>ctrl.abort(), SYNC_TIMEOUT_MS);
   try {
@@ -1487,12 +1207,12 @@ async function fetchSyncedTime() {
   }
 }
 async function syncTime(showUI=false) {
-  if (testStartFake) { showToast(t("clearTestFirst")); return false; }
+  if (testStartFake) { showToast("Clear test time first to sync."); return false; }
   const ind=document.getElementById("resync-indicator");
-  if(showUI){ind.classList.add("show");showToast(t("resyncing"));}
+  if(showUI){ind.classList.add("show");showToast("Resyncing...");}
   if(syncPromise) return syncPromise;
   syncPromise=(async()=>{
-    try { const ok=await fetchSyncedTime(); if(showUI) showToast(ok?t("synced"):t("syncFail")); return ok; }
+    try { const ok=await fetchSyncedTime(); if(showUI) showToast(ok?"Time synced.":"Sync failed."); return ok; }
     finally { syncPromise=null; setTimeout(()=>ind.classList.remove("show"),1200); lastPeriod=""; updateLabel(); updateBar(); }
   })();
   return syncPromise;
@@ -1514,21 +1234,24 @@ function isWeekendNow(){const d=getNow().getDay();return d===0||d===6;}
 function getNextNonChangePeriod(now,fromIdx){
   const schedule=getSchedule();
   for(let i=fromIdx;i<schedule.length;i++){
-    if(!isClassChange(schedule[i].name)){const nk=`schedule-base-${i}-${schedule[i].start}-${schedule[i].end}`;return`${t("next")}: ${getDisplayName(schedule[i].name,nk)} at ${formatClockTime(schedule[i].start)}`;}
+    if(!isClassChange(schedule[i].name)){const nk=`schedule-base-${i}-${schedule[i].start}-${schedule[i].end}`;return`Next: ${getDisplayName(schedule[i].name,nk)} at ${formatClockTime(schedule[i].start)}`;}
   }
   return "";
 }
-function isClassChange(name){const n=name.toLowerCase();return n.includes("class change")||n.includes("dismissal")||n.includes("passing")||n.includes("cambio de clase")||n.includes("смена класса");}
+function isClassChange(name){const n=name.toLowerCase();return n.includes("class change")||n.includes("dismissal")||n.includes("passing");}
 function isTimerHidden(state){return state.isWeekend||state.isAfterSchool;}
 function getCurrentState(now){
-  const schedule=getSchedule(),day=now.getDay();
+  const schedule=getSchedule();
+  if (schedule.length === 0) return {key:`unknown-base`,label:"",remainingText:"",percent:0,nextLabel:""};
+
+  const day=now.getDay();
   const firstStart=toDate(schedule[0].start,now),lastEnd=toDate(schedule[schedule.length-1].end,now);
   if(day===0||day===6){const key=`weekend-base`;return{key,label:getDisplayName("Weekend",key),remainingText:"",percent:0,nextLabel:"",isWeekend:true};}
-  if(now<firstStart){const key=`before-school-base`;return{key,label:getDisplayName(t("schoolStartsIn"),key),remainingText:formatTime(firstStart-now),percent:0,nextLabel:getNextNonChangePeriod(now,0)};}
-  if(now>=lastEnd){const key=`after-school-base`;return{key,label:getDisplayName(t("afterSchool"),key),remainingText:"",percent:100,nextLabel:"",isAfterSchool:true};}
+  if(now<firstStart){const key=`before-school-base`;return{key,label:getDisplayName("School starts in",key),remainingText:formatTime(firstStart-now),percent:0,nextLabel:getNextNonChangePeriod(now,0)};}
+  if(now>=lastEnd){const key=`after-school-base`;return{key,label:getDisplayName("School has ended.",key),remainingText:"",percent:100,nextLabel:"",isAfterSchool:true};}
   for(let i=0;i<schedule.length-1;i++){
     const end=toDate(schedule[i].end,now),nextStart=toDate(schedule[i+1].start,now);
-    if(now>end&&now<nextStart){const key=`class-change-base-${i}`;return{key,label:t("classChange"),remainingText:formatTime(nextStart-now),percent:Math.min(100,Math.max(0,((now-end)/(nextStart-end))*100)),nextLabel:getNextNonChangePeriod(now,i+1),msLeft:nextStart-now,msLeftRaw:nextStart-now};}
+    if(now>end&&now<nextStart){const key=`class-change-base-${i}`;return{key,label:"Class Change",remainingText:formatTime(nextStart-now),percent:Math.min(100,Math.max(0,((now-end)/(nextStart-end))*100)),nextLabel:getNextNonChangePeriod(now,i+1),msLeft:nextStart-now,msLeftRaw:nextStart-now};}
   }
   for(let i=0;i<schedule.length;i++){
     const start=toDate(schedule[i].start,now),end=toDate(schedule[i].end,now);
@@ -1549,73 +1272,34 @@ const scheduleModal=document.getElementById("scheduleModal");
 const scheduleCardClose=document.getElementById("scheduleCard-close"), scheduleCardBody=document.getElementById("scheduleCard-body");
 const screenFlash=document.getElementById("screen-flash"), colorFlash=document.getElementById("color-flash");
 const toastEl=document.getElementById("toast"), eggModeIndicator=document.getElementById("egg-mode-indicator");
-const fireDrillOverlay=document.getElementById("fire-drill-overlay"), fontWarningPopup=document.getElementById("font-warning-popup");
+const fireDrillOverlay=document.getElementById("fire-drill-overlay");
 
 // ============================================================
 // FULL RESET / RESTART LOGIC
 // ============================================================
-function performFullReset(){
-  logToConsole('System restart initiated', 'info');
-  localStorage.removeItem("bsms_config");
-  document.body.classList.remove("light-theme","custom-theme","party","ghost-mode","rainbow-mode","fire-drill-mode","shaking","reduce-motion");
-  document.body.style.transform="";
-  const root=document.documentElement;
-  root.style.removeProperty("--font");
-  root.style.removeProperty("--custom-accent");
-  root.style.removeProperty("--custom-accent2");
-  root.style.removeProperty("--custom-bg");
-  root.style.removeProperty("--custom-fg");
-  if(typeof stopCelebration==="function") stopCelebration();
-  if(typeof stopWeekendFireworks==="function") stopWeekendFireworks();
-  clearInterval(rainInterval);clearInterval(flashLightInterval);clearInterval(ghostInterval);
-  rainInterval=null;flashLightInterval=null;ghostInterval=null;
-  document.querySelectorAll(".balloon,.emoji-drop,.ghost-float").forEach(el=>el.remove());
-  particles=[];confettiPieces=[];lightningBolts=[];
-  if(eggs.firedrill){document.body.classList.remove("fire-drill-mode");fireDrillOverlay.classList.remove("active");clearInterval(fireDrillBarInterval);bar.style.transition="";fireDrillBarInterval=null;}
-  Object.keys(eggs).forEach(k=>{eggs[k]=false;});
-  document.querySelectorAll(".pill[data-egg]").forEach(p=>p.classList.remove("active"));
-  settings.nextPeriod=true;settings.warnPulse=true;settings.horn=true;settings.celebration=true;settings.reduceMotion=false;
-  document.getElementById("tog-nextperiod").checked=true;document.getElementById("tog-warnpulse").checked=true;document.getElementById("tog-horn").checked=true;document.getElementById("tog-celebration").checked=true;document.getElementById("tog-reducemotion").checked=false;
-  nextPreview.style.display="";
-  barColorHex="#BB001E"; pendingBarColorHex="#BB001E";
-  primaryHex="#000000"; secondaryHex="#BB001E"; textColorHex="#ffffff"; useAutoText=true;
-  bar.style.background=barColorHex;
-  if(typeof barWheel!=="undefined"){ barWheel.setHSL(348,100,37); }
-  if(typeof primaryWheel!=="undefined"){ primaryWheel.setHSL(0,0,0); }
-  if(typeof secondaryWheel!=="undefined"){ secondaryWheel.setHSL(348,100,37); }
-  if(typeof textColorWheel!=="undefined"){ textColorWheel.setHSL(0,0,100); }
-  root.style.setProperty("--custom-accent","#BB001E");
-  root.style.setProperty("--custom-accent2","#ff1f3d");
-  root.style.setProperty("--custom-bg","#000");
-  root.style.setProperty("--custom-fg","#fff");
-  currentFont="Patrick Hand"; root.style.setProperty("--font","'Patrick Hand', cursive");
-  const fpi=document.getElementById("fontPreviewText"); if(fpi) fpi.value="I hate school!";
-  buildFontList();
-  currentLang="en";
-  document.querySelectorAll(".lang-option").forEach(o=>o.classList.toggle("active",o.dataset.lang==="en"));
-  updateUIStrings();
-  Object.keys(sessionLabelOverrides).forEach(k=>delete sessionLabelOverrides[k]);
-  testStartFake=null; testStartReal=Date.now();
-  updateTestDateBadge(false,"");
-  const tdi=document.getElementById("testDateInput"); if(tdi) tdi.value="";
-  syncedOffsetMs=0;
-  timerEl.style.fontSize=""; timerEl.style.display="";
-  document.querySelectorAll(".theme-swatch").forEach(s=>s.classList.toggle("active",s.dataset.theme===""));
-  applyTextSize(TEXT_SIZE_DEFAULT);
-  closeControls(); closeScheduleModal();
-  lastPeriod=""; isFirstLoad=true;
-  updateLabel(); updateBar(); applyBarColor(); checkCelebration();
-  clearConsole();
-  keybinds = {...defaultKeybinds};
-  renderKeybinds();
-  logToConsole("System restarted — all settings reset to defaults.", "info");
-}
 function showRestartScreen(){
   closeControls();
   const rs=document.getElementById("restart-screen");
   rs.classList.add("visible"); void rs.offsetWidth; rs.classList.add("fade-in");
-  setTimeout(()=>{performFullReset();},400);
-  setTimeout(()=>{rs.classList.add("fade-out");rs.classList.remove("fade-in");setTimeout(()=>rs.classList.remove("visible","fade-out"),450);},RESTART_SCREEN_MS);
+  
+  if(typeof stopCelebration==="function") stopCelebration();
+  if(typeof stopWeekendFireworks==="function") stopWeekendFireworks();
+  clearInterval(rainInterval); clearInterval(flashLightInterval); clearInterval(ghostInterval);
+  
+  setTimeout(()=>{
+    localStorage.removeItem("bsms_countdown_prefs");
+    const auth = getAuthSession();
+    if(auth.loggedIn && auth.uid) {
+      db.ref('/accounts/' + auth.uid + '/countdown-preferences').remove();
+    }
+    rs.classList.add("fade-out");
+    rs.classList.remove("fade-in");
+    setTimeout(()=>{
+       rs.classList.remove("visible","fade-out");
+       window.location.hash = '';
+       window.location.reload();
+    }, 450);
+  }, RESTART_SCREEN_MS);
 }
 document.getElementById("panel-restart-btn").addEventListener("click",()=>{closeControls();document.getElementById("restart-confirm-modal").classList.add("open");});
 document.getElementById("restart-cancel-btn").addEventListener("click",()=>{document.getElementById("restart-confirm-modal").classList.remove("open");logToConsole('Restart cancelled','info');});
@@ -1634,7 +1318,7 @@ function showTopToast(msg, dur=3000) {
   topToastTimer = setTimeout(() => tt.classList.remove('show'), dur);
 }
 document.getElementById('help-btn').addEventListener('click', () => {
-  showTopToast(t("featureUnavailable"));
+  showTopToast("This feature is not available yet");
   logToConsole('Help button clicked', 'action');
 });
 
@@ -1643,7 +1327,7 @@ document.getElementById('help-btn').addEventListener('click', () => {
 // ============================================================
 const panelTabs=document.getElementById("panel-tabs");
 let tabDragging=false,tabDragStartX=0,tabDragScrollLeft=0,tabDragMoved=false,lastTabIndex=0;
-const TAB_ORDER=["appearance","settings","keyboard","easter","custkey","console"];
+const TAB_ORDER=["appearance","settings","keyboard","easter","console","accounts"];
 panelTabs.addEventListener("mousedown",e=>{tabDragging=true;tabDragMoved=false;tabDragStartX=e.pageX-panelTabs.offsetLeft;tabDragScrollLeft=panelTabs.scrollLeft;});
 document.addEventListener("mousemove",e=>{if(!tabDragging)return;const x=e.pageX-panelTabs.offsetLeft;const walk=x-tabDragStartX;if(Math.abs(walk)>4)tabDragMoved=true;panelTabs.scrollLeft=tabDragScrollLeft-walk;});
 document.addEventListener("mouseup",()=>{tabDragging=false;});
@@ -1723,7 +1407,14 @@ function closeControls(){
   setTimeout(()=>{controlsModal.classList.remove("open","closing");panel.classList.remove("closing");controlsClosing=false;},300);
   logToConsole('Controls panel closed','action');
 }
-controlsBtn.addEventListener("click",()=>openControls());
+controlsBtn.addEventListener("click", () => {
+  const auth = getAuthSession();
+  if (auth.loggedIn) {
+    openControls("accounts");
+  } else {
+    window.location.href = "/accounts#signup";
+  }
+});
 panelClose.addEventListener("click",closeControls);
 controlsModal.addEventListener("mousedown",e=>{ if(e.target===controlsModal) panelMouseDownInside=false; });
 controlsModal.addEventListener("click",e=>{ if(e.target===controlsModal && !panelMouseDownInside) closeControls(); });
@@ -1732,16 +1423,17 @@ controlsModal.addEventListener("click",e=>{ if(e.target===controlsModal && !pane
 // SCHEDULE MODAL
 // ============================================================
 function buildScheduleList(container,weekend){
+  if (GRADE === null) return;
   const now = getNow();
   container.innerHTML = "";
   if(weekend){
-    container.innerHTML=`<p style="font-size:17px;color:var(--fg2);padding:10px 0;margin:0;">${t("weekend")}</p>`;
+    container.innerHTML=`<p style="font-size:17px;color:var(--fg2);padding:10px 0;margin:0;">No school today — enjoy your weekend!</p>`;
     return;
   }
   
   const instr = document.createElement("div");
   instr.style.cssText = "font-size:calc(14px * var(--text-scale)); color:var(--fg2); text-align:center; margin-bottom:12px; font-style:italic;";
-  instr.textContent = t("clickToRename");
+  instr.textContent = "Click any period name to rename it.";
   container.appendChild(instr);
 
   const schedule = getSchedule();
@@ -1764,7 +1456,7 @@ function buildScheduleList(container,weekend){
     nameDiv.className = "sched-name";
     nameDiv.textContent = getDisplayName(s.name, key);
     nameDiv.style.cursor = "pointer";
-    nameDiv.title = t("clickToRename");
+    nameDiv.title = "Click any period name to rename it.";
 
     nameDiv.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -1827,7 +1519,7 @@ document.querySelectorAll(".theme-swatch").forEach(s=>{
     applyTheme(theme);
     saveConfig();
     logToConsole(`Theme preset applied: ${theme||'dark'}`,'action');
-    showToast(t("themeApplied"));
+    showToast("Theme applied.");
   });
 });
 function applyTheme(themeClass){
@@ -1955,7 +1647,7 @@ document.getElementById("applyPrimaryColor").addEventListener("click",()=>{
   applyThemeColors(primaryHex, secondaryHex);
   saveConfig();
   logToConsole(`Primary color applied: ${primaryHex}`,'action');
-  showToast(t("primaryApplied"));
+  showToast("Primary color applied!");
 });
 
 document.getElementById("resetPrimaryColor").addEventListener("click",()=>{
@@ -1963,14 +1655,14 @@ document.getElementById("resetPrimaryColor").addEventListener("click",()=>{
   primaryWheel.setHSL(0,0,0);
   saveConfig();
   logToConsole('Primary color reset to default (#000000)','action');
-  showToast(t("primaryReset"));
+  showToast("Primary color reset.");
 });
 
 document.getElementById("applySecondaryColor").addEventListener("click",()=>{
   applyThemeColors(primaryHex, secondaryHex);
   saveConfig();
   logToConsole(`Secondary color applied: ${secondaryHex}`,'action');
-  showToast(t("secondaryApplied"));
+  showToast("Secondary color applied!");
 });
 
 document.getElementById("resetSecondaryColor").addEventListener("click",()=>{
@@ -1978,7 +1670,7 @@ document.getElementById("resetSecondaryColor").addEventListener("click",()=>{
   secondaryWheel.setHSL(348,100,37);
   saveConfig();
   logToConsole('Secondary color reset to default (#BB001E)','action');
-  showToast(t("secondaryReset"));
+  showToast("Secondary color reset.");
 });
 
 function computeAccent2(hex){
@@ -2034,7 +1726,7 @@ document.getElementById("saveBarColor").addEventListener("click",()=>{
   barColorHex=pendingBarColorHex; applyBarColor();
   saveConfig();
   logToConsole(`Bar color saved: ${barColorHex}`,'action');
-  showToast(t("barSaved"));
+  showToast("Bar color saved.");
 });
 
 document.getElementById("resetBarColor").addEventListener("click",()=>{
@@ -2042,7 +1734,7 @@ document.getElementById("resetBarColor").addEventListener("click",()=>{
   barWheel.setHSL(348,100,37); applyBarColor();
   saveConfig();
   logToConsole('Bar color reset to default (#BB001E)','action');
-  showToast(t("barReset"));
+  showToast("Bar color reset.");
 });
 
 function applyBarColor(){if(!eggs.firedrill) bar.style.background=barColorHex;}
@@ -2063,7 +1755,7 @@ document.getElementById("saveTextColor").addEventListener("click",()=>{
   document.body.classList.add("custom-theme");
   saveConfig();
   logToConsole(`Text color applied: ${textColorHex}`,'action');
-  showToast(t("textSaved"));
+  showToast("Text color applied.");
 });
 
 document.getElementById("resetTextColor").addEventListener("click",()=>{
@@ -2072,14 +1764,14 @@ document.getElementById("resetTextColor").addEventListener("click",()=>{
   document.documentElement.style.setProperty("--custom-fg","#ffffff");
   saveConfig();
   logToConsole('Text color reset to default (#ffffff)','action');
-  showToast(t("textReset"));
+  showToast("Text color reset.");
 });
 
 document.getElementById("autoTextColor").addEventListener("click",()=>{
   useAutoText=true;
   saveConfig();
   logToConsole('Text color set to automatic','action');
-  showToast(t("automatic")+': ON');
+  showToast("Auto: ON");
 });
 
 let currentFont="Patrick Hand";
@@ -2098,8 +1790,7 @@ function buildFontList(){
       row.classList.add("active");
       saveConfig();
       logToConsole(`Font changed: "${prev}" → "${f}"`,'action');
-      showToast(t("fontChanged")+" "+f);
-      if(currentLang==="ru") fontWarningPopup.classList.add("show");
+      showToast("Font changed to " + f);
     });
     fontList.appendChild(row);
   });
@@ -2110,9 +1801,8 @@ fontPreviewInput.addEventListener("input",()=>{
   document.querySelectorAll(".font-preview").forEach(el=>el.textContent=v);
   logToConsole(`Font preview text changed: "${v}"`,'log');
 });
-document.getElementById("close-font-warning").addEventListener("click",()=>fontWarningPopup.classList.remove("show"));
 
-const settings={nextPeriod:true,warnPulse:true,horn:true,celebration:true,reduceMotion:false};
+const settings={nextPeriod:true,warnPulse:true,horn:true,celebration:true,reduceMotion:false,liveTitle:true};
 document.getElementById("tog-nextperiod").addEventListener("change",e=>{
   settings.nextPeriod=e.target.checked;
   nextPreview.style.display=settings.nextPeriod?"":"none";
@@ -2141,7 +1831,14 @@ document.getElementById("tog-reducemotion").addEventListener("change",e=>{
   if(settings.reduceMotion){stopCelebration();stopWeekendFireworks();clearInterval(rainInterval);clearInterval(flashLightInterval);clearInterval(ghostInterval);document.querySelectorAll(".balloon,.emoji-drop,.ghost-float").forEach(el=>el.remove());particles=[];confettiPieces=[];lightningBolts=[];}
   saveConfig();
   logToConsole(`Toggle "Reduce motion": ${e.target.checked}`,'action');
-  showToast(t("reduceMotion")+": "+(settings.reduceMotion?"ON":"OFF"));
+  showToast("Reduce Motion: " + (settings.reduceMotion?"ON":"OFF"));
+});
+document.getElementById("tog-livetitle").addEventListener("change", e => {
+  settings.liveTitle = e.target.checked;
+  saveConfig();
+  logToConsole(`Toggle "Live Tab Title": ${e.target.checked}`, 'action');
+  if (GRADE !== null) updateDocumentTitle(getCurrentState(getNow()));
+  else updateDocumentTitle(null);
 });
 document.getElementById("syncTimeBtn").addEventListener("click",()=>{
   logToConsole('Manual time sync triggered','action');
@@ -2177,89 +1874,34 @@ barContainer.addEventListener("mouseleave",()=>{
   setTimeout(()=>bar.classList.remove("hover-release"),400);
 });
 
-document.querySelectorAll(".lang-option").forEach(opt=>{
-  opt.addEventListener("click",()=>{
-    const prev=currentLang; currentLang=opt.dataset.lang;
-    document.querySelectorAll(".lang-option").forEach(o=>o.classList.remove("active"));
-    opt.classList.add("active");
-    lastPeriod=""; updateLabel(); updateUIStrings();
-    saveConfig();
-    logToConsole(`Language changed: "${prev}" → "${currentLang}"`,'action');
-    showToast(LANGS[currentLang].language);
-    if(currentLang==="ru"&&currentFont) fontWarningPopup.classList.add("show");
-  });
-});
-
-function updateUIStrings(){
-  document.querySelector('[data-tab="appearance"]').textContent=t("appearance");
-  document.querySelector('[data-tab="settings"]').textContent=t("settings");
-  document.querySelector('[data-tab="keyboard"]').textContent=t("keyboardTabTitle");
-  document.querySelector('[data-tab="easter"]').textContent=t("easterEggs");
-  document.querySelector('[data-tab="custkey"]').textContent=t("custKeyTitle").split(' ').slice(0,2).join(' ');
-  document.querySelector('[data-tab="console"]').textContent=t("console");
-  document.getElementById("subtab-theme-btn").textContent=t("theme");
-  document.getElementById("subtab-text-btn").textContent=t("text");
-  document.getElementById("panel-title").textContent=t("panelTitle");
-  document.getElementById("panel-restart-btn").textContent=t("restartBtn");
-  document.getElementById("saveBarColor").textContent=t("saveBarColor");
-  document.getElementById("resetBarColor").textContent=t("resetBarColor");
-  document.getElementById("applyPrimaryColor").textContent=t("applyPrimaryColor");
-  document.getElementById("resetPrimaryColor").textContent=t("resetPrimaryColor");
-  document.getElementById("applySecondaryColor").textContent=t("applySecondaryColor");
-  document.getElementById("resetSecondaryColor").textContent=t("resetSecondaryColor");
-  document.getElementById("saveTextColor").textContent=t("saveTextColor");
-  document.getElementById("resetTextColor").textContent=t("resetTextColor");
-  document.getElementById("autoTextColor").textContent=t("automatic");
-  document.getElementById("syncTimeBtn").textContent=t("syncBtn");
-  controlsBtn.textContent=t("controls");
-  document.getElementById("tog-nextperiod").closest(".toggle-row").querySelector(".toggle-label").textContent=t("showNext");
-  document.getElementById("tog-warnpulse").closest(".toggle-row").querySelector(".toggle-label").textContent=t("barPulse");
-  document.getElementById("tog-reducemotion").closest(".toggle-row").querySelector(".toggle-label").textContent=t("reduceMotion");
-  document.getElementById("tog-horn").closest(".toggle-row").querySelector(".toggle-label").textContent=t("soundFX");
-  document.getElementById("tog-celebration").closest(".toggle-row").querySelector(".toggle-label").textContent=t("endOfDay");
-  fontPreviewInput.placeholder=t("fontPreviewDefault");
-  document.getElementById("resync-indicator").textContent=t("resyncText");
-  document.getElementById("scheduleCard-title").textContent=t("today");
-  document.getElementById("restart-confirm-title").textContent=t("restartTitle");
-  document.getElementById("restart-confirm-desc").textContent=t("restartDesc");
-  document.getElementById("restart-cancel-btn").textContent=t("restartCancel");
-  document.getElementById("restart-proceed-btn").textContent=t("restartProceed");
-  document.getElementById("font-warning-text").textContent=t("fontWarningText");
-  document.getElementById("close-font-warning").textContent=t("fontWarningOk");
-  document.getElementById("splash-subtitle-text").textContent=currentLang==='en'?"Loading assets...":currentLang==='es'?"Cargando...":"Загрузка...";
-  document.getElementById("restart-subtitle-text").textContent=currentLang==='en'?"Restarting...":currentLang==='es'?"Reiniciando...":"Перезапуск...";
-  document.getElementById("textAutoNote").textContent=t("textAutoNote");
-  document.getElementById("toggleLogging").textContent=consoleLogging?t("consolePause"):t("consoleResume");
-  document.getElementById("clearConsole").textContent=t("consoleClear");
-  document.getElementById("exportConsole").textContent=t("consoleExport");
-  document.getElementById("scrollBottomConsole").textContent=t("consoleLatest");
-  if(!testStartFake) document.getElementById("testDateBadgeText").textContent=t("usingRealTime");
-  const swatchLabels=document.querySelectorAll(".theme-swatch-label");
-  if(swatchLabels.length>=2){swatchLabels[0].textContent=t("dark");swatchLabels[1].textContent=t("light");}
-  document.getElementById("gate-subtitle").textContent=t("gateSubtitle");
-  document.getElementById("gate-code-label").textContent=t("gateCodeLabel");
-  document.getElementById("gate-error").textContent=t("gateError");
-  document.getElementById("gate-bypass-hint").textContent=t("gateBypassHint");
-  document.getElementById("gate-submit-btn").textContent=t("gateSubmitBtn");
-  const tsSec = document.getElementById("section-text-size");
-  if (tsSec) {
-    const titleEl = tsSec.querySelector(".ctrl-section-title");
-    if (titleEl) titleEl.textContent = t("textSizeTitle");
-    const descEl = document.getElementById("textSizeDesc");
-    if (descEl) descEl.textContent = t("textSizeDesc");
+function updateDocumentTitle(state) {
+  if (GRADE === null) {
+    document.title = "Choose a Grade | BSMS Countdown";
+    return;
   }
-  document.querySelectorAll("[data-i18n]").forEach(el=>{
-    const key=el.getAttribute("data-i18n");
-    if(key&&LANGS[currentLang][key]!==undefined) el.textContent=LANGS[currentLang][key];
-    else if(key&&LANGS.en[key]!==undefined) el.textContent=LANGS.en[key];
-  });
-  refreshEggList();
-  if(scheduleModal.classList.contains("open")) buildScheduleList(scheduleCardBody,isWeekendNow());
+  if (!settings.liveTitle) {
+    document.title = "BSMS Countdown";
+    return;
+  }
+  if (!state) return;
+  
+  if (state.isWeekend) {
+    document.title = "Weekend | BSMS Countdown";
+  } else if (state.isAfterSchool) {
+    document.title = "School has ended.";
+  } else if (state.key.startsWith("before-school")) {
+    document.title = `${state.remainingText} until school starts`;
+  } else {
+    document.title = `${state.remainingText} left in ${state.label}`;
+  }
 }
 
 function updateLabel(){
   if(eggs.firedrill) return;
   const now=getNow(),state=getCurrentState(now);
+  
+  updateDocumentTitle(state);
+
   currentDisplayKey=state.key;
   const displayLabel=state.label||" ";
   if(displayLabel!==lastPeriod){
@@ -2303,43 +1945,49 @@ let rainInterval=null,flashLightInterval=null,ghostInterval=null,fireDrillSavedL
 
 function activateEgg(name){
   name=name.replace(/\s+/g,"-").toLowerCase();
+  
+  if (celebrationActive) {
+    showToast("Easter eggs cannot be started during the End of Day celebration. You can disable the celebration in Settings to enable Easter eggs.");
+    return;
+  }
+  
   if(!EGG_FLAGS[name]){logToConsole(`Egg "${name}" is disabled by feature flag`,'warn');return;}
   if(name==="party"){
     eggs.party=!eggs.party;
     logToConsole(`Easter egg "party" ${eggs.party?'activated':'deactivated'}`,'action');
-    if(eggs.party){startCelebration();showToast(t("partyOn"));}
-    else{stopCelebration();showToast(t("partyOff"));}
+    if(eggs.party){startCelebration();showToast("Party mode!");}
+    else{stopCelebration();showToast("Party stopped.");}
   } else if(name==="ghost"){
     eggs.ghost=!eggs.ghost;
     document.body.classList.toggle("ghost-mode",eggs.ghost);
     logToConsole(`Easter egg "ghost" ${eggs.ghost?'activated':'deactivated'}`,'action');
-    if(eggs.ghost){ghostInterval=setInterval(()=>spawnGhost(),2500);spawnGhost();showToast(t("ghostOn"));}
-    else{clearInterval(ghostInterval);document.querySelectorAll(".ghost-float").forEach(g=>g.remove());showToast(t("ghostOff"));}
+    if(eggs.ghost){ghostInterval=setInterval(()=>spawnGhost(),2500);spawnGhost();showToast("Ghost mode on.");}
+    else{clearInterval(ghostInterval);document.querySelectorAll(".ghost-float").forEach(g=>g.remove());showToast("Ghost mode off.");}
   } else if(name==="rain"){
     eggs.rain=!eggs.rain;
     logToConsole(`Easter egg "rain" ${eggs.rain?'activated':'deactivated'}`,'action');
-    if(eggs.rain){rainInterval=setInterval(spawnEmojiDrop,80);ensureAnimating();showToast(t("rainOn"));}
-    else{clearInterval(rainInterval);showToast(t("rainOff"));}
+    if(eggs.rain){rainInterval=setInterval(spawnEmojiDrop,80);ensureAnimating();showToast("Emoji rain!");}
+    else{clearInterval(rainInterval);showToast("Rain stopped.");}
   } else if(name==="flip"){
     eggs.flip=!eggs.flip;
     document.body.style.transform=eggs.flip?"scaleY(-1)":"";
     logToConsole(`Easter egg "flip" ${eggs.flip?'activated':'deactivated'}`,'action');
-    showToast(eggs.flip?t("flipOn"):t("flipOff"));
+    showToast(eggs.flip?"Upside down!":"Right-side up.");
   } else if(name==="big"){
     eggs.big=!eggs.big;
     timerEl.style.fontSize=eggs.big?"160px":"";
     logToConsole(`Easter egg "big-clock" ${eggs.big?'activated':'deactivated'}`,'action');
-    showToast(eggs.big?t("bigOn"):t("bigOff"));
+    showToast(eggs.big?"Big clock!":"Normal clock.");
   } else if(name==="rainbow"){
     eggs.rainbow=!eggs.rainbow;
     document.body.classList.toggle("rainbow-mode",eggs.rainbow);
     logToConsole(`Easter egg "rainbow" ${eggs.rainbow?'activated':'deactivated'}`,'action');
-    showToast(eggs.rainbow?t("rainbowOn"):t("rainbowOff"));
+    showToast(eggs.rainbow?"Rainbow mode!":"Rainbow off.");
   } else if(name==="flash"){
     eggs.flash=!eggs.flash;
     logToConsole(`Easter egg "flash" ${eggs.flash?'activated':'deactivated'}`,'action');
-    if(eggs.flash){flashLightInterval=setInterval(()=>{if(Math.random()<.7){createLightningBolt();doScreenFlash();}},600);ensureAnimating();showToast(t("flashOn"));}
-    else{clearInterval(flashLightInterval);ltCtx.clearRect(0,0,ltCanvas.width,ltCanvas.height);showToast(t("flashOff"));}
+    if(eggs.flash){flashLightInterval=setInterval(()=>{if(Math.random()<.7){createLightningBolt();doScreenFlash();}},600);ensureAnimating();showToast("Lightning storm!");}
+    else{clearInterval(flashLightInterval);ltCtx.clearRect(0,0,ltCanvas.width,ltCanvas.height);showToast("Storm passed.");}
   } else if(name==="firedrill"){
     eggs.firedrill=!eggs.firedrill;
     logToConsole(`Easter egg "fire-drill" ${eggs.firedrill?'activated':'deactivated'}`,'action');
@@ -2350,11 +1998,11 @@ function activateEgg(name){
       if(settings.horn) playFireAlarm();
       fireDrillBarInterval=setInterval(()=>{bar.style.background=bar.style.background.includes("linear")?"#fff":"linear-gradient(90deg,#ff0000,#ff6600,#ffcc00)";},200);
       setInterval(()=>{if(eggs.firedrill){doScreenFlash();if(Math.random()<.3)doShake();if(Math.random()<.4)spawnFireEmoji();}},500);
-      ensureAnimating();showToast(t("fireDrillOn"));
+      ensureAnimating();showToast("FIRE DRILL!");
     } else {
       document.body.classList.remove("fire-drill-mode");fireDrillOverlay.classList.remove("active");
       labelEl.textContent=fireDrillSavedLabel;clearInterval(fireDrillBarInterval);fireDrillBarInterval=null;
-      bar.style.transition="";applyBarColor();lastPeriod="";updateLabel();updateBar();showToast(t("fireDrillOff"));
+      bar.style.transition="";applyBarColor();lastPeriod="";updateLabel();updateBar();showToast("Fire drill ended.");
     }
   }
   refreshEggList();
@@ -2376,12 +2024,12 @@ function spawnGhost(){
 function refreshEggList(){
   const container=document.getElementById("active-eggs-list");
   const icons={party:"🎉",ghost:"👻",rain:"🌧️",flip:"🙃",big:"🕐",rainbow:"🌈",flash:"⚡",firedrill:"🔥"};
-  const descs={party:t("eggDescParty"),ghost:t("eggDescGhost"),rain:t("eggDescRain"),flip:t("eggDescFlip"),big:t("eggDescBig"),rainbow:t("eggDescRainbow"),flash:t("eggDescFlash"),firedrill:t("eggDescFiredrill")};
-  const names={party:t("eggNameParty"),ghost:t("eggNameGhost"),rain:t("eggNameRain"),flip:t("eggNameFlip"),big:t("eggNameBig"),rainbow:t("eggNameRainbow"),flash:t("eggNameFlash"),firedrill:t("eggNameFiredrill")};
+  const descs={party:"Start celebration mode early",ghost:"Floating ghost + fade",rain:"Emoji rain",flip:"Turn the world upside down",big:"Giant clock mode",rainbow:"Rainbow everything",flash:"Lightning storm",firedrill:"Fire drill mode"};
+  const names={party:"PARTY",ghost:"GHOST",rain:"RAIN",flip:"FLIP",big:"BIG-CLOCK",rainbow:"RAINBOW",flash:"FLASH",firedrill:"FIRE-DRILL"};
   const active=Object.entries(eggs).filter(([,v])=>v).map(([k])=>k);
-  if(!active.length){container.innerHTML=`<p style="font-size:16px;color:var(--fg2);margin:0;">${t("noEggs")}</p>`;return;}
+  if(!active.length){container.innerHTML=`<p style="font-size:16px;color:var(--fg2);margin:0;">No Easter Eggs active. Use the buttons below or type "/" then a code.</p>`;return;}
   container.innerHTML=active.map((k,i)=>
-    `<div class="egg-item" style="animation-delay:${i*0.06}s"><div class="egg-icon">${icons[k]}</div><div class="egg-info"><div class="egg-name">${names[k]}</div><div class="egg-hint">${descs[k]}</div></div><button class="modal-btn danger" onclick="activateEgg('${k}')">${t("deactivate")}</button></div>`
+    `<div class="egg-item" style="animation-delay:${i*0.06}s"><div class="egg-icon">${icons[k]}</div><div class="egg-info"><div class="egg-name">${names[k]}</div><div class="egg-hint">${descs[k]}</div></div><button class="modal-btn danger" onclick="activateEgg('${k}')">Deactivate</button></div>`
   ).join("");
 }
 
@@ -2389,12 +2037,13 @@ document.querySelectorAll(".pill[data-egg]").forEach(p=>p.addEventListener("clic
 document.getElementById("resetAllEggs").addEventListener("click",()=>{
   Object.keys(eggs).forEach(k=>{if(eggs[k])activateEgg(k);});
   logToConsole('All Easter eggs deactivated','action');
-  showToast(t("allEggsOff"));
+  showToast("All eggs deactivated.");
 });
 
 // ============================================================
 // GLOBAL KEYBOARD SHORTCUTS ENGINE
 // ============================================================
+const EGG_CODES = ["PARTY", "GHOST", "RAIN", "FLIP", "BIG-CLOCK", "RAINBOW", "FLASH", "FIRE-DRILL"];
 document.addEventListener("keydown",e => {
   if (listeningForKeybind) {
     e.preventDefault();
@@ -2429,9 +2078,8 @@ document.addEventListener("keydown",e => {
     return;
   }
 
-  if (inInput) return; // Disable further shortcuts while typing
+  if (inInput) return;
 
-  // EGG MODE HANDLER
   if (e.key.length === 1 && (e.key === "/" || eggModeActive)) {
     if (!eggModeActive) {
       if (e.key === "/" && !eggModeCooldown) { enterEggMode(); return; }
@@ -2485,8 +2133,13 @@ document.addEventListener("keydown",e => {
       break;
     case keybinds.toggleControls:
       e.preventDefault();
-      if (isControlsOpen) closeControls();
-      else openControls();
+      if (isControlsOpen) {
+        closeControls();
+      } else {
+        const auth = getAuthSession();
+        if (auth.loggedIn) openControls("accounts");
+        else openControls("appearance");
+      }
       break;
     case keybinds.keyboardTab:
       e.preventDefault();
@@ -2507,11 +2160,6 @@ document.addEventListener("keydown",e => {
     case (keybinds.restart === 'delete' ? 'backspace' : null):
       e.preventDefault();
       document.getElementById("restart-confirm-modal").classList.add("open");
-      break;
-    case keybinds.custKey:
-      e.preventDefault();
-      if (isControlsOpen && activeTab === "custkey") closeControls();
-      else openControls("custkey");
       break;
   }
 });
@@ -2606,6 +2254,7 @@ function scheduleWeekendFirework(){if(settings.reduceMotion){weekendFwTimeout=nu
 function startWeekendFireworks(){if(!weekendFwTimeout&&!settings.reduceMotion)weekendFwTimeout=setTimeout(scheduleWeekendFirework,1500);}
 function stopWeekendFireworks(){clearTimeout(weekendFwTimeout);weekendFwTimeout=null;}
 function checkCelebration(){
+  if(GRADE === null) return;
   if(isWeekendNow()){stopCelebration();startWeekendFireworks();}
   else{stopWeekendFireworks();if(!settings.celebration){stopCelebration();return;}if(isCelebrationTime(getNow()))startCelebration();else stopCelebration();}
 }
@@ -2637,7 +2286,7 @@ function appendConsoleEntry(entry){
 function clearConsole(){consoleLogEl.innerHTML='';consoleEntries=[];}
 function toggleLoggingFn(){
   consoleLogging=!consoleLogging;
-  document.getElementById('toggleLogging').textContent=consoleLogging?t('consolePause'):t('consoleResume');
+  document.getElementById('toggleLogging').textContent=consoleLogging?"Pause":"Resume";
   document.getElementById('toggleLogging').classList.toggle('active-btn',!consoleLogging);
   logToConsole('Console logging '+(consoleLogging?'resumed':'paused'),'info');
 }
@@ -2658,8 +2307,8 @@ document.getElementById('exportConsole').addEventListener('click',exportConsole)
 document.getElementById('scrollBottomConsole').addEventListener('click',()=>{consoleLogEl.scrollTop=consoleLogEl.scrollHeight;consoleAutoScroll=true;});
 document.getElementById('applyTestDate').addEventListener('click',()=>{
   const val=document.getElementById('testDateInput').value.trim();
-  if(!val){showToast(t("enterDateFirst"));return;}
-  const ok=setTestDateTime(val); if(!ok) showToast(t("invalidFormat"));
+  if(!val){showToast("Enter a date/time first.");return;}
+  const ok=setTestDateTime(val); if(!ok) showToast("Invalid format. Use MM/DD/YYYY HH:MM:SS AM/PM");
 });
 document.getElementById('clearTestDate').addEventListener('click',()=>{document.getElementById('testDateInput').value="";clearTestDateTime();});
 document.getElementById('testDateInput').addEventListener('input',e=>{logToConsole(`Test date input: "${e.target.value}"`,'log');});
@@ -2670,11 +2319,11 @@ console.warn=function(...args){_cwarn.apply(console,args);logToConsole(args.map(
 console.info=function(...args){_cinfo.apply(console,args);logToConsole(args.map(a=>typeof a==='object'?JSON.stringify(a):a).join(' '),'info');};
 
 // ============================================================
-// LOCAL STORAGE PERSISTENCE (RESTORE PROMPT LOGIC)
+// LOCAL STORAGE PERSISTENCE (RESTORE LOGIC)
 // ============================================================
 function loadConfig() {
   try {
-    const raw = localStorage.getItem("bsms_config");
+    const raw = localStorage.getItem("bsms_countdown_prefs");
     if (!raw) return null;
     return JSON.parse(raw);
   } catch(e) {
@@ -2684,11 +2333,6 @@ function loadConfig() {
 }
 
 function applySavedConfig(saved) {
-  if (saved.language) {
-    currentLang = saved.language;
-    document.querySelectorAll(".lang-option").forEach(o => o.classList.toggle("active", o.dataset.lang === currentLang));
-  }
-
   if (saved.settings) {
     Object.assign(settings, saved.settings);
     document.getElementById("tog-nextperiod").checked = settings.nextPeriod;
@@ -2696,6 +2340,14 @@ function applySavedConfig(saved) {
     document.getElementById("tog-horn").checked = settings.horn;
     document.getElementById("tog-celebration").checked = settings.celebration;
     document.getElementById("tog-reducemotion").checked = settings.reduceMotion;
+    
+    if (saved.settings.liveTitle !== undefined) {
+      document.getElementById("tog-livetitle").checked = settings.liveTitle;
+    } else {
+      document.getElementById("tog-livetitle").checked = true;
+      settings.liveTitle = true;
+    }
+
     document.body.classList.toggle("reduce-motion", settings.reduceMotion);
     nextPreview.style.display = settings.nextPeriod ? "" : "none";
   }
@@ -2721,23 +2373,59 @@ function applySavedConfig(saved) {
 
   if (saved.primaryHex) {
     primaryHex = saved.primaryHex;
-    if (typeof primaryWheel !== "undefined") primaryWheel.setHSL(...hexToHslRaw(primaryHex));
+    if (typeof primaryWheel !== "undefined") {
+      const hsl = hexToHslRaw(primaryHex);
+      primaryWheel.setHSL(hsl[0], hsl[1], hsl[2]);
+    }
+    const phi = document.getElementById("primaryHexInput");
+    if (phi) phi.value = primaryHex;
+    const pcp = document.getElementById("primaryColorPreview");
+    if (pcp) pcp.style.background = primaryHex;
+    const phs = document.getElementById("primaryHexSwatch");
+    if (phs) phs.style.background = primaryHex;
   }
   if (saved.secondaryHex) {
     secondaryHex = saved.secondaryHex;
-    if (typeof secondaryWheel !== "undefined") secondaryWheel.setHSL(...hexToHslRaw(secondaryHex));
+    if (typeof secondaryWheel !== "undefined") {
+      const hsl = hexToHslRaw(secondaryHex);
+      secondaryWheel.setHSL(hsl[0], hsl[1], hsl[2]);
+    }
+    const shi = document.getElementById("secondaryHexInput");
+    if (shi) shi.value = secondaryHex;
+    const scp = document.getElementById("secondaryColorPreview");
+    if (scp) scp.style.background = secondaryHex;
+    const shs = document.getElementById("secondaryHexSwatch");
+    if (shs) shs.style.background = secondaryHex;
   }
   if (saved.barColorHex) {
     barColorHex = saved.barColorHex;
     pendingBarColorHex = saved.barColorHex;
-    if (typeof barWheel !== "undefined") barWheel.setHSL(...hexToHslRaw(barColorHex));
+    if (typeof barWheel !== "undefined") {
+      const hsl = hexToHslRaw(barColorHex);
+      barWheel.setHSL(hsl[0], hsl[1], hsl[2]);
+    }
+    const bhi = document.getElementById("barHexInput");
+    if (bhi) bhi.value = barColorHex;
+    const bcp = document.getElementById("barColorPreview");
+    if (bcp) bcp.style.background = barColorHex;
+    const bhs = document.getElementById("barHexSwatch");
+    if (bhs) bhs.style.background = barColorHex;
     applyBarColor();
   }
 
   useAutoText = saved.useAutoText !== false;
   if (saved.textColorHex) {
     textColorHex = saved.textColorHex;
-    if (typeof textColorWheel !== "undefined") textColorWheel.setHSL(...hexToHslRaw(textColorHex));
+    if (typeof textColorWheel !== "undefined") {
+      const hsl = hexToHslRaw(textColorHex);
+      textColorWheel.setHSL(hsl[0], hsl[1], hsl[2]);
+    }
+    const thi = document.getElementById("textHexInput");
+    if (thi) thi.value = textColorHex;
+    const tcp = document.getElementById("textColorPreview");
+    if (tcp) tcp.style.background = textColorHex;
+    const ths = document.getElementById("textHexSwatch");
+    if (ths) ths.style.background = textColorHex;
   }
 
   // Set the theme, CSS transitions will handle the smooth fade natively
@@ -2756,16 +2444,85 @@ function applySavedConfig(saved) {
       document.documentElement.style.setProperty("--custom-fg", saved.themeClass === "light-theme" ? "#18100a" : "#fff");
     }
   }
-
-  updateUIStrings();
-  lastPeriod = "";
-  updateLabel();
-  updateBar();
 }
 
+// ============================================================
+// PREFERENCE SYNC & AUTHENTICATION
+// ============================================================
+let isApplyingConfig = false;
+
+function getAuthSession() {
+  try {
+    return JSON.parse(localStorage.getItem('bsms_auth_session')) || {};
+  } catch(e) { return {}; }
+}
+
+let currentUid = null;
+let prefsRef = null;
+
+function syncAuthSession() {
+  const auth = getAuthSession();
+  const btn = document.getElementById("controls-btn");
+  
+  if (auth.loggedIn && auth.uid) {
+    const avatarUrl = auth.avatar || auth.pfp || '';
+    
+    btn.innerHTML = '';
+    const headerImg = document.createElement('img');
+    headerImg.className = 'header-avatar';
+    headerImg.alt = 'Avatar';
+    headerImg.onerror = function() {
+      this.src = "data:image/svg+xml;utf8,<svg viewBox='0 0 24 24' width='28' height='28' stroke='currentColor' stroke-width='2' fill='none'><circle cx='12' cy='8' r='5'/><path d='M3 21v-2a7 7 0 0 1 14 0v2'/></svg>";
+    };
+    headerImg.src = avatarUrl;
+    btn.appendChild(headerImg);
+    
+    const accImg = document.getElementById("account-avatar-img");
+    accImg.style.display = ""; 
+    accImg.src = avatarUrl;
+
+    document.getElementById("account-display-name").textContent = auth.displayName || 'User';
+    document.getElementById("account-username-text").textContent = '@' + (auth.username || 'username');
+
+    if (currentUid !== auth.uid) {
+      if (prefsRef) prefsRef.off('value');
+      currentUid = auth.uid;
+      
+      const localSettings = localStorage.getItem("bsms_countdown_prefs");
+      if (localSettings) {
+        db.ref('/accounts/' + auth.uid + '/countdown-preferences').set(JSON.parse(localSettings));
+        localStorage.removeItem("bsms_countdown_prefs");
+      }
+
+      prefsRef = db.ref('/accounts/' + auth.uid + '/countdown-preferences');
+      prefsRef.on('value', (snap) => {
+        const val = snap.val();
+        if (val) {
+          isApplyingConfig = true;
+          applySavedConfig(val);
+          isApplyingConfig = false;
+        }
+      });
+    }
+  } else {
+    btn.innerHTML = `<svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+    if (currentUid) {
+      if (prefsRef) prefsRef.off('value');
+      prefsRef = null;
+      currentUid = null;
+    }
+  }
+}
+
+window.addEventListener('storage', (e) => {
+  if (e.key === 'bsms_auth_session') {
+    syncAuthSession();
+  }
+});
+
 function saveConfig() {
+  if (isApplyingConfig) return;
   const conf = {
-    language: currentLang,
     settings: settings,
     keybinds: keybinds,
     currentTextScale: currentTextScale,
@@ -2779,46 +2536,116 @@ function saveConfig() {
     themeClass: document.body.classList.contains("light-theme") ? "light-theme" : "",
     isCustom: document.body.classList.contains("custom-theme")
   };
-  localStorage.setItem("bsms_config", JSON.stringify(conf));
+  
+  const auth = getAuthSession();
+  if (auth.loggedIn && auth.uid) {
+    db.ref('/accounts/' + auth.uid + '/countdown-preferences').set(conf);
+  } else {
+    localStorage.setItem("bsms_countdown_prefs", JSON.stringify(conf));
+  }
 }
 
 // ============================================================
 // BOOT
 // ============================================================
-
 pendingConfig = loadConfig();
+const initialAuth = getAuthSession();
 
-// Pre-load language right away so the restore prompt is localized
-if (pendingConfig && pendingConfig.language) {
-  currentLang = pendingConfig.language;
+if (initialAuth.loggedIn && initialAuth.uid) {
+  // Sync up logic handled inside syncAuthSession() which fetches right away
+} else {
+  if (pendingConfig) {
+    isApplyingConfig = true;
+    applySavedConfig(pendingConfig);
+    isApplyingConfig = false;
+  } else {
+    applyBarColor();
+    applyTheme("");
+  }
 }
 
-// Start with standard defaults
-applyBarColor();
-applyTheme("");
+syncAuthSession();
 
-updateLabel();
-updateBar();
-updateUIStrings();
 logToConsole("BSMS Countdown booted","info");
 
-if(!testStartFake){
-  (async()=>{
-    const ok=await fetchSyncedTime();
-    syncedOffsetMs=ok?syncedOffsetMs:0;
-    lastPeriod=""; updateLabel(); updateBar();
-    if(ok) logToConsole("Time synced on load. Offset: "+syncedOffsetMs+"ms","info");
-    else logToConsole("Time sync failed — using local time","warn");
-  })();
-}
-checkCelebration();
-setInterval(()=>{updateLabel();checkCelebration();},100);
-setInterval(()=>{updateBar();},SHIMMER_CYCLE);
+checkRouting();
+
+setInterval(()=>{
+  if (GRADE !== null) {
+    updateLabel();
+    checkCelebration();
+  }
+}, 100);
+
+setInterval(()=>{
+  if (GRADE !== null) updateBar();
+}, SHIMMER_CYCLE);
+
 </script>
+    
+<script>
+const PAGE_VERSION="4.3.1";
+const PAGE_NAME="countdown";
+const FIREBASE_URL=`https://bsms-web-default-rtdb.firebaseio.com/config/versions/${encodeURIComponent(PAGE_NAME)}.json`;
+
+function isNewer(a,b){
+    a=a.split(".").map(Number);b=b.split(".").map(Number);
+    for(let i=0;i<Math.max(a.length,b.length);i++){
+        if((a[i]||0)>(b[i]||0))return true;
+        if((a[i]||0)<(b[i]||0))return false;
+    }
+    return false;
+}
+
+async function checkForUpdate(){
+    try{
+        const r=await fetch(FIREBASE_URL,{cache:"no-store"});
+        const latest=(await r.text()).replace(/"/g,"").trim();
+        if(!isNewer(latest,PAGE_VERSION)||document.getElementById("versionUpdatePopup"))return;
+
+        const s=document.createElement("style");
+        s.textContent=`
+            #versionUpdatePopup{
+                position:fixed!important;inset:0!important;z-index:2147483647!important;
+                display:flex!important;align-items:center!important;justify-content:center!important;
+                padding:20px!important;background:rgba(0,0,0,.85)!important;
+                backdrop-filter:blur(4px)!important;font-family:'Patrick Hand',cursive!important;
+            }
+            #versionUpdatePopup .version-popup{
+                background:var(--bg,#000);color:var(--fg,#fff);
+                border:2px solid var(--red,#bb001e);border-radius:20px;
+                padding:30px 24px 24px;width:min(400px,100%);
+                text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.5);
+                animation:versionPopIn .22s ease;
+            }
+            #versionUpdatePopup h2{font-size:28px;margin:0 0 8px;color:var(--fg,#fff)}
+            #versionUpdatePopup p{font-size:20px;color:var(--fg2,rgba(255,255,255,.6));margin:0 0 24px;line-height:1.5}
+            #versionUpdatePopup button{
+                display:inline-block;width:100%;font-family:'Patrick Hand',cursive;
+                font-size:19px;padding:10px 18px;border-radius:12px;
+                border:2px solid var(--red,#bb001e);background:var(--red,#bb001e);
+                color:#fff;cursor:pointer;transition:.15s;
+            }
+            #versionUpdatePopup button:hover{background:var(--red-h,#d10022);transform:scale(1.03)}
+            @keyframes versionPopIn{from{opacity:0;transform:scale(.92) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+        `;
+        document.head.appendChild(s);
+
+        const overlay=document.createElement("div");
+        overlay.id="versionUpdatePopup";
+        overlay.innerHTML=`
+            <div class="version-popup">
+                <h2>Update Available</h2>
+                <p>A newer version of this application is available. Please refresh to continue.</p>
+                <button onclick="location.reload()">Refresh</button>
+            </div>`;
+        document.body.appendChild(overlay);
+    }catch(e){console.error("Version check failed:",e);}
+}
+
+checkForUpdate();
+setInterval(checkForUpdate,1000);
+</script>
+    
 </body>
 </html>
-
-<script>
-  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-</script>
-<script defer src="/_vercel/insights/script.js"></script>
