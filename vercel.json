@@ -7,8 +7,8 @@
       "permanent": true
     },
     {
-      "source": "/room",
-      "destination": "/rooms",
+      "source": "/rooms",
+      "destination": "/chat",
       "permanent": true
     }
   ]
