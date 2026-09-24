@@ -15,18 +15,22 @@ SPDX-License-Identifier: MIT
 <meta name="theme-color" content="#BB001E">
 <meta name="color-scheme" content="#BB001E">
 <meta name="application-name" content="BSMS Web">
-<meta name="application-version" content="v1.0.0">
+<meta name="application-version" content="v4.0.0">
 <meta property="og:title" content="BSMS Web">
 <meta property="og:description" content="The central digital hub for Boiling Springs Middle School.">
 <meta property="og:category" content="Education">
-<meta property="og:image" content="">
 <meta property="og:url" content="https://bsms-web.vercel.app/">
 <meta property="og:type" content="website">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="BSMS Web">
-<link rel="apple-touch-icon" href="">
-<title>BSMS Web | Home</title>
-<link rel="icon" type="image/png" href=""/>
+<title>BSMS Web</title>
+
+    <!-- Analytics -->
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "y87hnhpoob");
+    </script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
@@ -37,31 +41,50 @@ SPDX-License-Identifier: MIT
   --red: rgb(var(--theme-rgb));
   --red-h: #d10022;
   --red-glow: rgba(var(--theme-rgb), 0.35);
+  --bg: #000;
+  --fg: #fff;
+  --fg2: rgba(255,255,255,0.6);
   --border: rgba(255,255,255,0.13);
-  --msg-bg: rgba(255,255,255,0.04);
+  --msg-bg: rgba(255,255,255,0.06);
+  --input-bg: rgba(255,255,255,0.08);
   --font: 'Patrick Hand', cursive;
+}
+
+body.light-mode {
+  --bg: #f0f2f5;
+  --fg: #1c1e21;
+  --fg2: rgba(0,0,0,0.6);
+  --border: rgba(0,0,0,0.15);
+  --msg-bg: #fff;
+  --input-bg: #fff;
 }
 
 html, body {
   margin: 0; padding: 0; height: 100%; width: 100%;
-  font-family: var(--font); background: #000; color: #fff;
-  overflow-x: hidden;
+  font-family: var(--font); background: var(--bg); color: var(--fg);
+  overflow-x: hidden; transition: background 0.3s, color 0.3s;
 }
 
 @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
 @keyframes popIn { from { opacity:0; transform:scale(.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
 @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
 
+/* Global User Button */
+#globalUserBtn { position: fixed; top: 16px; right: 20px; width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--border); background: var(--input-bg); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; z-index: 2000; overflow: hidden; color:var(--fg); font-weight:bold; font-size:22px; box-shadow: 0 4px 14px rgba(0,0,0,0.3);}
+#globalUserBtn:hover { border-color: var(--red); box-shadow: 0 8px 24px rgba(0,0,0,0.4); transform: scale(1.05); }
+#globalUserBtn svg { width: 24px; height: 24px; fill: var(--fg); transition: fill 0.2s; }
+#globalUserBtn img { width: 100%; height: 100%; object-fit: cover; }
+
 /* Top Navigation */
 #topbar {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 16px 24px; border-bottom: 2px solid var(--border);
-  background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
+  padding: 18px 24px; border-bottom: 2px solid var(--border);
+  background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
   position: sticky; top: 0; z-index: 100;
 }
 .logo-container { display: flex; align-items: center; gap: 12px; cursor: pointer; }
-.logo-icon { width: 32px; height: 32px; fill: var(--red); }
-.logo-text { font-size: 24px; font-weight: bold; letter-spacing: 1px; margin: 0; }
+.logo-icon { width: 34px; height: 34px; fill: var(--red); }
+.logo-text { font-size: 26px; font-weight: bold; letter-spacing: 1px; margin: 0; color:var(--fg); }
 
 /* Buttons */
 .btn {
@@ -69,138 +92,128 @@ html, body {
   padding: 10px 18px; border-radius: 12px; border: 2px solid var(--red);
   background: var(--red); color: #fff; cursor: pointer;
   transition: transform .15s, background .15s, box-shadow .15s, border-color .15s;
-  text-decoration: none; text-align: center; line-height: 1.2;
+  text-decoration: none; text-align: center; line-height: 1.2; width:100%;
 }
 .btn:hover { background: var(--red-h); transform: scale(1.03); box-shadow: 0 4px 18px var(--red-glow); }
 .btn:active { transform: scale(.97); }
-.btn.sec { background: transparent; border-color: rgba(255,255,255,0.4); color: #fff; }
-.btn.sec:hover { background: rgba(255,255,255,0.09); border-color: #fff; box-shadow: none; }
+.btn.sec { background: transparent; border-color: var(--border); color: var(--fg); }
+.btn.sec:hover { background: var(--msg-bg); border-color: var(--fg2); box-shadow: none; }
 
 /* Hero Section */
 .hero {
-  text-align: center; padding: 60px 20px 40px;
+  text-align: center; padding: 70px 20px 50px;
   animation: fadeUp 0.6s ease forwards;
 }
-.hero h1 { font-size: 56px; margin: 0 0 10px; line-height: 1.1; }
+.hero h1 { font-size: 64px; margin: 0 0 10px; line-height: 1.1; color:var(--fg);}
 .hero h1 span { color: var(--red); }
-.hero p { font-size: 22px; color: rgba(255,255,255,0.65); max-width: 600px; margin: 0 auto; line-height: 1.5; }
+.hero p { font-size: 22px; color: var(--fg2); max-width: 600px; margin: 0 auto; line-height: 1.5; }
 
 /* Launcher Grid */
 .launcher-container { max-width: 1000px; margin: 0 auto; padding: 20px; }
 .launcher-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;
 }
 .app-card {
   background: var(--msg-bg); border: 2px solid var(--border); border-radius: 20px;
-  padding: 30px 24px; display: flex; flex-direction: column; align-items: flex-start;
+  padding: 30px 26px; display: flex; flex-direction: column; align-items: flex-start;
   transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-  animation: popIn 0.5s ease forwards; opacity: 0;
+  animation: popIn 0.5s ease forwards; opacity: 0; position:relative; overflow:hidden;
 }
 .app-card:nth-child(1) { animation-delay: 0.1s; }
 .app-card:nth-child(2) { animation-delay: 0.2s; }
-.app-card:nth-child(3) { animation-delay: 0.3s; }
-
 .app-card:hover {
-  border-color: var(--red); transform: translateY(-5px);
-  box-shadow: 0 8px 30px rgba(var(--theme-rgb), 0.15);
+  border-color: var(--red); transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(var(--theme-rgb), 0.2);
 }
 .app-icon {
-  width: 54px; height: 54px; fill: var(--red); margin-bottom: 20px;
+  width: 58px; height: 58px; fill: var(--red); margin-bottom: 20px;
   background: rgba(var(--theme-rgb), 0.1); padding: 12px; border-radius: 14px;
+  border: 1px solid rgba(var(--theme-rgb), 0.3);
 }
-.app-title { font-size: 28px; margin: 0 0 8px; color: #fff; }
-.app-desc { font-size: 18px; color: rgba(255,255,255,0.6); margin: 0 0 24px; line-height: 1.4; flex: 1; }
-.app-card .btn { width: 100%; }
+.app-title { font-size: 32px; margin: 0 0 8px; color: var(--fg); }
+.app-desc { font-size: 19px; color: var(--fg2); margin: 0 0 24px; line-height: 1.45; flex: 1; }
 
-/* Overlay & Modals */
+/* Overlays & Modals */
 .overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.85);
   display: none; align-items: center; justify-content: center;
-  z-index: 2000; animation: fadeIn .2s ease; padding: 20px;
+  z-index: 3000; animation: fadeIn .2s ease; padding: 20px; backdrop-filter:blur(4px);
 }
 .overlay.show { display: flex; }
 .popup {
-  background: #080808; border: 3px solid var(--red); border-radius: 20px;
-  padding: 30px 24px 24px; width: min(440px, 100%); animation: popIn .22s ease;
-  text-align: center;
+  background: var(--bg); border: 2px solid var(--red); border-radius: 20px;
+  padding: 30px 24px 24px; width: min(400px, 100%); animation: popIn .22s ease;
+  text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
 }
-.popup p { font-size: 20px; color: rgba(255,255,255,0.85); margin: 0 0 24px; line-height: 1.5; }
-
-/* User Info specific */
-.user-pill {
-  display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.05);
-  border: 2px solid var(--border); padding: 4px 14px 4px 4px; border-radius: 50px;
-  cursor: pointer; transition: all 0.15s;
-}
-.user-pill:hover { border-color: var(--red); box-shadow: 0 0 12px var(--red-glow); background: rgba(255,255,255,0.1); }
-.user-pill .avatar {
-  width: 32px; height: 32px; border-radius: 50%; background: rgba(var(--theme-rgb), 0.2);
-  color: var(--red); display: flex; align-items: center; justify-content: center;
-  font-weight: bold; font-size: 16px; border: 2px solid transparent; overflow: hidden;
-}
-.user-pill .avatar img { width: 100%; height: 100%; object-fit: cover; }
-.user-pill span { font-size: 17px; font-family: var(--font); color: #fff; }
+.popup p { font-size: 20px; color: var(--fg2); margin: 0 0 24px; line-height: 1.5; }
+.popup h2 { font-size: 28px; margin: 0 0 8px; color:var(--fg); }
 
 @media (max-width: 600px) {
-  .hero h1 { font-size: 42px; }
-  .hero p { font-size: 18px; }
-  #topbar { padding: 12px 16px; }
-  .logo-text { display: none; } /* hide text on very small screens to save space */
+  .hero h1 { font-size: 48px; }
+  .hero p { font-size: 19px; }
+  #topbar { padding: 14px 16px; }
+  .logo-text { display: none; }
+  #globalUserBtn { top: 10px; right: 14px; width:40px; height:40px; }
 }
 </style>
 </head>
 <body>
+
+<!-- Global User Button -->
+<div id="globalUserBtn" onclick="handleUserIconClick()"></div>
+
+<!-- Global Account Popup -->
+<div id="accountPopup" class="overlay" onclick="if(event.target===this) closePopup('accountPopup')">
+  <div class="popup" style="align-items:center;">
+    <div id="accPopupAvatar" style="width:86px;height:86px;border-radius:50%;border:3px solid var(--red);margin:0 auto 12px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:36px;background:var(--msg-bg);font-weight:bold;color:var(--fg);"></div>
+    <h2 id="accPopupName" style="margin-bottom:2px;">---</h2>
+    <p style="font-size:16px; margin-bottom:22px;">@<span id="accPopupUser">---</span></p>
+    <a href="/accounts" class="btn">Manage Account</a>
+    <button class="btn sec" onclick="closePopup('accountPopup')" style="border:none; margin-top:6px;">Close</button>
+  </div>
+</div>
 
 <div id="topbar">
   <div class="logo-container">
     <svg class="logo-icon" viewBox="0 0 24 24"><path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z"/></svg>
     <h2 class="logo-text">BSMS Web</h2>
   </div>
-  <div id="topbar-right">
-    <!-- Populated by JS -->
-  </div>
 </div>
 
 <div class="hero">
   <h1>Welcome to <span>BSMS Web</span></h1>
-  <p>Your unified digital ecosystem for Boiling Springs Middle School. Connect with classmates, manage your profile, and access all our apps in one place.</p>
+  <p>The unified digital ecosystem for Boiling Springs Middle School. Connect with classmates, track your schedule, and manage your account in one seamless suite.</p>
 </div>
 
 <div class="launcher-container">
   <div class="launcher-grid">
     
-    <!-- Accounts Card -->
+    <!-- Countdown Card -->
     <div class="app-card">
-      <svg class="app-icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-      <h3 class="app-title">Accounts</h3>
-      <p class="app-desc">Manage your public profile, security settings, and global preferences across all BSMS Web services.</p>
-      <a href="/accounts" class="btn">Manage Account</a>
+      <svg class="app-icon" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+      <h3 class="app-title">Countdown</h3>
+      <p class="app-desc">Track how much time is left until the next period with beautiful, visual customization.</p>
+      <a href="/countdown" class="btn">Launch Countdown</a>
     </div>
 
     <!-- Rooms Card -->
     <div class="app-card">
       <svg class="app-icon" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/></svg>
-      <h3 class="app-title">Rooms</h3>
-      <p class="app-desc">A fast, lightweight real-time chat platform. Create shared spaces to connect and talk with your friends.</p>
-      <a href="/rooms" class="btn">Open Rooms</a>
+      <h3 class="app-title">Chat</h3>
+      <p class="app-desc">A lightning-fast real-time chat platform. Create shared spaces to connect and talk with friends instantly.</p>
+      <a href="/c" class="btn">Launch Chat</a>
     </div>
 
-    <!-- Countdown Card -->
+    <!-- Games Card -->
     <div class="app-card">
-      <svg class="app-icon" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
-      <h3 class="app-title">Countdown</h3>
-      <p class="app-desc">Track how time is left until the next period with cool customization features.</p>
-      <button class="btn sec" onclick="showCountdownAlert()">Launch Countdown</button>
+      <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M21.58 16.09l-1.6-6.39A5.01 5.01 0 0 0 15.12 6H8.88a5.01 5.01 0 0 0-4.86 3.7l-1.6 6.39a2.99 2.99 0 0 0 5.72 1.64l.86-2.15c.15-.36.5-.6.89-.6h4.22c.39 0 .74.24.89.6l.86 2.15a2.99 2.99 0 0 0 5.72-1.64zM9 12H7v2H5v-2H3v-2h2V8h2v2h2v2zm6-1.5a1 1 0 1 1 1-1 1 1 0 0 1-1 1zm3 3a1 1 0 1 1 1-1 1 1 0 0 1-1 1z"/>
+      </svg>
+      <h3 class="app-title">Games</h3>
+      <p class="app-desc">A massive collection of interactive HTML5 games.</p>
+      <a href="/g" class="btn">Launch Games</a>
     </div>
 
-  </div>
-</div>
-
-<!-- Alert Modal -->
-<div id="alertOverlay" class="overlay">
-  <div class="popup">
-    <p id="alertText">Alert Message Here</p>
-    <button class="btn" onclick="closeAlert()">Understood</button>
   </div>
 </div>
 
@@ -211,78 +224,125 @@ html, body {
  * SPDX-License-Identifier: MIT
  */
 
-const SESSION_KEY = 'bsms_account_session';
-let currentUser = localStorage.getItem(SESSION_KEY);
+const SESSION_KEY = 'bsms_auth_session';
+let authSession = null;
+let isGuest = true;
 
-async function init() {
-    const topbarRight = document.getElementById('topbar-right');
-    
-    if (currentUser) {
-        // Optimistic UI update
-        const initial = currentUser.charAt(0).toUpperCase();
-        topbarRight.innerHTML = `
-            <div class="user-pill" onclick="window.location.href='/accounts'" title="Manage Account">
-                <div class="avatar" id="navAvatar">${initial}</div>
-                <span id="navUsername">${currentUser}</span>
-            </div>
-        `;
-
-        // Fetch actual profile data from the API to get Display Name and Avatar
-        try {
-            const response = await fetch(`/api/index?action=getAccount&username=${encodeURIComponent(currentUser)}`);
-            const data = await response.json();
-            
-            if (response.ok && data.success && data.accountData) {
-                const acc = data.accountData;
-                const dName = acc.displayName || currentUser;
-                document.getElementById('navUsername').textContent = dName;
-                
-                if (acc.avatar) {
-                    document.getElementById('navAvatar').innerHTML = `<img src="${acc.avatar}" alt="Avatar">`;
-                    document.getElementById('navAvatar').style.border = "none";
-                }
-                
-                // Apply global theme color if it exists
-                if (acc.theme) {
-                    let hex = acc.theme;
-                    document.documentElement.style.setProperty('--red', hex);
-                    if(hex.length === 7) {
-                        let r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
-                        document.documentElement.style.setProperty('--theme-rgb', `${r}, ${g}, ${b}`);
-                        document.documentElement.style.setProperty('--red-h', `rgb(${Math.min(255,r+20)},${Math.min(255,g+20)},${Math.min(255,b+20)})`);
-                        document.documentElement.style.setProperty('--red-glow', `rgba(${r},${g},${b},0.35)`);
-                    }
-                }
-            } else {
-                // If API says invalid account, clear local storage
-                localStorage.removeItem(SESSION_KEY);
-                currentUser = null;
-                renderLoggedOutState(topbarRight);
-            }
-        } catch (e) {
-            console.error("Failed to fetch user data for topbar", e);
-        }
+function syncAuthSession() {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (raw) {
+        authSession = JSON.parse(raw);
+        isGuest = !authSession.loggedIn;
     } else {
-        renderLoggedOutState(topbarRight);
+        authSession = null;
+        isGuest = true;
+    }
+    renderUserIcon();
+}
+
+window.addEventListener('storage', (e) => {
+    if (e.key === SESSION_KEY) syncAuthSession();
+});
+
+function renderUserIcon() {
+    const btn = document.getElementById('globalUserBtn');
+    if (isGuest) {
+        btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
+        btn.style.border = "2px solid var(--border)";
+    } else {
+        if (authSession.pfp) {
+            btn.innerHTML = `<img src="${authSession.pfp}" alt="Avatar">`;
+            btn.style.border = "none";
+        } else {
+            btn.innerHTML = (authSession.displayName || authSession.username || "?").charAt(0).toUpperCase();
+            btn.style.border = "2px solid var(--border)";
+        }
     }
 }
 
-function renderLoggedOutState(container) {
-    container.innerHTML = `
-        <button class="btn" style="margin:0; padding: 6px 16px; font-size: 19px;" onclick="window.location.href='/accounts'">Sign In</button>
-    `;
+function handleUserIconClick() {
+    if (isGuest) {
+        window.location.href = '/accounts#signup';
+    } else {
+        document.getElementById('accPopupName').textContent = authSession.displayName || authSession.username;
+        document.getElementById('accPopupUser').textContent = authSession.username;
+        const ava = document.getElementById('accPopupAvatar');
+        if(authSession.pfp) ava.innerHTML = `<img src="${authSession.pfp}" style="width:100%;height:100%;object-fit:cover;">`;
+        else ava.innerHTML = (authSession.displayName || authSession.username).charAt(0).toUpperCase();
+        openPopup('accountPopup');
+    }
 }
 
-function showCountdownAlert() {
-    document.getElementById('alertText').innerText = "BSMS Countdown is still being integrated with the BSMS Web ecosystem. It will be available soon.";
-    document.getElementById('alertOverlay').classList.add('show');
-}
+function openPopup(id) { document.getElementById(id).classList.add('show'); }
+function closePopup(id) { document.getElementById(id).classList.remove('show'); }
 
-function closeAlert() {
-    document.getElementById('alertOverlay').classList.remove('show');
-}
-
-window.onload = init;
+// Run
+syncAuthSession();
 </script>
+    
+<script>
+const PAGE_VERSION="4.8";
+const PAGE_NAME="home";
+const FIREBASE_URL=`https://bsms-web-default-rtdb.firebaseio.com/config/versions/${encodeURIComponent(PAGE_NAME)}.json`;
+
+function isNewer(a,b){
+    a=a.split(".").map(Number);b=b.split(".").map(Number);
+    for(let i=0;i<Math.max(a.length,b.length);i++){
+        if((a[i]||0)>(b[i]||0))return true;
+        if((a[i]||0)<(b[i]||0))return false;
+    }
+    return false;
+}
+
+async function checkForUpdate(){
+    try{
+        const r=await fetch(FIREBASE_URL,{cache:"no-store"});
+        const latest=(await r.text()).replace(/"/g,"").trim();
+        if(!isNewer(latest,PAGE_VERSION)||document.getElementById("versionUpdatePopup"))return;
+
+        const s=document.createElement("style");
+        s.textContent=`
+            #versionUpdatePopup{
+                position:fixed!important;inset:0!important;z-index:2147483647!important;
+                display:flex!important;align-items:center!important;justify-content:center!important;
+                padding:20px!important;background:rgba(0,0,0,.85)!important;
+                backdrop-filter:blur(4px)!important;font-family:'Patrick Hand',cursive!important;
+            }
+            #versionUpdatePopup .version-popup{
+                background:var(--bg,#000);color:var(--fg,#fff);
+                border:2px solid var(--red,#bb001e);border-radius:20px;
+                padding:30px 24px 24px;width:min(400px,100%);
+                text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.5);
+                animation:versionPopIn .22s ease;
+            }
+            #versionUpdatePopup h2{font-size:28px;margin:0 0 8px;color:var(--fg,#fff)}
+            #versionUpdatePopup p{font-size:20px;color:var(--fg2,rgba(255,255,255,.6));margin:0 0 24px;line-height:1.5}
+            #versionUpdatePopup button{
+                display:inline-block;width:100%;font-family:'Patrick Hand',cursive;
+                font-size:19px;padding:10px 18px;border-radius:12px;
+                border:2px solid var(--red,#bb001e);background:var(--red,#bb001e);
+                color:#fff;cursor:pointer;transition:.15s;
+            }
+            #versionUpdatePopup button:hover{background:var(--red-h,#d10022);transform:scale(1.03)}
+            @keyframes versionPopIn{from{opacity:0;transform:scale(.92) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+        `;
+        document.head.appendChild(s);
+
+        const overlay=document.createElement("div");
+        overlay.id="versionUpdatePopup";
+        overlay.innerHTML=`
+            <div class="version-popup">
+                <h2>Update Available</h2>
+                <p>A newer version of this application is available. Please refresh to continue.</p>
+                <button onclick="location.reload()">Refresh</button>
+            </div>`;
+        document.body.appendChild(overlay);
+    }catch(e){console.error("Version check failed:",e);}
+}
+
+checkForUpdate();
+setInterval(checkForUpdate,1000);
+</script>
+    
 </body>
 </html>
