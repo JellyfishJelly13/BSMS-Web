@@ -51,12 +51,6 @@ body{
   }
 }
 
-@keyframes glowPulse{
-  0%{box-shadow:0 0 20px rgba(187,0,30,0.18);}
-  50%{box-shadow:0 0 60px rgba(187,0,30,0.45);}
-  100%{box-shadow:0 0 20px rgba(187,0,30,0.18);}
-}
-
 /* CARD */
 .card{
   width:min(560px,100%);
@@ -66,10 +60,6 @@ body{
   padding:40px 30px;
   text-align:center;
   animation:fadeIn .25s ease, popIn .3s ease;
-}
-
-.card.glow{
-  animation:fadeIn .25s ease, popIn .3s ease, glowPulse 3s infinite ease-in-out;
 }
 
 .error-code{
@@ -92,37 +82,6 @@ body{
   margin:0;
 }
 
-/* BACKGROUND GLOW (now controlled) */
-.bg-glow{
-  position:fixed;
-  width:600px;
-  height:600px;
-  background:radial-gradient(circle, rgba(187,0,30,0.2) 0%, transparent 70%);
-  pointer-events:none;
-  filter:blur(30px);
-  animation:fadeIn 1s ease;
-  display:none; /* OFF by default */
-}
-
-body.glow .bg-glow{
-  display:block;
-}
-
-.bg-glow.one{
-  top:-220px;
-  left:-160px;
-}
-
-.bg-glow.two{
-  bottom:-240px;
-  right:-160px;
-}
-
-/* remove everything if glow is off */
-body:not(.glow) .card{
-  box-shadow:none;
-}
-
 @media(max-width:600px){
   .error-code{font-size:90px;}
   .title{font-size:34px;}
@@ -133,10 +92,7 @@ body:not(.glow) .card{
 
 <body>
 
-<div class="bg-glow one"></div>
-<div class="bg-glow two"></div>
-
-<div class="card" id="card">
+<div class="card">
   <h1 class="error-code">404</h1>
 
   <div class="title">Page Not Found</div>
@@ -146,22 +102,6 @@ body:not(.glow) .card{
     not exist or may have been removed.
   </p>
 </div>
-
-<script>
-const GLOW_ENABLED = false;
-
-const card = document.getElementById("card");
-
-if (GLOW_ENABLED) {
-  document.body.classList.add("glow");
-  card.classList.add("glow");
-}
-</script>
-
-<script>
-  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-</script>
-<script defer src="/_vercel/insights/script.js"></script>
 
 </body>
 </html>
