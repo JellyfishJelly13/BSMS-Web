@@ -7,6 +7,16 @@
       "permanent": true
     },
     {
+      "source": "/c",
+      "destination": "/chat",
+      "permanent": true
+    },
+    {
+      "source": "/games",
+      "destination": "/g",
+      "permanent": true
+    },
+    {
       "source": "/rooms",
       "destination": "/chat",
       "permanent": true
