@@ -1,0 +1,1 @@
+bsms-web.vercel.app/img/
