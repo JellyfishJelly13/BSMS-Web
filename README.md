@@ -48,7 +48,7 @@ Global event tracking is managed via a root-level `analytics.js` file. This scri
 
 ## Deployment Infrastructure
 
-The platform utilizes Vercel for automated deployment and continuous integration. The connection to the Firebase Realtime Database instance (such as the `bsms-rooms-default-rtdb` project) is initialized using securely stored Environment Variables configured directly within the Vercel project settings:
+The platform utilizes Vercel for automated deployment and continuous integration. The connection to the Firebase Realtime Database instance is initialized using securely stored Environment Variables configured directly within the Vercel project settings:
 
 * `FIREBASE_PROJECT_ID`
 * `FIREBASE_CLIENT_EMAIL`
