@@ -5,8 +5,8 @@
  */
 
 import admin from 'firebase-admin';
+import profanity from 'glin-profanity';
 
-// Initialize Firebase Admin
 if (!admin.apps.length) {
     admin.initializeApp({
         credential: admin.credential.cert({
@@ -43,18 +43,13 @@ export default async function handler(req, res) {
 
     try {
         const userLookup = await getUserBySession(sessionId);
-        if (!userLookup) {
-            return res.status(401).json({ error: 'Unauthorized session.' });
-        }
+        if (!userLookup) return res.status(401).json({ error: 'Unauthorized session.' });
 
         const { uid, account } = userLookup;
-
         if (account.account_status === 'banned') {
-            console.warn(`[BSMS Web :: Chat] Banned user attempted action: ${uid}`);
             return res.status(403).json({ error: 'Account banned.', account_status: 'banned' });
         }
 
-        // Update session lastActive
         await db.ref(`/accounts/${uid}/sessions/${sessionId}/lastActive`).set(Date.now());
 
         switch (action) {
@@ -67,7 +62,6 @@ export default async function handler(req, res) {
                 const usersCache = usersSnap.val() || {};
                 const accountsCache = {};
                 
-                // Build safe accounts cache (no passwords/sessions)
                 for (const [id, acc] of Object.entries(allAccounts)) {
                     if (acc.account_status !== 'deleted') {
                         accountsCache[id] = { displayName: acc.displayName, avatar: acc.avatar };
@@ -81,7 +75,6 @@ export default async function handler(req, res) {
                     if (allConvos[type]) {
                         for (const [cid, channel] of Object.entries(allConvos[type])) {
                             if (channel.members && channel.members[uid]) {
-                                // Extract the last message only to save bandwidth on sync
                                 let strippedMessages = {};
                                 if (channel.messages) {
                                     const mKeys = Object.keys(channel.messages);
@@ -90,7 +83,6 @@ export default async function handler(req, res) {
                                         strippedMessages[lastKey] = channel.messages[lastKey];
                                     }
                                 }
-                                
                                 myChannels[cid] = {
                                     ...channel,
                                     _type: type,
@@ -102,11 +94,7 @@ export default async function handler(req, res) {
                     }
                 }
 
-                return res.status(200).json({
-                    users: usersCache,
-                    accounts: accountsCache,
-                    channels: myChannels
-                });
+                return res.status(200).json({ users: usersCache, accounts: accountsCache, channels: myChannels });
             }
 
             case 'messages': {
@@ -120,73 +108,53 @@ export default async function handler(req, res) {
                     return res.status(403).json({ error: "Not a member of this channel." });
                 }
 
-                // If user requests messages, ensure they get them cleanly (scrub deleted user identities visually if needed)
-                // The frontend handles deleted user rendering based on 'deleted' status flag if needed, but we pass raw data here.
-                return res.status(200).json({
-                    messages: channel.messages || {},
-                    members: channel.members || {}
-                });
+                return res.status(200).json({ messages: channel.messages || {}, members: channel.members || {} });
             }
 
             case 'sendMessage': {
                 const { cid, type, content, repliedTo } = payload;
-                
-                if (!cid || !type || !content) {
-                    return res.status(400).json({ error: "Missing payload data" });
-                }
+                if (!cid || !type || !content) return res.status(400).json({ error: "Missing payload data" });
 
-                // Verify Membership
                 const chSnap = await db.ref(`/chat/conversations/${type}/${cid}`).once('value');
                 const channel = chSnap.val();
                 if (!channel || !channel.members || !channel.members[uid]) {
                     return res.status(403).json({ error: "Not a member." });
                 }
 
-                // Internal API Profanity Check
-                const profCheck = await fetch(`https://${req.headers.host}/api/profanity-filter`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: content })
-                });
+                // Direct Profanity Check (No internal API Fetch)
+                let normalizedText = content.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/@/g, 'a').replace(/\$/g, 's').replace(/0/g, 'o');
+                const validTextRegex = /^[\x20-\x7E\p{Emoji}\s]*$/u;
 
-                if (!profCheck.ok) {
-                    const profData = await profCheck.json();
-                    return res.status(400).json(profData);
+                if (!validTextRegex.test(normalizedText)) {
+                    return res.status(400).json({ error: 'Invalid characters or formatting detected.' });
+                }
+                if (profanity(normalizedText)) {
+                    return res.status(400).json({ error: 'Profanity detected.' });
                 }
 
-                // Cooldown Enforcement
                 const lastMsgSnap = await db.ref(`/chat/users/${uid}/lastMessageTimestamp`).once('value');
                 const lastTs = lastMsgSnap.val() || 0;
                 const now = Date.now();
-                if (now - lastTs < 5000) {
-                    return res.status(429).json({ error: "Please wait 5 seconds before sending another message." });
-                }
+                if (now - lastTs < 5000) return res.status(429).json({ error: "Please wait 5 seconds before sending another message." });
 
-                // Build Message
+                // Transaction fix for high concurrency
                 const msgIdRef = db.ref(`/chat/conversations/${type}/${cid}/config/lastMessageId`);
-                let newId = 99999;
-                await msgIdRef.transaction((current) => {
-                    newId = (current || 99999) + 1;
-                    return newId;
+                const transactionResult = await msgIdRef.transaction((current) => {
+                    return (current || 99999) + 1;
                 });
+                const newId = transactionResult.snapshot.val();
 
                 const msgObj = {
                     senderUid: uid,
                     timestamp: admin.database.ServerValue.TIMESTAMP,
                     content: content,
                     contentType: 'text',
-                    status: {
-                        unsent: false,
-                        deletedByMod: false,
-                        pinned: false,
-                        repliedTo: repliedTo || false
-                    }
+                    status: { unsent: false, deletedByMod: false, pinned: false, repliedTo: repliedTo || false }
                 };
 
                 await db.ref(`/chat/conversations/${type}/${cid}/messages/${newId}`).set(msgObj);
                 await db.ref(`/chat/users/${uid}/lastMessageTimestamp`).set(now);
                 
-                console.log(`[BSMS Web :: Chat] Message sent by ${uid} in ${cid}`);
                 return res.status(200).json({ success: true, messageId: newId });
             }
 
@@ -210,13 +178,11 @@ export default async function handler(req, res) {
                 } else if (msgAction === 'moderate' && isMod && !isMine) {
                     await msgRef.update({ 'status/deletedByMod': true, content: null });
                 } else if (msgAction === 'pin' && isMod) {
-                    const currentPin = msg.status?.pinned || false;
-                    await msgRef.update({ 'status/pinned': !currentPin });
+                    await msgRef.update({ 'status/pinned': !(msg.status?.pinned || false) });
                 } else {
                     return res.status(403).json({ error: "Unauthorized message action." });
                 }
 
-                console.log(`[BSMS Web :: Chat] Message ${msgId} action '${msgAction}' performed by ${uid}`);
                 return res.status(200).json({ success: true });
             }
 
@@ -241,22 +207,20 @@ export default async function handler(req, res) {
                 const { targetUid } = payload;
                 if (!targetUid || targetUid === uid) return res.status(400).json({ error: "Invalid target." });
 
-                // Verify target exists
                 const targetSnap = await db.ref(`/accounts/${targetUid}`).once('value');
                 if (!targetSnap.exists()) return res.status(404).json({ error: "User not found." });
 
-                // Check existing
                 const convosSnap = await db.ref(`/chat/conversations/dms`).once('value');
                 const dms = convosSnap.val() || {};
                 
                 for (const [id, c] of Object.entries(dms)) {
                     if (c.members && c.members[uid] && c.members[targetUid]) {
-                        return res.status(200).json({ cid: id }); // Return existing
+                        return res.status(200).json({ cid: id }); 
                     }
                 }
 
-                // Create new
-                const newCid = Math.floor(1000 + Math.random() * 9000).toString();
+                // ID Collision fix: Use Firebase built-in push key
+                const newCid = db.ref('/chat/conversations/dms').push().key;
                 await db.ref(`/chat/conversations/dms/${newCid}`).set({
                     config: { createdAt: Date.now(), lastMessageId: 99999 },
                     members: {
@@ -265,14 +229,12 @@ export default async function handler(req, res) {
                     }
                 });
 
-                console.log(`[BSMS Web :: Chat] New DM created between ${uid} and ${targetUid}`);
                 return res.status(200).json({ cid: newCid });
             }
 
             default:
                 return res.status(400).json({ error: "Unknown action." });
         }
-
     } catch (err) {
         console.error(`[BSMS Web :: Chat] Internal Error:`, err);
         return res.status(500).json({ error: 'Internal server error.' });
