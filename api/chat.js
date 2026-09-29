@@ -5,7 +5,6 @@
  */
 
 import admin from 'firebase-admin';
-import profanity from 'glin-profanity';
 
 if (!admin.apps.length) {
     admin.initializeApp({
