@@ -1,0 +1,133 @@
+<!--
+BSMS Web
+Copyright © 2026 Jellyfish Jelly
+SPDX-License-Identifier: MIT
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Privacy Policy - BSMS Web</title>
+
+<!-- Favicons -->
+<link rel="icon" href="/img/icon.png">
+<link rel="apple-touch-icon" href="/img/app-icon.png">
+
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2TKPQV995W"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-2TKPQV995W');
+</script>
+<script src="/analytics.js"></script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+
+*,*::before,*::after{
+  box-sizing:border-box;
+}
+
+:root{
+  --red:#BB001E;
+  --red-h:#d10022;
+  --bg:#000;
+  --fg:#fff;
+  --fg2:rgba(255,255,255,0.7);
+  --border:rgba(255,255,255,0.15);
+  --font:'Patrick Hand',cursive;
+}
+
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  background:var(--bg);
+  color:var(--fg);
+  font-family:var(--font);
+  overflow-y: auto;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 60px 20px;
+}
+
+h1 { font-size: 48px; color: var(--red); margin-bottom: 10px; }
+h2 { font-size: 28px; margin-top: 30px; margin-bottom: 10px; border-bottom: 2px solid var(--border); padding-bottom: 5px;}
+p, li { font-size: 20px; color: var(--fg2); line-height: 1.6; }
+ul { margin-top: 10px; }
+
+.btn {
+  display: inline-block; font-family: var(--font); font-size: 19px;
+  padding: 10px 18px; border-radius: 12px; border: 2px solid var(--red);
+  background: var(--red); color: #fff; cursor: pointer;
+  transition: transform .15s, background .15s;
+  text-decoration: none; text-align: center; margin-bottom: 30px;
+}
+.btn:hover { background: var(--red-h); transform: scale(1.03); }
+
+/* Offline Banner */
+#offlineBanner {
+  position: fixed; top: 0; left: 0; width: 100%; background: #ef4444; color: #fff;
+  text-align: center; padding: 10px; font-family: var(--font); font-size: 18px;
+  z-index: 10000; transform: translateY(-100%); transition: transform 0.3s ease;
+}
+#offlineBanner.show { transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<div id="offlineBanner">You are currently offline</div>
+
+<div class="container">
+  <a href="/" class="btn" data-ga="privacy_home_btn">← Go Back Home</a>
+
+  <h1>Privacy Policy</h1>
+  <p><strong>Last Updated:</strong> September 2026</p>
+
+  <p>Welcome to BSMS Web. We are committed to protecting your personal information and your right to privacy. This policy explains what information we collect and how we use it within the BSMS Web ecosystem.</p>
+
+  <h2>1. Information We Collect</h2>
+  <ul>
+    <li><strong>Account Information:</strong> We collect your chosen username, display name, and any optional bio or contact info you provide to render your public profile.</li>
+    <li><strong>Chat Logs:</strong> Messages sent within BSMS Chat are permanently logged and stored on our servers to maintain chat history and enforce moderation.</li>
+    <li><strong>Usage & Sessions:</strong> We utilize HTML5 Local Storage to generate and store a secure <code>session_id</code> to keep you logged in.</li>
+    <li><strong>Network Data:</strong> As this service is hosted on Vercel, standard network data including IP addresses may be processed by Vercel for security and routing purposes.</li>
+  </ul>
+
+  <h2>2. Analytics</h2>
+  <p>We use Google Analytics 4 (GA4) to analyze user behavior, track button clicks, and understand page traffic. This helps us improve the platform's user experience. GA4 may utilize cookies to function properly.</p>
+
+  <h2>3. Moderation & Bans</h2>
+  <p>To ensure a safe environment, all text data (including usernames and messages) is processed by our automated Profanity Filter. Accounts that violate our terms may have their <code>account_status</code> flagged as banned, which will permanently revoke device and session access to the platform.</p>
+
+  <h2>4. Data Export & Deletion</h2>
+  <p>You have full control over your data. In the Account Manager, you can download a complete ZIP export of your profile, messages, and game saves. You may also permanently delete your account, which removes your profile and scrubs your identity from historical chat logs.</p>
+
+</div>
+
+<script>
+/*
+ * BSMS Web
+ * Copyright © 2026 Jellyfish Jelly
+ * SPDX-License-Identifier: MIT
+ */
+window.addEventListener('offline', () => document.getElementById('offlineBanner').classList.add('show'));
+window.addEventListener('online', () => document.getElementById('offlineBanner').classList.remove('show'));
+if (!navigator.onLine) document.getElementById('offlineBanner').classList.add('show');
+</script>
+
+<script>
+    window.BSMS_WEB_PAGE_VERSION = "5.0";
+    window.BSMS_WEB_PAGE_NAME = "privacy";
+</script>
+
+<script src="/api/version-check.js"></script>
+
+</body>
+</html>
