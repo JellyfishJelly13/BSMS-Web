@@ -6,20 +6,29 @@
 
 import admin from 'firebase-admin';
 
+// Safe Firebase Initialization
 if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert({
-            projectId: process.env.FIREBASE_PROJECT_ID,
-            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-            privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        }),
-        databaseURL: process.env.FIREBASE_DATABASE_URL
-    });
+    try {
+        if (!process.env.FIREBASE_PRIVATE_KEY) {
+            throw new Error("FIREBASE_PRIVATE_KEY is missing from environment variables.");
+        }
+        
+        admin.initializeApp({
+            credential: admin.credential.cert({
+                projectId: process.env.FIREBASE_PROJECT_ID,
+                clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+            }),
+            databaseURL: process.env.FIREBASE_DATABASE_URL
+        });
+    } catch (err) {
+        console.error("[BSMS Web :: API] Firebase Init Error:", err.message);
+    }
 }
-const db = admin.database();
+const db = admin.apps.length ? admin.database() : null;
 
 async function getUserBySession(sessionId) {
-    if (!sessionId) return null;
+    if (!sessionId || !db) return null;
     const snap = await db.ref('/accounts').once('value');
     const accounts = snap.val() || {};
     
@@ -34,6 +43,10 @@ async function getUserBySession(sessionId) {
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    if (!db) {
+        return res.status(500).json({ error: "Database failed to initialize. Check environment variables." });
     }
 
     const action = req.query.action;
@@ -120,15 +133,44 @@ export default async function handler(req, res) {
                     return res.status(403).json({ error: "Not a member." });
                 }
 
-                // Direct Profanity Check (No internal API Fetch)
-                let normalizedText = content.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/@/g, 'a').replace(/\$/g, 's').replace(/0/g, 'o');
+                // 1. Validate basic characters
                 const validTextRegex = /^[\x20-\x7E\p{Emoji}\s]*$/u;
-
-                if (!validTextRegex.test(normalizedText)) {
+                if (!validTextRegex.test(content)) {
                     return res.status(400).json({ error: 'Invalid characters or formatting detected.' });
                 }
-                if (profanity(normalizedText)) {
-                    return res.status(400).json({ error: 'Profanity detected.' });
+
+                // 2. Aggressive Normalization to catch bypass attempts
+                let strippedText = content
+                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove accents
+                    .replace(/[\u200B-\u200D\uFEFF]/g, "") // Remove invisible characters
+                    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") // Remove punctuation
+                    .replace(/\s+/g, "") // Remove spaces to catch spaced-out words
+                    .replace(/@/g, "a")
+                    .replace(/\$/g, "s")
+                    .replace(/0/g, "o")
+                    .replace(/1/g, "i")
+                    .replace(/3/g, "e")
+                    .replace(/4/g, "a")
+                    .replace(/5/g, "s")
+                    .replace(/7/g, "t")
+                    .toLowerCase();
+
+                // 3. Dynamic Import to bypass Vercel ESM crash
+                try {
+                    const glinModule = await import('glin-profanity');
+                    const profanityCheck = glinModule.default || glinModule; 
+                    
+                    // Run Glin on both the raw content and the aggressively stripped version
+                    if (profanityCheck(content) || profanityCheck(strippedText)) {
+                        return res.status(400).json({ error: 'Profanity detected.' });
+                    }
+                } catch (err) {
+                    console.error("[BSMS Web :: API] Glin Profanity Failed to Load:", err);
+                    // Fallback blocklist just in case the module fails
+                    const blockList = ['fuck', 'shit', 'bitch', 'asshole', 'cunt', 'nigger', 'nigga', 'faggot'];
+                    if (blockList.some(word => strippedText.includes(word))) {
+                        return res.status(400).json({ error: 'Profanity detected.' });
+                    }
                 }
 
                 const lastMsgSnap = await db.ref(`/chat/users/${uid}/lastMessageTimestamp`).once('value');
