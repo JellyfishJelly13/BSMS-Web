@@ -6,7 +6,6 @@
 
 import admin from 'firebase-admin';
 
-// Initialize Firebase Admin globally for Serverless caching
 if (!admin.apps.length) {
     admin.initializeApp({
         credential: admin.credential.cert({
@@ -53,45 +52,18 @@ export default async function handler(req, res) {
             return res.status(403).json({ error: 'Account banned.', account_status: 'banned' });
         }
 
-        // 1. Gather Profile
-        const profile = { ...account };
-        delete profile.password; // Scrub sensitive data before export
-        delete profile.sessions;
-
-        // 2. Gather Game Saves
-        const gameSavesSnap = await db.ref(`/accounts/${uid}/game_saves`).once('value');
-        const game_saves = gameSavesSnap.val() || {};
-
-        // 3. Gather Messages (Iterate all channels to find user's messages)
-        const messages = [];
-        const chatSnap = await db.ref(`/chat/conversations`).once('value');
-        const conversations = chatSnap.val() || {};
+        // Export strictly the data under /accounts/[uid]/
+        const accountExport = { ...account };
         
-        for (const [type, channels] of Object.entries(conversations)) {
-            for (const [cid, channelData] of Object.entries(channels)) {
-                if (channelData.messages) {
-                    for (const [mid, msg] of Object.entries(channelData.messages)) {
-                        if (msg.senderUid === uid) {
-                            messages.push({
-                                channelId: cid,
-                                channelType: type,
-                                messageId: mid,
-                                timestamp: msg.timestamp,
-                                content: msg.content,
-                                status: msg.status
-                            });
-                        }
-                    }
-                }
-            }
-        }
+        // Scrub sensitive identity data before handing it over
+        delete accountExport.password; 
+        delete accountExport.sessions;
 
         console.log(`[BSMS Web :: API] Successfully exported data for ${uid}.`);
         
         return res.status(200).json({
-            profile,
-            game_saves,
-            messages
+            uid: uid,
+            account_data: accountExport
         });
 
     } catch (err) {
