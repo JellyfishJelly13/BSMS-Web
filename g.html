@@ -3,34 +3,39 @@ BSMS Web
 Copyright © 2026 Jellyfish Jelly
 SPDX-License-Identifier: MIT
 -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="description" content="BSMS Web is the central digital hub for Boiling Springs Middle School. Access your unified account, rooms, countdown, and more."/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="description" content="BSMS Web Game Vault. A massive collection of interactive HTML5 games."/>
 <meta name="category" content="Education"/>
 <meta name="author" content="BSMS Web"/>
 <meta name="theme-color" content="#BB001E">
 <meta name="color-scheme" content="#BB001E">
-<meta name="application-name" content="BSMS Web">
-<meta name="application-version" content="v4.0.0">
-<meta property="og:title" content="BSMS Web">
-<meta property="og:description" content="The central digital hub for Boiling Springs Middle School.">
+<meta name="application-name" content="BSMS Web Games">
+<meta name="application-version" content="v5.0.0">
+<meta property="og:title" content="BSMS Web Games">
+<meta property="og:description" content="A massive collection of interactive HTML5 games.">
 <meta property="og:category" content="Education">
-<meta property="og:url" content="https://bsms-web.vercel.app/games">
+<meta property="og:url" content="https://bsms-web.vercel.app/g">
+<meta property="og:image" content="/img/app-icon.png">
 <meta property="og:type" content="website">
-<title>BSMS Web</title>
+<title>BSMS Web Games</title>
 
-    <!-- Microsoft Clarity Analytics -->
-    <script type="text/javascript">
-        (function(c,l,a,r,i,t,y){
-            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-        })(window, document, "clarity", "script", "y87hnhpoob");
-    </script>
+<!-- Favicons -->
+<link rel="icon" href="/img/icon.png">
+<link rel="apple-touch-icon" href="/img/app-icon.png">
+
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2TKPQV995W"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-2TKPQV995W');
+</script>
+<script src="/analytics.js"></script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
@@ -69,11 +74,21 @@ html, body {
 @keyframes popIn { from { opacity:0; transform:scale(.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
 @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
 
+/* Offline Banner */
+#offlineBanner {
+  position: fixed; top: 0; left: 0; width: 100%; background: #ef4444; color: #fff;
+  text-align: center; padding: 10px; font-family: var(--font); font-size: 18px;
+  z-index: 10000; transform: translateY(-100%); transition: transform 0.3s ease;
+}
+#offlineBanner.show { transform: translateY(0); }
+
 /* Global User Button */
 #globalUserBtn { position: fixed; top: 16px; right: 20px; width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--border); background: var(--input-bg); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; z-index: 2000; overflow: hidden; color:var(--fg); font-weight:bold; font-size:22px; box-shadow: 0 4px 14px rgba(0,0,0,0.3);}
 #globalUserBtn:hover { border-color: var(--red); box-shadow: 0 8px 24px rgba(0,0,0,0.4); transform: scale(1.05); }
 #globalUserBtn svg { width: 24px; height: 24px; fill: var(--fg); transition: fill 0.2s; }
 #globalUserBtn img { width: 100%; height: 100%; object-fit: cover; }
+
+#goHomeBtn { position: fixed; top: 16px; left: 20px; z-index: 2000; }
 
 /* Buttons */
 .btn {
@@ -81,12 +96,13 @@ html, body {
   padding: 10px 18px; border-radius: 12px; border: 2px solid var(--red);
   background: var(--red); color: #fff; cursor: pointer;
   transition: transform .15s, background .15s, box-shadow .15s, border-color .15s;
-  text-decoration: none; text-align: center; line-height: 1.2; width:100%;
+  text-decoration: none; text-align: center; line-height: 1.2; width:100%; min-height: 44px; /* Touch target */
 }
-.btn:hover { background: var(--red-h); transform: scale(1.03); box-shadow: 0 4px 18px var(--red-glow); }
-.btn:active { transform: scale(.97); }
+.btn:hover:not(:disabled) { background: var(--red-h); transform: scale(1.03); box-shadow: 0 4px 18px var(--red-glow); }
+.btn:active:not(:disabled) { transform: scale(.97); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn.sec { background: transparent; border-color: var(--border); color: var(--fg); }
-.btn.sec:hover { background: var(--msg-bg); border-color: var(--fg2); box-shadow: none; }
+.btn.sec:hover:not(:disabled) { background: var(--msg-bg); border-color: var(--fg2); box-shadow: none; }
 
 /* Hero Section */
 .hero {
@@ -106,10 +122,10 @@ html, body {
 .search-bar {
   width: 100%; padding: 14px 24px; font-size: 22px; font-family: var(--font);
   border-radius: 16px; border: 2px solid var(--border);
-  background: var(--input-bg); color: var(--fg);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  background: var(--input-bg); color: var(--fg); min-height: 48px;
+  transition: border-color 0.2s, box-shadow 0.2s; outline: none;
 }
-.search-bar:focus { outline: none; border-color: var(--red); box-shadow: 0 0 15px rgba(var(--theme-rgb), 0.2); }
+.search-bar:focus { border-color: var(--red); box-shadow: 0 0 15px rgba(var(--theme-rgb), 0.2); }
 .search-bar::placeholder { color: var(--fg2); }
 
 .az-filters {
@@ -118,7 +134,7 @@ html, body {
 .az-btn {
   background: var(--msg-bg); border: 2px solid var(--border); color: var(--fg);
   border-radius: 8px; padding: 8px 14px; font-family: var(--font); font-size: 19px;
-  cursor: pointer; transition: all 0.2s;
+  cursor: pointer; transition: all 0.2s; min-height: 44px; min-width: 44px;
 }
 .az-btn:hover, .az-btn.active {
   background: var(--red); border-color: var(--red); color: #fff; transform: scale(1.05);
@@ -152,9 +168,9 @@ html, body {
 .overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.85);
   display: none; align-items: center; justify-content: center;
-  z-index: 3000; animation: fadeIn .2s ease; padding: 20px; backdrop-filter:blur(4px);
+  z-index: 3000; animation: fadeIn .2s ease; padding: 20px; backdrop-filter:blur(4px); opacity: 0; transition: opacity 0.3s ease;
 }
-.overlay.show { display: flex; }
+.overlay.show { display: flex; opacity: 1; }
 .popup {
   background: var(--bg); border: 2px solid var(--red); border-radius: 20px;
   padding: 30px 24px 24px; width: min(400px, 100%); animation: popIn .22s ease;
@@ -198,15 +214,20 @@ html, body {
 @media (max-width: 600px) {
   .hero h1 { font-size: 48px; }
   .hero p { font-size: 19px; }
-  #globalUserBtn { top: 10px; right: 14px; width:40px; height:40px; }
+  #globalUserBtn { top: 10px; right: 14px; width:44px; height:44px; }
+  #goHomeBtn { top: 10px; left: 14px; padding: 6px 14px; font-size: 17px; }
   .az-btn { padding: 6px 10px; font-size: 17px; }
 }
 </style>
 </head>
 <body>
 
+<div id="offlineBanner">You are currently offline</div>
+
+<a href="/" id="goHomeBtn" class="btn sec" style="width: auto;" data-ga="games_home_btn">← Home</a>
+
 <!-- Global User Button -->
-<div id="globalUserBtn" onclick="handleUserIconClick()"></div>
+<div id="globalUserBtn" onclick="handleUserIconClick()" data-ga="games_user_btn"></div>
 
 <!-- Global Account Popup -->
 <div id="accountPopup" class="overlay" onclick="if(event.target===this) closePopup('accountPopup')">
@@ -214,7 +235,7 @@ html, body {
     <div id="accPopupAvatar" style="width:86px;height:86px;border-radius:50%;border:3px solid var(--red);margin:0 auto 12px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:36px;background:var(--msg-bg);font-weight:bold;color:var(--fg);"></div>
     <h2 id="accPopupName" style="margin-bottom:2px;">---</h2>
     <p style="font-size:16px; margin-bottom:22px;">@<span id="accPopupUser">---</span></p>
-    <a href="/accounts" class="btn">Manage Account</a>
+    <a href="/accounts" class="btn" data-ga="games_manage_account">Manage Account</a>
     <button class="btn sec" onclick="closePopup('accountPopup')" style="border:none; margin-top:6px;">Close</button>
   </div>
 </div>
@@ -247,7 +268,7 @@ html, body {
 <div id="loadingOverlay" class="overlay" style="flex-direction: column; z-index: 3500;">
   <h2 id="loadingText" style="color: #fff; font-size: 32px; margin-bottom: 20px;">Loading Game...</h2>
   <div id="loadingSpinner" class="spinner"></div>
-  <button id="playBtn" class="btn" style="display: none; width: auto; font-size: 26px; padding: 12px 40px; border-radius: 30px;">Play Now</button>
+  <button id="playBtn" class="btn" style="display: none; width: auto; font-size: 26px; padding: 12px 40px; border-radius: 30px;" data-ga="games_play_btn">Play Now</button>
   <button id="cancelLoadBtn" class="btn sec" style="width: auto; margin-top: 20px; border: none;">Cancel</button>
 </div>
 
@@ -260,8 +281,8 @@ html, body {
 <div id="inGameMenu" class="overlay" style="z-index: 4000;">
   <div class="popup" style="align-items:center;">
     <h2 style="margin-bottom: 24px;">Game Menu</h2>
-    <button class="btn" onclick="resumeGame()" style="margin-bottom:12px;">Resume Game</button>
-    <button class="btn sec" onclick="quitGame(false)">Quit Game & Save</button>
+    <button class="btn" onclick="resumeGame()" style="margin-bottom:12px;" data-ga="games_resume_btn">Resume Game</button>
+    <button class="btn sec" onclick="quitGame(false)" data-ga="games_quit_btn">Quit Game & Save</button>
   </div>
 </div>
 
@@ -276,15 +297,27 @@ html, body {
  * SPDX-License-Identifier: MIT
  */
 
+// Offline handlers
+window.addEventListener('offline', () => document.getElementById('offlineBanner').classList.add('show'));
+window.addEventListener('online', () => document.getElementById('offlineBanner').classList.remove('show'));
+if (!navigator.onLine) document.getElementById('offlineBanner').classList.add('show');
+
 // === Authentication & Cloud Saves ===
+if (!localStorage.getItem('session_id')) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let sid = '';
+    for (let i = 0; i < 10; i++) sid += chars.charAt(Math.floor(Math.random() * chars.length));
+    localStorage.setItem('session_id', sid);
+}
+const currentSessionId = localStorage.getItem('session_id');
+
 const SESSION_KEY = 'bsms_auth_session';
 let authSession = null;
 let isGuest = true;
-let cloudSyncDone = false; // Tracks if we've safely pulled their cloud data
+let cloudSyncDone = false; 
 
 function syncAuthSession() {
     const raw = localStorage.getItem(SESSION_KEY);
-    const wasGuest = isGuest;
     
     if (raw) {
         authSession = JSON.parse(raw);
@@ -296,7 +329,6 @@ function syncAuthSession() {
     
     renderUserIcon();
     
-    // Pull saves only when they transition to logged-in state or reload page while logged in
     if (!isGuest && !cloudSyncDone) {
         pullCloudSaves();
     }
@@ -336,51 +368,60 @@ function handleUserIconClick() {
 }
 
 async function pullCloudSaves() {
-    if (isGuest || !authSession || !authSession.username) return;
+    if (isGuest || !authSession) return;
     try {
-        const res = await fetch(`https://bsms-web-default-rtdb.firebaseio.com/accounts/${authSession.username}/game_saves.json`);
-        const data = await res.json();
-        if (data) {
-            for (const [key, value] of Object.entries(data)) {
-                localStorage.setItem(key, value);
+        const res = await fetch(`/api/games/saves`, {
+            headers: { 'X-Session-ID': currentSessionId }
+        });
+        if(res.status === 403) {
+            const data = await res.json();
+            if(data.account_status === "banned") { window.location.href = "/device-banned.html"; return; }
+        }
+        
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data.saves) {
+                for (const [key, value] of Object.entries(data.saves)) {
+                    localStorage.setItem(key, value);
+                }
             }
+            console.log("[BSMS Web :: Games] Cloud saves successfully loaded.");
         }
         cloudSyncDone = true;
-        console.log("Cloud saves successfully loaded.");
     } catch (err) {
-        console.error("Failed to pull cloud saves", err);
-        // We still set it to true so they can write over failing reads, keeping game active.
+        console.error("[BSMS Web :: Games] Failed to pull cloud saves", err);
         cloudSyncDone = true; 
     }
 }
 
 async function pushCloudSaves() {
-    if (isGuest || !authSession || !authSession.username || !cloudSyncDone) return;
+    if (isGuest || !authSession || !cloudSyncDone) return;
     try {
         const dump = {};
-        // Serialize local storage, strictly avoiding auth session leaks
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key !== SESSION_KEY && !key.startsWith('firebase')) {
+            if (key !== SESSION_KEY && key !== 'session_id' && !key.startsWith('firebase')) {
                 dump[key] = localStorage.getItem(key);
             }
         }
         
-        await fetch(`https://bsms-web-default-rtdb.firebaseio.com/accounts/${authSession.username}/game_saves.json`, {
+        await fetch(`/api/games/saves`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dump)
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Session-ID': currentSessionId
+            },
+            body: JSON.stringify({ saves: dump })
         });
-        console.log("Progress saved to the cloud.");
+        console.log("[BSMS Web :: Games] Progress saved to the cloud.");
     } catch (err) {
-        console.error("Failed to push cloud saves", err);
+        console.error("[BSMS Web :: Games] Failed to push cloud saves", err);
     }
 }
 
 function openPopup(id) { document.getElementById(id).classList.add('show'); }
 function closePopup(id) { document.getElementById(id).classList.remove('show'); }
 
-// Execute Auth setup
 syncAuthSession();
 
 
@@ -392,7 +433,6 @@ let currentFetchController = null;
 let isGameRunning = false;
 let currentLetterFilter = 'All';
 
-// DOM Elements
 const gamesGrid = document.getElementById('gamesGrid');
 const loadingOverlay = document.getElementById('loadingOverlay');
 const loadingText = document.getElementById('loadingText');
@@ -406,8 +446,6 @@ const toast = document.getElementById('toast');
 const searchInput = document.getElementById('gameSearch');
 const azFiltersContainer = document.getElementById('azFilters');
 
-
-// Initialize A-Z Filters
 function initFilters() {
     const letters = ["All", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")];
     letters.forEach(letter => {
@@ -469,7 +507,7 @@ function renderGamesGrid(listToRender) {
 
         const card = document.createElement('div');
         card.className = 'app-card';
-        card.style.animationDelay = `${(index % 20) * 0.03}s`; // Stagger animation for visibility
+        card.style.animationDelay = `${(index % 20) * 0.03}s`; 
         
         card.innerHTML = `
             <svg class="app-icon" viewBox="0 0 24 24">
@@ -489,7 +527,6 @@ function renderGamesGrid(listToRender) {
 }
 
 async function triggerLoadGame(game) {
-    // Reset UI
     playBtn.style.display = 'none';
     cancelLoadBtn.style.display = 'inline-block';
     loadingSpinner.style.display = 'block';
@@ -499,7 +536,6 @@ async function triggerLoadGame(game) {
     currentFetchController = new AbortController();
     
     try {
-        // Enforce a minimum wait of 2 seconds for the sleek loading transition
         const delayPromise = new Promise(resolve => setTimeout(resolve, 2000));
         const fetchPromise = fetch(game.download_url, { signal: currentFetchController.signal });
 
@@ -508,7 +544,6 @@ async function triggerLoadGame(game) {
         if (!res.ok) throw new Error("Network response was not ok");
         const htmlContent = await res.text();
         
-        // Inject Escape Key Listener into iframe context
         const scriptToInject = `
             <script>
                 window.addEventListener('keydown', function(e) {
@@ -516,7 +551,11 @@ async function triggerLoadGame(game) {
                         window.parent.postMessage({ type: 'bsms-esc' }, '*');
                     }
                 });
+                // Ensure instant focus
                 window.addEventListener('mousedown', function() {
+                    window.focus();
+                });
+                document.addEventListener('click', function() {
                     window.focus();
                 });
             <\/script>
@@ -533,7 +572,6 @@ async function triggerLoadGame(game) {
         if (currentGameBlobUrl) URL.revokeObjectURL(currentGameBlobUrl);
         currentGameBlobUrl = URL.createObjectURL(blob);
         
-        // Game Ready State - Hide Cancel, Show Play
         loadingSpinner.style.display = 'none';
         cancelLoadBtn.style.display = 'none';
         loadingText.textContent = `${game.name.replace('.html', '')} is ready!`;
@@ -543,9 +581,9 @@ async function triggerLoadGame(game) {
 
     } catch (err) {
         if (err.name === 'AbortError') {
-            console.log("Game loading cancelled.");
+            console.log("[BSMS Web :: Games] Game loading cancelled.");
         } else {
-            console.error("Game Load Error: ", err);
+            console.error("[BSMS Web :: Games] Game Load Error: ", err);
             loadingText.textContent = "Error loading game.";
             loadingSpinner.style.display = 'none';
         }
@@ -590,7 +628,6 @@ function toggleInGameMenu() {
         resumeGame();
     } else {
         openPopup('inGameMenu');
-        // Good time to backup to the cloud silently when they pause
         pushCloudSaves(); 
     }
 }
@@ -605,10 +642,8 @@ function quitGame(skipHistoryAction = false) {
     gameContainer.style.display = 'none';
     isGameRunning = false;
     
-    // Hard Save to Cloud upon Quit
     pushCloudSaves(); 
     
-    // Free Memory 
     gameIframe.src = 'about:blank';
     if (currentGameBlobUrl) {
         URL.revokeObjectURL(currentGameBlobUrl);
@@ -620,12 +655,11 @@ function quitGame(skipHistoryAction = false) {
     }
 }
 
-// Background Auto-Save Loop (Runs every 30 seconds while in a game)
+// Background Auto-Save Loop
 setInterval(() => {
     if (isGameRunning) pushCloudSaves();
 }, 30000);
 
-// Hash Route Control
 function handleHashChange() {
     const hash = window.location.hash.substring(1);
     if (!hash && isGameRunning) {
@@ -637,7 +671,6 @@ function handleHashChange() {
 }
 window.addEventListener('hashchange', handleHashChange);
 
-// Run Application
 fetchGames();
 </script>
 
@@ -646,7 +679,7 @@ fetchGames();
     window.BSMS_WEB_PAGE_NAME = "games";
 </script>
 
-<script src="/version-check.js"></script>
+<script src="/api/version-check.js"></script>
     
 </body>
 </html>
