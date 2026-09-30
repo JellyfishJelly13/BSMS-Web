@@ -604,7 +604,7 @@ async function handleAuth() {
         const data = await apiFetch(`/api/auth`, {
             method: 'POST',
             body: JSON.stringify({ 
-                action: authMode, // Sends 'login' or 'signup'
+                action: register, // Sends 'login' or 'signup'
                 mode: authMode,   // Kept for backward compatibility
                 username: user, 
                 password: pass 
