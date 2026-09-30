@@ -5,22 +5,37 @@
  */
 
 import admin from 'firebase-admin';
-import profanity from 'glin-profanity';
+import crypto from 'crypto';
 
+// Safe Firebase Initialization
 if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert({
-            projectId: process.env.FIREBASE_PROJECT_ID,
-            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-            privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        }),
-        databaseURL: process.env.FIREBASE_DATABASE_URL
-    });
+    try {
+        if (!process.env.FIREBASE_PRIVATE_KEY) {
+            throw new Error("FIREBASE_PRIVATE_KEY is missing from environment variables.");
+        }
+        
+        admin.initializeApp({
+            credential: admin.credential.cert({
+                projectId: process.env.FIREBASE_PROJECT_ID,
+                clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+                privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+            }),
+            databaseURL: process.env.FIREBASE_DATABASE_URL
+        });
+    } catch (err) {
+        console.error("[BSMS Web :: Auth] Firebase Init Error:", err.message);
+    }
 }
-const db = admin.database();
+const db = admin.apps.length ? admin.database() : null;
 
+// Secure password hashing
+function hashPassword(password) {
+    return crypto.createHash('sha256').update(password).digest('hex');
+}
+
+// Session validator
 async function getUserBySession(sessionId) {
-    if (!sessionId) return null;
+    if (!sessionId || !db) return null;
     const snap = await db.ref('/accounts').once('value');
     const accounts = snap.val() || {};
     
@@ -32,211 +47,201 @@ async function getUserBySession(sessionId) {
     return null;
 }
 
+// Dynamic Glin Profanity checker for usernames and display names
+async function checkProfanity(text) {
+    if (!text) return false;
+    let strippedText = text
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[\u200B-\u200D\uFEFF]/g, "")
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+        .replace(/\s+/g, "")
+        .replace(/@/g, "a")
+        .replace(/\$/g, "s")
+        .replace(/0/g, "o")
+        .replace(/1/g, "i")
+        .replace(/3/g, "e")
+        .replace(/4/g, "a")
+        .replace(/5/g, "s")
+        .replace(/7/g, "t")
+        .toLowerCase();
+
+    try {
+        const glinModule = await import('glin-profanity');
+        const profanityCheck = glinModule.default || glinModule;
+        return profanityCheck(text) || profanityCheck(strippedText);
+    } catch (err) {
+        console.error("[BSMS Web :: Auth] Glin Profanity Failed to Load:", err);
+        const blockList = ['fuck', 'shit', 'bitch', 'asshole', 'cunt', 'nigger', 'nigga', 'faggot'];
+        return blockList.some(word => strippedText.includes(word));
+    }
+}
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
+    if (!db) {
+        return res.status(500).json({ error: "Database failed to initialize. Check environment variables." });
+    }
+
     const action = req.query.action;
-    const sessionId = req.headers['x-session-id'];
     const payload = req.body || {};
+    const sessionId = req.headers['x-session-id'];
 
     try {
-        const userLookup = await getUserBySession(sessionId);
-        if (!userLookup) return res.status(401).json({ error: 'Unauthorized session.' });
-
-        const { uid, account } = userLookup;
-        if (account.account_status === 'banned') {
-            return res.status(403).json({ error: 'Account banned.', account_status: 'banned' });
-        }
-
-        await db.ref(`/accounts/${uid}/sessions/${sessionId}/lastActive`).set(Date.now());
-
         switch (action) {
-            case 'sync': {
-                const usersSnap = await db.ref('/chat/users').once('value');
-                const acctSnap = await db.ref('/accounts').once('value');
-                const convosSnap = await db.ref('/chat/conversations').once('value');
+            case 'register': {
+                const { email, username, password } = payload;
+                if (!email || !username || !password) {
+                    return res.status(400).json({ error: 'Missing required fields.' });
+                }
+
+                // Validate Username Formatting
+                const validUserRegex = /^[a-zA-Z0-9_.-]+$/;
+                if (!validUserRegex.test(username)) {
+                    return res.status(400).json({ error: 'Username contains invalid characters.' });
+                }
+
+                // Check Profanity
+                const isProfane = await checkProfanity(username);
+                if (isProfane) {
+                    return res.status(400).json({ error: 'Username contains profane language.' });
+                }
+
+                // Check for existing user records
+                const accountsSnap = await db.ref('/accounts').once('value');
+                const accounts = accountsSnap.val() || {};
                 
-                const allAccounts = acctSnap.val() || {};
-                const usersCache = usersSnap.val() || {};
-                const accountsCache = {};
-                
-                for (const [id, acc] of Object.entries(allAccounts)) {
-                    if (acc.account_status !== 'deleted') {
-                        accountsCache[id] = { displayName: acc.displayName, avatar: acc.avatar };
+                const inputEmail = email.toLowerCase();
+                const inputUser = username.toLowerCase();
+
+                for (const [id, acc] of Object.entries(accounts)) {
+                    if (acc.email && acc.email.toLowerCase() === inputEmail) {
+                        return res.status(409).json({ error: 'Email already in use.' });
+                    }
+                    if (acc.username && acc.username.toLowerCase() === inputUser) {
+                        return res.status(409).json({ error: 'Username already in use.' });
                     }
                 }
 
-                const myChannels = {};
-                const allConvos = convosSnap.val() || {};
+                // Create Account
+                const uid = db.ref('/accounts').push().key;
+                const newSessionId = crypto.randomUUID();
                 
-                for (const type of ['dms', 'gcs']) {
-                    if (allConvos[type]) {
-                        for (const [cid, channel] of Object.entries(allConvos[type])) {
-                            if (channel.members && channel.members[uid]) {
-                                let strippedMessages = {};
-                                if (channel.messages) {
-                                    const mKeys = Object.keys(channel.messages);
-                                    if (mKeys.length > 0) {
-                                        const lastKey = mKeys[mKeys.length - 1];
-                                        strippedMessages[lastKey] = channel.messages[lastKey];
-                                    }
-                                }
-                                myChannels[cid] = {
-                                    ...channel,
-                                    _type: type,
-                                    _id: cid,
-                                    messages: strippedMessages
-                                };
-                            }
+                const newAccount = {
+                    email,
+                    username,
+                    displayName: username,
+                    password: hashPassword(password),
+                    account_status: 'active',
+                    createdAt: admin.database.ServerValue.TIMESTAMP,
+                    avatar: '', 
+                    sessions: {
+                        [newSessionId]: {
+                            createdAt: admin.database.ServerValue.TIMESTAMP,
+                            lastActive: admin.database.ServerValue.TIMESTAMP
                         }
                     }
-                }
-
-                return res.status(200).json({ users: usersCache, accounts: accountsCache, channels: myChannels });
-            }
-
-            case 'messages': {
-                const { cid, type } = payload;
-                if (!cid || !type) return res.status(400).json({ error: "Missing channel data" });
-                
-                const chSnap = await db.ref(`/chat/conversations/${type}/${cid}`).once('value');
-                const channel = chSnap.val();
-                
-                if (!channel || !channel.members || !channel.members[uid]) {
-                    return res.status(403).json({ error: "Not a member of this channel." });
-                }
-
-                return res.status(200).json({ messages: channel.messages || {}, members: channel.members || {} });
-            }
-
-            case 'sendMessage': {
-                const { cid, type, content, repliedTo } = payload;
-                if (!cid || !type || !content) return res.status(400).json({ error: "Missing payload data" });
-
-                const chSnap = await db.ref(`/chat/conversations/${type}/${cid}`).once('value');
-                const channel = chSnap.val();
-                if (!channel || !channel.members || !channel.members[uid]) {
-                    return res.status(403).json({ error: "Not a member." });
-                }
-
-                // Direct Profanity Check (No internal API Fetch)
-                let normalizedText = content.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[\u200B-\u200D\uFEFF]/g, '').replace(/@/g, 'a').replace(/\$/g, 's').replace(/0/g, 'o');
-                const validTextRegex = /^[\x20-\x7E\p{Emoji}\s]*$/u;
-
-                if (!validTextRegex.test(normalizedText)) {
-                    return res.status(400).json({ error: 'Invalid characters or formatting detected.' });
-                }
-                if (profanity(normalizedText)) {
-                    return res.status(400).json({ error: 'Profanity detected.' });
-                }
-
-                const lastMsgSnap = await db.ref(`/chat/users/${uid}/lastMessageTimestamp`).once('value');
-                const lastTs = lastMsgSnap.val() || 0;
-                const now = Date.now();
-                if (now - lastTs < 5000) return res.status(429).json({ error: "Please wait 5 seconds before sending another message." });
-
-                // Transaction fix for high concurrency
-                const msgIdRef = db.ref(`/chat/conversations/${type}/${cid}/config/lastMessageId`);
-                const transactionResult = await msgIdRef.transaction((current) => {
-                    return (current || 99999) + 1;
-                });
-                const newId = transactionResult.snapshot.val();
-
-                const msgObj = {
-                    senderUid: uid,
-                    timestamp: admin.database.ServerValue.TIMESTAMP,
-                    content: content,
-                    contentType: 'text',
-                    status: { unsent: false, deletedByMod: false, pinned: false, repliedTo: repliedTo || false }
                 };
 
-                await db.ref(`/chat/conversations/${type}/${cid}/messages/${newId}`).set(msgObj);
-                await db.ref(`/chat/users/${uid}/lastMessageTimestamp`).set(now);
+                await db.ref(`/accounts/${uid}`).set(newAccount);
                 
-                return res.status(200).json({ success: true, messageId: newId });
-            }
-
-            case 'action': {
-                const { action: msgAction, cid, type, msgId } = payload;
-                if (!cid || !type || !msgId) return res.status(400).json({ error: "Missing data" });
-
-                const msgRef = db.ref(`/chat/conversations/${type}/${cid}/messages/${msgId}`);
-                const msgSnap = await msgRef.once('value');
-                const msg = msgSnap.val();
-
-                if (!msg) return res.status(404).json({ error: "Message not found" });
-
-                const roleSnap = await db.ref(`/chat/conversations/${type}/${cid}/members/${uid}/role`).once('value');
-                const role = roleSnap.val() || 'member';
-                const isMod = type === 'gcs' && (role === 'owner' || role === 'moderator');
-                const isMine = msg.senderUid === uid;
-
-                if (msgAction === 'unsend' && isMine) {
-                    await msgRef.update({ 'status/unsent': true, content: null });
-                } else if (msgAction === 'moderate' && isMod && !isMine) {
-                    await msgRef.update({ 'status/deletedByMod': true, content: null });
-                } else if (msgAction === 'pin' && isMod) {
-                    await msgRef.update({ 'status/pinned': !(msg.status?.pinned || false) });
-                } else {
-                    return res.status(403).json({ error: "Unauthorized message action." });
-                }
-
-                return res.status(200).json({ success: true });
-            }
-
-            case 'typing': {
-                const { cid, type, isTyping } = payload;
-                if (!cid || !type) return res.status(400).json({ error: "Missing data" });
-                
-                await db.ref(`/chat/conversations/${type}/${cid}/members/${uid}/isTyping`).set(Boolean(isTyping));
-                return res.status(200).json({ success: true });
-            }
-
-            case 'status': {
-                const { status } = payload;
-                if (status === 'online') {
-                    await db.ref(`/chat/users/${uid}/status`).set('online');
-                    await db.ref(`/chat/users/${uid}/lastSeen`).set(admin.database.ServerValue.TIMESTAMP);
-                }
-                return res.status(200).json({ success: true });
-            }
-
-            case 'startDM': {
-                const { targetUid } = payload;
-                if (!targetUid || targetUid === uid) return res.status(400).json({ error: "Invalid target." });
-
-                const targetSnap = await db.ref(`/accounts/${targetUid}`).once('value');
-                if (!targetSnap.exists()) return res.status(404).json({ error: "User not found." });
-
-                const convosSnap = await db.ref(`/chat/conversations/dms`).once('value');
-                const dms = convosSnap.val() || {};
-                
-                for (const [id, c] of Object.entries(dms)) {
-                    if (c.members && c.members[uid] && c.members[targetUid]) {
-                        return res.status(200).json({ cid: id }); 
-                    }
-                }
-
-                // ID Collision fix: Use Firebase built-in push key
-                const newCid = db.ref('/chat/conversations/dms').push().key;
-                await db.ref(`/chat/conversations/dms/${newCid}`).set({
-                    config: { createdAt: Date.now(), lastMessageId: 99999 },
-                    members: {
-                        [uid]: { role: 'member', isTyping: false },
-                        [targetUid]: { role: 'member', isTyping: false }
-                    }
+                // Initialize corresponding user presence node
+                await db.ref(`/chat/users/${uid}`).set({
+                    status: 'online',
+                    lastSeen: admin.database.ServerValue.TIMESTAMP,
+                    lastMessageTimestamp: 0
                 });
 
-                return res.status(200).json({ cid: newCid });
+                return res.status(200).json({ success: true, sessionId: newSessionId, uid });
+            }
+
+            case 'login': {
+                const { username, password } = payload;
+                if (!username || !password) return res.status(400).json({ error: 'Missing credentials.' });
+
+                const hashedPw = hashPassword(password);
+                const accountsSnap = await db.ref('/accounts').once('value');
+                const accounts = accountsSnap.val() || {};
+                
+                let targetUid = null;
+                let targetAcc = null;
+                
+                const inputLower = username.toLowerCase();
+                for (const [id, acc] of Object.entries(accounts)) {
+                    const accUserLower = acc.username ? acc.username.toLowerCase() : '';
+                    const accEmailLower = acc.email ? acc.email.toLowerCase() : '';
+                    if ((accUserLower === inputLower || accEmailLower === inputLower) && acc.password === hashedPw) {
+                        targetUid = id;
+                        targetAcc = acc;
+                        break;
+                    }
+                }
+
+                if (!targetUid) return res.status(401).json({ error: 'Invalid username/email or password.' });
+                if (targetAcc.account_status === 'banned') return res.status(403).json({ error: 'Account is banned.' });
+
+                const newSessionId = crypto.randomUUID();
+                await db.ref(`/accounts/${targetUid}/sessions/${newSessionId}`).set({
+                    createdAt: admin.database.ServerValue.TIMESTAMP,
+                    lastActive: admin.database.ServerValue.TIMESTAMP
+                });
+
+                return res.status(200).json({ success: true, sessionId: newSessionId, uid: targetUid });
+            }
+
+            case 'logout': {
+                const user = await getUserBySession(sessionId);
+                if (!user) return res.status(401).json({ error: 'Unauthorized.' });
+                
+                await db.ref(`/accounts/${user.uid}/sessions/${sessionId}`).remove();
+                return res.status(200).json({ success: true });
+            }
+
+            case 'updateProfile': {
+                const user = await getUserBySession(sessionId);
+                if (!user) return res.status(401).json({ error: 'Unauthorized.' });
+
+                const { displayName, avatar } = payload;
+                const updates = {};
+                
+                if (displayName !== undefined) {
+                    const isProfane = await checkProfanity(displayName);
+                    if (isProfane) {
+                        return res.status(400).json({ error: 'Display name contains profane language.' });
+                    }
+                    updates['displayName'] = displayName;
+                }
+                if (avatar !== undefined) updates['avatar'] = avatar;
+
+                if (Object.keys(updates).length > 0) {
+                    await db.ref(`/accounts/${user.uid}`).update(updates);
+                }
+                return res.status(200).json({ success: true });
+            }
+
+            case 'changePassword': {
+                const user = await getUserBySession(sessionId);
+                if (!user) return res.status(401).json({ error: 'Unauthorized.' });
+
+                const { oldPassword, newPassword } = payload;
+                if (!oldPassword || !newPassword) {
+                    return res.status(400).json({ error: 'Missing password fields.' });
+                }
+                if (user.account.password !== hashPassword(oldPassword)) {
+                    return res.status(401).json({ error: 'Incorrect current password.' });
+                }
+
+                await db.ref(`/accounts/${user.uid}/password`).set(hashPassword(newPassword));
+                return res.status(200).json({ success: true });
             }
 
             default:
-                return res.status(400).json({ error: "Unknown action." });
+                return res.status(400).json({ error: 'Unknown action.' });
         }
     } catch (err) {
-        console.error(`[BSMS Web :: Chat] Internal Error:`, err);
+        console.error('[BSMS Web :: Auth] Error:', err);
         return res.status(500).json({ error: 'Internal server error.' });
     }
 }
