@@ -480,7 +480,7 @@ window.addEventListener('offline', () => document.getElementById('offlineBanner'
 window.addEventListener('online', () => document.getElementById('offlineBanner').classList.remove('show'));
 if (!navigator.onLine) document.getElementById('offlineBanner').classList.add('show');
 
-const SESSION_KEY = 'bsms_auth_session';
+const SESSION_KEY = 'session_id';
 let currentSessionId = localStorage.getItem('session_id') || "";
 
 const State = {
