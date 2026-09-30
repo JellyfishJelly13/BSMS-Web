@@ -603,7 +603,12 @@ async function handleAuth() {
     try {
         const data = await apiFetch(`/api/auth`, {
             method: 'POST',
-            body: JSON.stringify({ mode: authMode, username: user, password: pass })
+            body: JSON.stringify({ 
+                action: authMode, // Sends 'login' or 'signup'
+                mode: authMode,   // Kept for backward compatibility
+                username: user, 
+                password: pass 
+            })
         });
         
         if (data && data.success) {
@@ -615,7 +620,6 @@ async function handleAuth() {
         setButtonLoading('authSubmitBtn', false);
     }
 }
-
 function completeLogin(data) {
     const sessionObj = {
         loggedIn: true, uid: data.username, username: data.username,
