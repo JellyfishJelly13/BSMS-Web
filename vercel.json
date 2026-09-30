@@ -20,11 +20,6 @@
       "source": "/rooms",
       "destination": "/chat",
       "permanent": true
-    },
-    {
-      "source": "/(.*)",
-      "destination": "https://bsms-web.page.gd/404",
-      "permanent": false
     }
   ]
 }
