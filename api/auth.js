@@ -92,10 +92,10 @@ export default async function handler(req, res) {
     try {
         switch (action) {
             case 'register': {
-                const { email, username, password } = payload;
-                if (!email || !username || !password) {
-                    return res.status(400).json({ error: 'Missing required fields.' });
-                }
+                const { email = "", username, password } = payload;
+if (!username || !password) {
+    return res.status(400).json({ error: 'Missing required fields.' });
+}
 
                 // Validate Username Formatting
                 const validUserRegex = /^[a-zA-Z0-9_.-]+$/;
@@ -113,7 +113,7 @@ export default async function handler(req, res) {
                 const accountsSnap = await db.ref('/accounts').once('value');
                 const accounts = accountsSnap.val() || {};
                 
-                const inputEmail = email.toLowerCase();
+                const inputEmail = email ? email.toLowerCase() : "";
                 const inputUser = username.toLowerCase();
 
                 for (const [id, acc] of Object.entries(accounts)) {
