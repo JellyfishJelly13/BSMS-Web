@@ -154,7 +154,8 @@ if (!username || !password) {
                     lastMessageTimestamp: 0
                 });
 
-                return res.status(200).json({ success: true, sessionId: newSessionId, uid });
+                const { password: _, ...safeProfile } = newAccount;
+return res.status(200).json({ success: true, sessionId: newSessionId, uid, profile: safeProfile });
             }
 
             case 'login': {
@@ -188,7 +189,8 @@ if (!username || !password) {
                     lastActive: admin.database.ServerValue.TIMESTAMP
                 });
 
-                return res.status(200).json({ success: true, sessionId: newSessionId, uid: targetUid });
+                const { password: _, ...safeProfile } = targetAcc;
+return res.status(200).json({ success: true, sessionId: newSessionId, uid: targetUid, profile: safeProfile });
             }
 
             case 'logout': {
