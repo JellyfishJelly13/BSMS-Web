@@ -85,8 +85,8 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: "Database failed to initialize. Check environment variables." });
     }
 
-    const action = req.query.action;
     const payload = req.body || {};
+    const action = req.query.action || payload.action;
     const sessionId = req.headers['x-session-id'];
 
     try {
