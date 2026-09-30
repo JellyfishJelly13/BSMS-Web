@@ -293,7 +293,6 @@ function renderUserIcon() {
     if (isGuest) {
         btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
         btn.style.border = "2px solid var(--border)";
-        heroAuth.innerHTML = `<a href="/accounts#signup" class="btn" style="width: auto; padding: 12px 30px;" data-ga="hero_login_btn">Login / Sign Up</a>`;
     } else {
         if (authSession.pfp) {
             btn.innerHTML = `<img src="${authSession.pfp}" alt="Avatar">`;
@@ -302,7 +301,6 @@ function renderUserIcon() {
             btn.innerHTML = (authSession.displayName || authSession.username || "?").charAt(0).toUpperCase();
             btn.style.border = "2px solid var(--border)";
         }
-        heroAuth.innerHTML = `<a href="/chat" class="btn" style="width: auto; padding: 12px 30px;" data-ga="hero_chat_btn">Go to Chat / Dashboard</a>`;
     }
 }
 
