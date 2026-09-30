@@ -1,941 +1,733 @@
-<!--
-BSMS Web
-Copyright © 2026 Jellyfish Jelly
-SPDX-License-Identifier: MIT
--->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="description" content="BSMS Web Account Manager. Manage your profile, identity, and security across the BSMS Web ecosystem."/>
-<meta name="category" content="Education"/>
-<meta name="author" content="BSMS Web"/>
-<meta name="theme-color" content="#BB001E">
-<meta name="color-scheme" content="#BB001E">
-<meta name="application-name" content="BSMS Accounts">
-<meta name="application-version" content="v5.0.0">
-<meta property="og:title" content="BSMS Accounts">
-<meta property="og:description" content="Manage your unified profile and security settings.">
-<meta property="og:category" content="Education">
-<meta property="og:url" content="https://bsms-web.vercel.app/accounts">
-<meta property="og:image" content="/img/app-icon.png">
-<meta property="og:type" content="website">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>BSMS Web Accounts</title>
-
-<!-- Favicons -->
-<link rel="icon" href="/img/icon.png">
-<link rel="apple-touch-icon" href="/img/app-icon.png">
-
-<!-- Google Analytics 4 -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-2TKPQV995W"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-2TKPQV995W');
-</script>
-<script src="/js/analytics.js"></script>
-
-<!-- JSZip for Data Export -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
 
-*,*::before,*::after{box-sizing:border-box}
+*,
+*::before,
+*::after{
+  box-sizing:border-box;
+}
+
 :root{
-  --theme-rgb: 187,0,30;
-  --red: rgb(var(--theme-rgb));
-  --red-h: #d10022;
-  --red-glow: rgba(var(--theme-rgb), 0.35);
-  --bg: #000;
-  --fg: #fff;
-  --fg2: rgba(255,255,255,0.6);
-  --border: rgba(255,255,255,0.13);
-  --msg-bg: rgba(255,255,255,0.06);
-  --input-bg: rgba(255,255,255,0.08);
-  --font: 'Patrick Hand', cursive;
+  --red:#BB001E;
+  --red-bright:#e00025;
+
+  --green:#35c878;
+  --green-soft:rgba(53,200,120,.09);
+  --green-border:rgba(53,200,120,.3);
+
+  --yellow:#e2aa35;
+  --yellow-soft:rgba(226,170,53,.09);
+  --yellow-border:rgba(226,170,53,.3);
+
+  --font:'Patrick Hand',cursive;
+
+  --mono:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    "Liberation Mono",
+    "Courier New",
+    monospace;
 }
 
-body.light-mode {
-  --bg: #f0f2f5;
-  --fg: #1c1e21;
-  --fg2: rgba(0,0,0,0.6);
-  --border: rgba(0,0,0,0.15);
-  --msg-bg: #fff;
-  --input-bg: #fff;
+html,
+body{
+  margin:0;
+  width:100%;
+  min-height:100%;
+  background:#000;
+  color:#fff;
+  font-family:var(--font);
 }
 
-html,body{margin:0;padding:0;height:100%;width:100%;font-family:var(--font);background:var(--bg);color:var(--fg);overflow:hidden; transition:background 0.3s, color 0.3s;}
+body{
+  min-height:100vh;
 
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-@keyframes popIn{from{opacity:0;transform:scale(.92) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
-@keyframes slideLeft{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
-@keyframes notifIn{from{opacity:0;transform:translateY(14px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}
+  display:flex;
+  align-items:center;
+  justify-content:center;
 
-/* Offline Banner */
-#offlineBanner {
-  position: fixed; top: 0; left: 0; width: 100%; background: #ef4444; color: #fff;
-  text-align: center; padding: 10px; font-family: var(--font); font-size: 18px;
-  z-index: 10000; transform: translateY(-100%); transition: transform 0.3s ease;
+  padding:28px;
+
+  overflow-x:hidden;
 }
-#offlineBanner.show { transform: translateY(0); }
 
-/* UI Elements */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:3000;opacity:0;transition:opacity 0.3s ease;backdrop-filter:blur(4px);}
-.overlay.show{display:flex;opacity:1;}
-.popup{background:var(--bg);border:2px solid var(--red);border-radius:20px;padding:26px 24px 20px;width:min(420px,92vw);animation:popIn .22s ease; display:flex; flex-direction:column; max-height: 90vh; overflow-y:auto; box-shadow:0 10px 40px rgba(0,0,0,0.5);}
-.popup h2{font-size:28px;margin:0 0 8px; color:var(--fg);}
-.popup p{font-size:18px;color:var(--fg2);margin:0 0 14px;line-height:1.45}
+.background-glow{
+  position:fixed;
 
-.btn{display:block;width:100%;font-family:var(--font);font-size:21px;padding:10px 14px;border-radius:12px;border:2px solid var(--red);background:var(--red);color:#fff;cursor:pointer;transition:transform .13s,background .13s,border-color .13s,box-shadow .13s;margin-bottom:9px;line-height:1.2; text-align:center; text-decoration: none;}
-.btn:last-child{margin-bottom:0}
-.btn:hover:not(:disabled){background:var(--red-h);transform:scale(1.02);box-shadow:0 4px 18px var(--red-glow)}
-.btn:active:not(:disabled){transform:scale(.97)}
-.btn:disabled{opacity:0.5;cursor:not-allowed;}
-.btn.sec{background:transparent;border-color:var(--border);color:var(--fg);}
-.btn.sec:hover:not(:disabled){background:var(--msg-bg);border-color:var(--fg2);box-shadow:none}
-.btn.warn{background:#7a0010;border-color:#7a0010;color:#fff;}
-.btn.warn:hover:not(:disabled){background:#9a0015;border-color:#9a0015}
+  width:750px;
+  height:750px;
 
-input,textarea{width:100%;font-family:var(--font);font-size:20px;padding:10px 13px;border-radius:12px;border:2px solid var(--border);background:var(--input-bg);color:var(--fg);margin:5px 0 12px;display:block;transition:border-color .2s,box-shadow .2s; outline:none;}
-input:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 14px var(--red-glow);}
-input:disabled{opacity:0.5;cursor:not-allowed}
-input::placeholder,textarea::placeholder{color:var(--fg2)}
-textarea{resize:vertical;height:110px}
+  border-radius:50%;
 
-.spinner{width:46px;height:46px;border:4px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin 1s cubic-bezier(.4,0,.2,1) infinite;margin:0 auto 20px}
-@keyframes spin{to{transform:rotate(360deg)}}
+  background:radial-gradient(
+    circle,
+    rgba(187,0,30,.15) 0%,
+    rgba(187,0,30,.05) 35%,
+    transparent 70%
+  );
 
-/* Screens */
-.screen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity 0.3s ease;overflow-y:auto;}
-.screen.show{display:flex;opacity:1;}
-.card{width:min(440px,100%);background:var(--bg);border:3px solid var(--red);border-radius:26px;padding:32px 26px;animation:popIn .3s ease;text-align:center;box-shadow:0 0 60px rgba(var(--theme-rgb),0.15); position:relative;}
-.card h1{font-size:42px;margin:0 0 4px;line-height:1.1; color:var(--fg);}
-.card>p{font-size:19px;color:var(--fg2);margin:0 0 24px}
-.logo-img{width:72px;height:72px;object-fit:contain;margin:0 auto 15px;display:block;border-radius:14px; background: var(--msg-bg); border: 2px solid var(--border);}
+  filter:blur(40px);
 
-/* Dashboard Shell */
-#appShell{position:fixed;inset:0;display:none;flex-direction:row;opacity:0;transition:opacity 0.3s ease;}
-#appShell.show{display:flex;opacity:1;}
-#sidebar{width:260px;min-width:260px;border-right:3px solid var(--red);padding:24px 16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;background:var(--bg);z-index:50;}
-.sidebar-title { font-size: 26px; margin: 0 0 15px 5px; color: var(--fg); font-weight: bold; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
-.navBtn{width:100%;font-family:var(--font);font-size:19px;padding:12px 16px;border-radius:12px;border:2px solid transparent;background:transparent;color:var(--fg2);cursor:pointer;text-align:left;transition:all .15s;display:flex;align-items:center;gap:12px;}
-.navBtn:hover{background:var(--msg-bg);color:var(--fg);transform:translateX(4px);}
-.navBtn.active{background:rgba(var(--theme-rgb),0.15);border-color:var(--red);color:var(--fg);box-shadow:0 2px 12px rgba(var(--theme-rgb),0.2);}
-.sidebar-gap{flex:1}
+  pointer-events:none;
 
-/* Mobile Topbar */
-#mobileTopbar{display:none;height:60px;border-bottom:3px solid var(--red);padding:0 16px;align-items:center;justify-content:space-between;background:var(--bg);flex-shrink:0;}
-#mobileMenuBtn{font-family:var(--font);font-size:20px;padding:6px 14px;border-radius:10px;border:2px solid var(--red);background:transparent;color:var(--fg);cursor:pointer;}
-#mobileMenuBtn:hover{background:rgba(var(--theme-rgb),0.1)}
-.mobile-title { font-size: 24px; color: var(--fg); font-weight: bold;}
+  z-index:0;
+}
 
-#mobileDrawerBackdrop{position:fixed;inset:0;top:60px;background:rgba(0,0,0,0.5);z-index:699;display:none;animation:fadeIn .2s ease}
-#mobileDrawerBackdrop.show{display:block}
-#mobileDrawer{position:fixed;top:60px;left:0;bottom:0;width:260px;background:var(--bg);border-right:3px solid var(--red);z-index:700;display:flex;flex-direction:column;gap:7px;padding:15px;overflow-y:auto;transform:translateX(-100%);transition:transform .25s cubic-bezier(.4,0,.2,1)}
-#mobileDrawer.open{transform:translateX(0)}
+.background-glow.one{
+  top:-420px;
+  left:-300px;
+}
 
-/* Main View */
-#mainView{flex:1;display:flex;flex-direction:column;overflow-y:auto;padding:30px;position:relative;}
-.panel{display:none;flex-direction:column;animation:slideLeft .2s ease; max-width: 650px; margin: 0 auto; width: 100%;}
-.panel.show{display:flex}
-.panel-header{margin-bottom:24px;}
-.panel-header h1{font-size:42px;margin:0 0 5px; color:var(--fg);}
-.panel-header p{font-size:19px;color:var(--fg2);margin:0;}
+.background-glow.two{
+  bottom:-430px;
+  right:-300px;
+}
 
-.form-group { margin-bottom: 22px; }
-.form-group label { display: block; font-size: 18px; margin-bottom: 8px; color: var(--fg); }
-.avatar-preview { width: 110px; height: 110px; border-radius: 50%; border: 3px solid var(--red); background: var(--input-bg); margin-bottom: 15px; display:flex; align-items:center; justify-content:center; font-size: 46px; color: var(--fg); font-weight:bold; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.2);}
-.avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+.card{
+  position:relative;
+  z-index:1;
 
-/* Sessions View */
-.session-card { background: var(--input-bg); border: 1px solid var(--border); padding: 12px 16px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-.session-card.current { border-color: var(--red); box-shadow: 0 0 10px rgba(var(--theme-rgb), 0.2); }
-.session-info { display: flex; flex-direction: column; gap: 4px; }
-.session-info strong { font-size: 18px; color: var(--fg); }
-.session-info span { font-size: 15px; color: var(--fg2); }
+  width:min(1120px,100%);
 
-/* Notifications */
-#notifContainer{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:9000;pointer-events:none;width:min(400px,92vw)}
-.notif{background:rgba(20,20,20,0.96);border:2px solid var(--red);border-radius:12px;padding:10px 16px;font-size:17px;color:#fff;pointer-events:all;cursor:pointer;animation:notifIn .26s ease;width:100%;text-align:center;transition:opacity .28s,transform .28s; box-shadow: 0 6px 20px rgba(0,0,0,0.5);}
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.025),
+      rgba(255,255,255,.008)
+    ),
+    rgba(0,0,0,.95);
 
-#deleteCountdownDisplay { font-size: 80px; font-weight: bold; color: #ff3333; margin: 10px 0 20px; font-family: 'VT323', monospace; line-height:1;}
+  border:2px solid rgba(187,0,30,.7);
+  border-radius:30px;
 
-@media (max-width:768px){
-    #sidebar{display:none;}
-    #mobileTopbar{display:flex;}
-    #mainView{padding:20px 16px;}
+  padding:38px 42px;
+
+  box-shadow:
+    0 30px 100px rgba(0,0,0,.78),
+    0 0 55px rgba(187,0,30,.08);
+
+  animation:cardIn .5s cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes cardIn{
+  from{
+    opacity:0;
+    transform:translateY(18px) scale(.97);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+}
+
+.header{
+  display:flex;
+  align-items:center;
+  gap:20px;
+
+  padding-bottom:25px;
+
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+
+.status-icon{
+  width:76px;
+  height:76px;
+
+  flex:none;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border:3px solid var(--yellow);
+  border-radius:50%;
+
+  color:var(--yellow);
+
+  font-family:var(--mono);
+  font-size:31px;
+  font-weight:700;
+
+  box-shadow:
+    0 0 28px rgba(226,170,53,.12);
+}
+
+.header-text{
+  min-width:0;
+}
+
+.title{
+  margin:0;
+
+  font-size:44px;
+  line-height:1.05;
+  font-weight:400;
+}
+
+.subtitle{
+  margin:8px 0 0;
+
+  color:rgba(255,255,255,.58);
+
+  font-size:21px;
+  line-height:1.35;
+}
+
+.content{
+  display:grid;
+
+  grid-template-columns:
+    minmax(320px, .85fr)
+    minmax(480px, 1.5fr);
+
+  gap:32px;
+
+  margin-top:28px;
+}
+
+.status-panel{
+  min-width:0;
+}
+
+.panel-title{
+  margin:0 0 13px;
+
+  font-family:var(--mono);
+
+  font-size:11px;
+  letter-spacing:1.5px;
+
+  text-transform:uppercase;
+
+  color:rgba(255,255,255,.38);
+}
+
+.status-group{
+  display:grid;
+  gap:9px;
+}
+
+.status-item{
+  display:flex;
+  align-items:center;
+
+  gap:13px;
+
+  min-height:62px;
+
+  padding:11px 14px;
+
+  border-radius:14px;
+
+  background:rgba(255,255,255,.025);
+
+  border:1px solid rgba(255,255,255,.08);
+}
+
+.indicator{
+  width:34px;
+  height:34px;
+
+  flex:none;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:10px;
+
+  font-family:var(--mono);
+  font-size:11px;
+  font-weight:700;
+}
+
+.indicator.online{
+  color:var(--green);
+
+  background:var(--green-soft);
+
+  border:1px solid var(--green-border);
+}
+
+.indicator.offline{
+  color:var(--red-bright);
+
+  background:rgba(187,0,30,.09);
+
+  border:1px solid rgba(187,0,30,.35);
+}
+
+.status-info{
+  min-width:0;
+}
+
+.status-name{
+  font-size:19px;
+  line-height:1.1;
+}
+
+.status-state{
+  margin-top:3px;
+
+  font-family:var(--mono);
+
+  font-size:10px;
+  letter-spacing:.7px;
+
+  text-transform:uppercase;
+
+  color:rgba(255,255,255,.35);
+}
+
+.info-panel{
+  min-width:0;
+}
+
+.info-title{
+  margin:0 0 9px;
+
+  font-size:28px;
+  line-height:1.1;
+}
+
+.info-text{
+  margin:0;
+
+  color:rgba(255,255,255,.62);
+
+  font-size:17px;
+  line-height:1.48;
+}
+
+.info-text + .info-text{
+  margin-top:11px;
+}
+
+.info-text strong{
+  color:rgba(255,255,255,.9);
+
+  font-weight:400;
+}
+
+.crash-box{
+  margin-top:17px;
+
+  padding:15px 17px;
+
+  border-left:3px solid var(--red);
+
+  border-radius:0 12px 12px 0;
+
+  background:rgba(187,0,30,.065);
+
+  color:rgba(255,255,255,.61);
+
+  font-size:16px;
+
+  line-height:1.45;
+}
+
+.crash-box strong{
+  color:#fff;
+  font-weight:400;
+}
+
+.bottom{
+  display:grid;
+
+  grid-template-columns:
+    1fr
+    auto;
+
+  gap:25px;
+
+  align-items:end;
+
+  margin-top:28px;
+
+  padding-top:24px;
+
+  border-top:1px solid rgba(255,255,255,.08);
+}
+
+.vercel-info{
+  min-width:0;
+}
+
+.vercel-title{
+  margin:0;
+
+  font-size:22px;
+}
+
+.vercel-text{
+  margin:4px 0 0;
+
+  color:rgba(255,255,255,.45);
+
+  font-size:16px;
+  line-height:1.4;
+}
+
+.url{
+  display:inline-block;
+
+  margin-top:4px;
+
+  color:rgba(255,255,255,.7);
+
+  font-family:var(--mono);
+
+  font-size:12px;
+}
+
+.open-button{
+  min-width:250px;
+
+  padding:15px 24px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  gap:10px;
+
+  border:2px solid var(--red);
+
+  border-radius:15px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(187,0,30,.2),
+      rgba(187,0,30,.06)
+    );
+
+  color:#fff;
+
+  font-family:var(--font);
+  font-size:21px;
+
+  text-decoration:none;
+
+  transition:
+    transform .18s ease,
+    background .18s ease,
+    box-shadow .18s ease;
+}
+
+.open-button:hover{
+  transform:translateY(-2px);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(187,0,30,.3),
+      rgba(187,0,30,.1)
+    );
+
+  box-shadow:
+    0 9px 30px rgba(187,0,30,.18);
+}
+
+.open-button:active{
+  transform:scale(.985);
+}
+
+.arrow{
+  font-family:var(--mono);
+
+  font-size:17px;
+
+  transition:
+    transform .18s ease;
+}
+
+.open-button:hover .arrow{
+  transform:translateX(4px);
+}
+
+@media(
+  min-width:700px
+) and (
+  max-width:1100px
+){
+
+  body{
+    padding:22px;
+  }
+
+  .card{
+    padding:32px;
+  }
+
+  .content{
+    grid-template-columns:
+      minmax(280px,.85fr)
+      minmax(400px,1.3fr);
+
+    gap:25px;
+  }
+
+  .title{
+    font-size:40px;
+  }
+
+}
+
+@media(max-width:699px){
+
+  body{
+    align-items:flex-start;
+
+    padding:16px;
+  }
+
+  .card{
+    padding:28px 20px;
+
+    border-radius:24px;
+  }
+
+  .header{
+    align-items:flex-start;
+  }
+
+  .status-icon{
+    width:64px;
+    height:64px;
+  }
+
+  .title{
+    font-size:34px;
+  }
+
+  .subtitle{
+    font-size:18px;
+  }
+
+  .content{
+    grid-template-columns:1fr;
+
+    gap:25px;
+  }
+
+  .bottom{
+    grid-template-columns:1fr;
+  }
+
+  .open-button{
+    width:100%;
+  }
+
+}
+
+@media(prefers-reduced-motion:reduce){
+
+  *,
+  *::before,
+  *::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+  }
+
 }
 </style>
 </head>
+
 <body>
 
-<div id="offlineBanner">You are currently offline</div>
+<div class="background-glow one"></div>
+<div class="background-glow two"></div>
 
-<!-- Loaders & Modals -->
-<div id="initLoadingScreen" class="screen show">
-  <div class="card" style="background:transparent; border:none; box-shadow:none;">
-    <div class="spinner"></div>
-    <h1 style="font-size:46px;">BSMS Web</h1>
-    <div style="font-size:20px; color:var(--red);">Loading Account...</div>
-  </div>
-</div>
 
-<div id="actionLoadingScreen" class="overlay">
-  <div class="popup" style="width: auto; background: transparent; border: none; align-items: center; box-shadow: none;">
-    <div class="spinner"></div>
-    <div id="actionLoadingText" style="font-size: 24px; font-weight: bold; color:var(--red);">Please wait...</div>
-  </div>
-</div>
+<main class="card">
 
-<div id="alertOverlay" class="overlay" onclick="if(event.target===this) closePopup('alertOverlay')">
-  <div class="popup">
-    <p id="alertText" style="font-size:22px;margin-bottom:24px;color:var(--fg)"></p>
-    <button class="btn" onclick="closePopup('alertOverlay')" data-ga="alert_ok">OK</button>
-  </div>
-</div>
+  <header class="header">
 
-<!-- Modals -->
-<div id="changeUsernameModal" class="overlay" onclick="if(event.target===this) closePopup('changeUsernameModal')">
-  <div class="popup">
-    <h2>Change Username</h2>
-    <p>You can only change your username once every 7 days. Your new username must not be taken.</p>
-    <input type="text" id="newUsernameInput" placeholder="New Username (3-20 chars)" maxlength="20"/>
-    <p style="font-size: 15px; color:var(--fg2); margin-top:-5px;">Only letters, numbers, dashes, and underscores allowed.</p>
-    <button class="btn warn" id="confirmUsernameBtn" onclick="executeUsernameChange()" data-ga="confirm_username_change">Confirm Change</button>
-    <button class="btn sec" onclick="closePopup('changeUsernameModal')">Cancel</button>
-  </div>
-</div>
-
-<div id="deleteAccountModal" class="overlay" onclick="if(event.target===this) closePopup('deleteAccountModal')">
-  <div class="popup">
-    <h2 style="color:#ff3333;">Delete Account</h2>
-    <p>This action is irreversible. All of your BSMS Web data will be permanently lost.</p>
-    <p style="font-size: 16px;">Please confirm your credentials to proceed.</p>
-    <input type="text" id="delAuthUser" placeholder="Enter your username"/>
-    <input type="password" id="delAuthPass" placeholder="Enter your password"/>
-    <button class="btn warn" id="confirmDeleteBtn" onclick="verifyAccountDeletion()" data-ga="confirm_delete_account">Proceed</button>
-    <button class="btn sec" onclick="closePopup('deleteAccountModal')">Cancel</button>
-  </div>
-</div>
-
-<div id="deleteCountdownModal" class="overlay" style="background:rgba(20,0,0,0.96);">
-  <div class="popup" style="border-color:#ff3333; text-align:center;">
-    <h2 style="color:#ff3333;">Account Deletion</h2>
-    <p>Your account will be permanently deleted in:</p>
-    <div id="deleteCountdownDisplay">10</div>
-    <p style="font-size:18px;">This is your last chance to abort.</p>
-    <button class="btn sec" style="border-color:var(--border);" onclick="cancelDeletion()" data-ga="cancel_deletion">Cancel Deletion</button>
-  </div>
-</div>
-
-<!-- Authentication Screen (Login / Sign Up) -->
-<div id="authScreen" class="screen">
-  <div class="card">
-    <div class="logo-img">
-        <svg style="width:40px;height:40px;margin-top:14px;fill:var(--red);" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-    </div>
-    <h1 id="authTitle">Sign In</h1>
-    <p id="authSubtitle">Access your BSMS Web Account</p>
-    
-    <div style="text-align: left;">
-      <input id="authUsername" type="text" placeholder="Username (3-20 chars)" maxlength="20" autocomplete="username"/>
-      <input id="authPassword" type="password" placeholder="Password" autocomplete="current-password"/>
-    </div>
-    
-    <button class="btn" id="authSubmitBtn" onclick="handleAuth()" style="margin-top: 14px;" data-ga="auth_submit">Login</button>
-    <a href="/" class="btn sec" style="margin-top: 10px;" data-ga="auth_home">Go Back Home</a>
-    
-    <div style="margin-top: 22px; font-size: 18px; color: var(--fg2);">
-      <span id="authToggleText">Don't have an account?</span> 
-      <strong style="color:var(--red); cursor:pointer;" onclick="toggleAuthMode()" data-ga="auth_toggle">Sign up here</strong>
-    </div>
-  </div>
-</div>
-
-<!-- Logged In Dashboard -->
-<div id="appShell">
-  <div id="sidebar">
-    <div class="sidebar-title">Accounts</div>
-    <button class="navBtn active" id="dock-profile" onclick="switchPanel('profile')" data-ga="tab_profile">Profile</button>
-    <button class="navBtn" id="dock-security" onclick="switchPanel('security')" data-ga="tab_security">Security</button>
-    <button class="navBtn" id="dock-sessions" onclick="switchPanel('sessions')" data-ga="tab_sessions">Sessions</button>
-    <div class="sidebar-gap"></div>
-    <a href="/" class="btn sec" style="text-align: left; padding: 12px 16px; font-size: 19px; border-color: transparent;" data-ga="dash_home">← Go Back Home</a>
-    <div style="font-size: 15px; color:var(--fg2); text-align:center; margin-bottom:10px;">Logged in as <br><strong id="sidebarUsername" style="color:var(--fg);font-size:17px;">---</strong></div>
-    <button class="navBtn" style="border-color:var(--border); color:#ff4444; justify-content:center; font-weight:bold;" onclick="logout()" data-ga="dash_logout">Logout</button>
-  </div>
-
-  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;">
-    
-    <div id="mobileTopbar">
-      <button id="mobileMenuBtn" onclick="toggleMobileDrawer()">
-        <svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:var(--fg);"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
-      </button>
-      <div class="mobile-title">Accounts</div>
-      <div style="width:40px;"></div> <!-- Spacer -->
-    </div>
-    
-    <div id="mobileDrawerBackdrop" onclick="closeMobileDrawer()"></div>
-    <div id="mobileDrawer">
-      <div class="sidebar-title">Menu</div>
-      <button class="navBtn active" id="mob-profile" onclick="switchPanel('profile'); closeMobileDrawer()">Profile</button>
-      <button class="navBtn" id="mob-security" onclick="switchPanel('security'); closeMobileDrawer()">Security</button>
-      <button class="navBtn" id="mob-sessions" onclick="switchPanel('sessions'); closeMobileDrawer()">Sessions</button>
-      <div class="sidebar-gap"></div>
-      <a href="/" class="btn sec" style="text-align: left; padding: 12px 16px; font-size: 19px; border-color: transparent;">← Go Back Home</a>
-      <div style="font-size: 15px; color:var(--fg2); text-align:center; margin-bottom:10px;">Logged in as <br><strong id="mobileSidebarUsername" style="color:var(--fg);font-size:17px;">---</strong></div>
-      <button class="navBtn" style="border-color:var(--border); color:#ff4444; justify-content:center; font-weight:bold;" onclick="logout()">Logout</button>
+    <div class="status-icon">
+      !
     </div>
 
-    <!-- Main Content Area -->
-    <div id="mainView">
-        
-      <!-- Profile Panel -->
-      <div id="profilePanel" class="panel show">
-        <div class="panel-header">
-            <h1>Public Profile</h1>
-            <p>Manage your identity across the BSMS Web ecosystem.</p>
-        </div>
-        
-        <div class="form-group" style="display:flex; flex-direction:column; align-items:center;">
-            <div class="avatar-preview" id="avatarPreviewContainer"></div>
-            <input type="file" id="avatarUpload" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)"/>
-            <button class="btn sec" style="width:auto; padding: 8px 18px; font-size:18px;" onclick="document.getElementById('avatarUpload').click()" data-ga="upload_avatar">Upload Picture</button>
-            <p style="font-size:15px; color:var(--fg2); margin: 12px 0 20px 0;">Account created: <strong id="accountCreatedDate">---</strong></p>
-        </div>
+    <div class="header-text">
 
-        <div class="form-group">
-            <label>Username <span style="font-size:14px; color:var(--fg2);">(Used for login)</span></label>
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="profileUsername" disabled style="margin:0;"/>
-                <button class="btn sec" style="width:auto; margin:0;" onclick="openUsernameModal()" data-ga="open_username_modal">Change</button>
+      <h1 class="title">
+        BSMS Web is Partially Operational
+      </h1>
+
+      <p class="subtitle">
+        Most services are back online, but Accounts and BSMS Chat
+        are still unavailable.
+      </p>
+
+    </div>
+
+  </header>
+
+
+  <div class="content">
+
+    <section class="status-panel">
+
+      <h2 class="panel-title">
+        Current Status
+      </h2>
+
+
+      <div class="status-group">
+
+
+        <div class="status-item">
+
+          <div class="indicator online">
+            OK
+          </div>
+
+          <div class="status-info">
+
+            <div class="status-name">
+              BSMS Countdown
             </div>
-            <div id="usernameCooldownText" style="font-size: 15px; color:var(--red); margin-top:8px; display:none;"></div>
+
+            <div class="status-state">
+              Operational
+            </div>
+
+          </div>
+
         </div>
 
-        <div class="form-group">
-            <label>Display Name <span style="font-size:14px; color:var(--fg2);">(Visible to others)</span></label>
-            <input type="text" id="profileDisplayName" placeholder="Your display name" maxlength="30"/>
-        </div>
-        
-        <div class="form-group">
-            <label>Bio</label>
-            <textarea id="profileBio" placeholder="Tell us a bit about yourself..." maxlength="200"></textarea>
+
+        <div class="status-item">
+
+          <div class="indicator online">
+            OK
+          </div>
+
+          <div class="status-info">
+
+            <div class="status-name">
+              BSMS Games
+            </div>
+
+            <div class="status-state">
+              Operational
+            </div>
+
+          </div>
+
         </div>
 
-        <div class="panel-header" style="margin-top: 40px;">
-            <h2 style="margin:0; font-size: 32px; color:var(--fg);">Contact Information (Optional)</h2>
+
+        <div class="status-item">
+
+          <div class="indicator offline">
+            !
+          </div>
+
+          <div class="status-info">
+
+            <div class="status-name">
+              Accounts
+            </div>
+
+            <div class="status-state">
+              Currently unavailable
+            </div>
+
+          </div>
+
         </div>
 
-        <div class="form-group">
-            <label>Email Address</label>
-            <input type="email" id="profileEmail" placeholder="name@example.com"/>
+
+        <!-- CHAT -->
+
+        <div class="status-item">
+
+          <div class="indicator offline">
+            !
+          </div>
+
+          <div class="status-info">
+
+            <div class="status-name">
+              BSMS Chat
+            </div>
+
+            <div class="status-state">
+              Currently unavailable
+            </div>
+
+          </div>
+
         </div>
 
-        <div class="form-group">
-            <label>Phone Number</label>
-            <input type="tel" id="profilePhone" placeholder="(123) 456-7890"/>
-        </div>
 
-        <button class="btn" id="saveProfileBtn" onclick="saveProfile()" style="margin-top: 20px; margin-bottom: 60px;" data-ga="save_profile">Save Profile Changes</button>
       </div>
 
-      <!-- Security Panel -->
-      <div id="securityPanel" class="panel">
-        <div class="panel-header">
-            <h1>Security</h1>
-            <p>Update your password and export your data.</p>
-        </div>
-        
-        <div class="form-group">
-            <label>Current Password</label>
-            <input type="password" id="secCurrentPass" placeholder="Enter current password"/>
-        </div>
-        <div class="form-group">
-            <label>New Password</label>
-            <input type="password" id="secNewPass" placeholder="Enter new password (min 6 chars)"/>
-        </div>
-        <div class="form-group">
-            <label>Confirm New Password</label>
-            <input type="password" id="secConfirmPass" placeholder="Confirm new password"/>
-        </div>
-        
-        <button class="btn warn" id="updatePasswordBtn" onclick="changePassword()" style="margin-top: 14px;" data-ga="update_password">Update Password</button>
+    </section>
+	  
+    <section class="info-panel">
 
-        <div style="margin-top: 60px; padding-top: 30px; border-top: 2px solid var(--border);">
-            <h2 style="margin: 0 0 12px; font-size:32px;">Export Data</h2>
-            <p style="font-size:18px; color:var(--fg2); margin:0 0 20px;">Download a ZIP file containing your unified profile, chats, and configurations.</p>
-            <button class="btn sec" id="exportDataBtn" onclick="exportData()" data-ga="export_data">Request Data Export</button>
-        </div>
+      <h2 class="info-title">
+        What happened?
+      </h2>
 
-        <div style="margin-top: 60px; padding-top: 30px; border-top: 2px solid var(--border); margin-bottom: 40px;">
-            <h2 style="color: #ff3333; margin: 0 0 12px; font-size:32px;">Danger Zone</h2>
-            <p style="font-size:18px; color:var(--fg2); margin:0 0 20px;">Once you delete your account, there is no going back. Please be certain.</p>
-            <button class="btn warn" style="background:transparent; color:#ff3333; border-color:#ff3333;" onclick="openPopup('deleteAccountModal')" data-ga="open_delete_modal">Delete Account</button>
-        </div>
-      </div>
+      <p class="info-text">
+        BSMS Web originally went down after a message in BSMS Chat
+        triggered the profanity checker. The checker was not
+        configured correctly and produced data that the server
+        could not understand.
+      </p>
 
-      <!-- Sessions Panel -->
-      <div id="sessionsPanel" class="panel">
-        <div class="panel-header">
-            <h1>Active Sessions</h1>
-            <p>Manage the devices currently logged into your account.</p>
-        </div>
+      <p class="info-text">
+        This caused the server to crash unexpectedly, taking down
+        <strong>BSMS Chat, Accounts, and the update system</strong>
+        at the same time.
+      </p>
 
-        <div id="sessionsListContainer">
-            <div style="text-align:center; color:var(--fg2); padding: 20px;">Loading sessions...</div>
-        </div>
+      <div class="crash-box">
+
+        <strong>Current situation:</strong>
+        Most of BSMS Web has now been restored. Accounts and
+        BSMS Chat are still unavailable while we finish fixing
+        the remaining problems and improve the way the system
+        handles unexpected data and edge cases.
 
       </div>
 
-    </div>
+    </section>
+
   </div>
-</div>
+	
+  <div class="bottom">
 
-<div id="notifContainer"></div>
+    <a
+      class="open-button"
+      href="https://bsms-web.vercel.app"
+    >
+      <span>
+        ← Back
+      </span>
+    </a>
 
-<script>
-/*
- * BSMS Web
- * Copyright © 2026 Jellyfish Jelly
- * SPDX-License-Identifier: MIT
- */
+  </div>
 
-// Initialize standard offline checking
-window.addEventListener('offline', () => document.getElementById('offlineBanner').classList.add('show'));
-window.addEventListener('online', () => document.getElementById('offlineBanner').classList.remove('show'));
-if (!navigator.onLine) document.getElementById('offlineBanner').classList.add('show');
+</main>
 
-// Establish global session ID
-if (!localStorage.getItem('session_id')) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let sid = '';
-    for (let i = 0; i < 10; i++) sid += chars.charAt(Math.floor(Math.random() * chars.length));
-    localStorage.setItem('session_id', sid);
-    console.log("[BSMS Web :: Auth] Generated new session_id.");
-}
-const currentSessionId = localStorage.getItem('session_id');
-
-const SESSION_KEY = 'bsms_auth_session';
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-
-let authSession = null;
-let currentAccountData = null;
-let authMode = 'login'; 
-let pendingAvatarBase64 = null;
-let deleteInterval = null;
-let deleteTimer = 10;
-
-// ---------- INIT & ROUTING ----------
-window.addEventListener('hashchange', handleHash);
-
-function init() {
-    const raw = localStorage.getItem(SESSION_KEY);
-    if (raw) {
-        authSession = JSON.parse(raw);
-        if(authSession.loggedIn && authSession.uid) {
-            fetchCloudProfile();
-            return;
-        }
-    }
-    
-    // Logged out
-    authSession = null;
-    handleHash();
-}
-
-async function apiFetch(endpoint, options = {}) {
-    if (!options.headers) options.headers = {};
-    options.headers['X-Session-ID'] = currentSessionId;
-    options.headers['Content-Type'] = 'application/json';
-
-    try {
-        const response = await fetch(endpoint, options);
-        const data = await response.json().catch(() => ({}));
-        
-        if (response.status === 403 && data.account_status === "banned") {
-            console.warn("[BSMS Web :: Auth] Device/Account banned. Redirecting.");
-            localStorage.removeItem(SESSION_KEY);
-            window.location.href = '/device-banned.html';
-            return null;
-        }
-        
-        if (!response.ok) {
-            throw new Error(data.error || `HTTP error ${response.status}`);
-        }
-        
-        return data;
-    } catch (err) {
-        console.error(`[BSMS Web :: API] Fetch failed for ${endpoint}:`, err);
-        throw err;
-    }
-}
-
-async function fetchCloudProfile() {
-    try {
-        const data = await apiFetch(`/api/account`);
-        if (data && data.profile) {
-            currentAccountData = data.profile;
-            loadDashboard();
-        } else {
-            throw new Error("Invalid session data");
-        }
-    } catch(err) {
-        localStorage.removeItem(SESSION_KEY);
-        authSession = null;
-        handleHash();
-    }
-}
-
-function handleHash() {
-    let hash = window.location.hash || '#';
-    
-    // Small timeout to allow CSS transitions if needed, but we handle it via classes
-    setTimeout(() => {
-        document.getElementById('initLoadingScreen').classList.remove('show');
-        
-        if (authSession && authSession.loggedIn) {
-            showScreen('appShell');
-            if (hash === '#security') switchPanel('security');
-            else if (hash === '#sessions') { switchPanel('sessions'); loadSessions(); }
-            else switchPanel('profile');
-        } else {
-            showScreen('authScreen');
-            if (hash === '#signup') {
-                authMode = 'signup';
-            } else {
-                authMode = 'login';
-            }
-            updateAuthUI();
-        }
-    }, 50);
-}
-
-// ---------- UI HELPERS ----------
-function showScreen(id) {
-    document.querySelectorAll('.screen, #appShell').forEach(s => s.classList.remove('show'));
-    // Force reflow
-    void document.getElementById(id).offsetWidth;
-    document.getElementById(id).classList.add('show');
-}
-function openPopup(id) { document.getElementById(id).classList.add('show'); }
-function closePopup(id) { document.getElementById(id).classList.remove('show'); }
-
-function setButtonLoading(btnId, isLoading, originalText = "") {
-    const btn = document.getElementById(btnId);
-    if (!btn) return;
-    if (isLoading) {
-        btn.disabled = true;
-        btn.dataset.originalText = btn.textContent;
-        btn.textContent = "Please wait...";
-    } else {
-        btn.disabled = false;
-        btn.textContent = originalText || btn.dataset.originalText || "Submit";
-    }
-}
-
-function showAction(msg) { document.getElementById('actionLoadingText').textContent = msg; document.getElementById('actionLoadingScreen').classList.add('show'); }
-function hideAction() { document.getElementById('actionLoadingScreen').classList.remove('show'); }
-function showAlert(msg) { document.getElementById('alertText').innerText = msg; openPopup('alertOverlay'); }
-function showToast(msg) {
-    const c = document.getElementById('notifContainer');
-    const n = document.createElement('div'); n.className = 'notif'; n.textContent = msg;
-    n.onclick = () => { n.style.opacity='0'; setTimeout(()=>n.remove(), 280); }; c.appendChild(n);
-    setTimeout(() => { if(n.parentNode) n.click(); }, 4000);
-}
-
-function preventSpaces(e) { this.value = this.value.replace(/ /g, '_'); }
-document.getElementById('authUsername').addEventListener('input', preventSpaces);
-document.getElementById('newUsernameInput').addEventListener('input', preventSpaces);
-
-function toggleMobileDrawer(){
-    const d=document.getElementById('mobileDrawer'), bd=document.getElementById('mobileDrawerBackdrop');
-    const o=d.classList.toggle('open'); bd.classList.toggle('show',o);
-}
-function closeMobileDrawer(){
-    document.getElementById('mobileDrawer').classList.remove('open');
-    document.getElementById('mobileDrawerBackdrop').classList.remove('show');
-}
-
-function switchPanel(name) {
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('show'));
-    document.querySelectorAll('.navBtn').forEach(b => b.classList.remove('active'));
-    document.getElementById(name + 'Panel').classList.add('show');
-    if(document.getElementById('dock-' + name)) document.getElementById('dock-' + name).classList.add('active');
-    if(document.getElementById('mob-' + name)) document.getElementById('mob-' + name).classList.add('active');
-    window.location.hash = `#${name}`;
-}
-
-// ---------- AUTHENTICATION ----------
-function toggleAuthMode() {
-    window.location.hash = authMode === 'login' ? '#signup' : '#login';
-}
-
-function updateAuthUI() {
-    const title = document.getElementById('authTitle');
-    const subtitle = document.getElementById('authSubtitle');
-    const btn = document.getElementById('authSubmitBtn');
-    const toggleText = document.getElementById('authToggleText');
-    const toggleLink = toggleText.nextElementSibling;
-
-    if (authMode === 'signup') {
-        title.textContent = 'Create Account'; subtitle.textContent = 'Join the BSMS Web ecosystem';
-        btn.textContent = 'Sign Up'; toggleText.textContent = 'Already have an account?'; toggleLink.textContent = 'Log in here';
-    } else {
-        title.textContent = 'Sign In'; subtitle.textContent = 'Access your BSMS Web Account';
-        btn.textContent = 'Login'; toggleText.textContent = "Don't have an account?"; toggleLink.textContent = 'Sign up here';
-    }
-}
-
-async function handleAuth() {
-    let user = document.getElementById('authUsername').value.replace(/ /g, '_');
-    const pass = document.getElementById('authPassword').value.trim();
-
-    if (user.length < 3 || user.length > 20) return showAlert("Username must be between 3 and 20 characters.");
-    if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(user)) return showAlert("Username must start with a letter/number and contain only letters, numbers, dashes, and underscores.");
-    if (!pass) return showAlert("Password is required.");
-
-    setButtonLoading('authSubmitBtn', true);
-
-    try {
-        const data = await apiFetch(`/api/auth`, {
-            method: 'POST',
-            body: JSON.stringify({ mode: authMode, username: user, password: pass })
-        });
-        
-        if (data && data.success) {
-            completeLogin(data.profile);
-        }
-    } catch (err) { 
-        showAlert(err.message || "Connection error."); 
-    } finally {
-        setButtonLoading('authSubmitBtn', false);
-    }
-}
-
-function completeLogin(data) {
-    const sessionObj = {
-        loggedIn: true, uid: data.username, username: data.username,
-        displayName: data.displayName || data.username, pfp: data.avatar || ""
-    };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(sessionObj));
-    authSession = sessionObj;
-    currentAccountData = data;
-    
-    document.getElementById('authPassword').value = '';
-    
-    // Check for callback URL to redirect safely
-    const cb = new URLSearchParams(window.location.search).get('callback_url');
-    if (cb && cb.startsWith('/') && !cb.startsWith('//')) {
-        window.location.href = cb;
-    } else {
-        window.location.hash = '#profile';
-        loadDashboard();
-    }
-}
-
-async function logout() {
-    try {
-        await apiFetch(`/api/auth/logout`, { method: 'POST' });
-    } catch(e) {
-        console.warn("[BSMS Web :: Auth] Backend logout failed, clearing locally.");
-    }
-    localStorage.removeItem(SESSION_KEY);
-    authSession = null; currentAccountData = null; pendingAvatarBase64 = null;
-    showToast("Logged out.");
-    window.location.hash = '#login';
-}
-
-// ---------- DASHBOARD POPULATION ----------
-function loadDashboard() {
-    document.getElementById('initLoadingScreen').classList.remove('show');
-    showScreen('appShell');
-    
-    // Sidebar Updates
-    document.getElementById('sidebarUsername').textContent = authSession.username;
-    document.getElementById('mobileSidebarUsername').textContent = authSession.username;
-    
-    // Form fields
-    document.getElementById('profileUsername').value = authSession.username;
-    document.getElementById('profileDisplayName').value = currentAccountData.displayName || authSession.username;
-    document.getElementById('profileBio').value = currentAccountData.bio || "";
-    document.getElementById('profileEmail').value = currentAccountData.email || "";
-    document.getElementById('profilePhone').value = currentAccountData.phone || "";
-    pendingAvatarBase64 = currentAccountData.avatar || null;
-    
-    const cd = currentAccountData.createdAt ? new Date(currentAccountData.createdAt).toLocaleDateString() : 'Unknown';
-    document.getElementById('accountCreatedDate').textContent = cd;
-    
-    renderAvatarPreview();
-}
-
-function renderAvatarPreview() {
-    const container = document.getElementById('avatarPreviewContainer');
-    if (pendingAvatarBase64) { container.innerHTML = `<img src="${pendingAvatarBase64}">`; container.style.border = "none"; }
-    else { container.innerHTML = (document.getElementById('profileDisplayName').value || authSession.username).charAt(0).toUpperCase(); container.style.border = "3px solid var(--red)"; }
-}
-
-function handleAvatarUpload(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) return showAlert("Please select a valid image.");
-
-    // Client-side compression
-    const reader = new FileReader();
-    reader.onload = (event) => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = 256; canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            
-            // Calculate cover sizing
-            const scale = Math.max(256 / img.width, 256 / img.height);
-            const x = (256 / 2) - (img.width / 2) * scale;
-            const y = (256 / 2) - (img.height / 2) * scale;
-            
-            ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
-            
-            pendingAvatarBase64 = canvas.toDataURL('image/jpeg', 0.85);
-            renderAvatarPreview();
-        };
-        img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
-}
-
-// ---------- UPDATES ----------
-async function saveProfile() {
-    const dName = document.getElementById('profileDisplayName').value.trim();
-    if (dName.length > 30) return showAlert("Display name cannot exceed 30 characters.");
-    
-    setButtonLoading('saveProfileBtn', true);
-    
-    try {
-        const updateObj = {
-            displayName: dName || authSession.username,
-            bio: document.getElementById('profileBio').value.trim(),
-            email: document.getElementById('profileEmail').value.trim(),
-            phone: document.getElementById('profilePhone').value.trim(),
-            avatar: pendingAvatarBase64 || ""
-        };
-        
-        await apiFetch(`/api/account`, {
-            method: 'PUT',
-            body: JSON.stringify(updateObj)
-        });
-        
-        Object.assign(currentAccountData, updateObj);
-        
-        // Update Local Session
-        authSession.displayName = updateObj.displayName;
-        authSession.pfp = updateObj.avatar;
-        localStorage.setItem(SESSION_KEY, JSON.stringify(authSession));
-        
-        showToast("Profile updated!"); 
-        loadDashboard();
-    } catch (err) { 
-        showAlert(err.message || "Failed to save profile."); 
-    } finally {
-        setButtonLoading('saveProfileBtn', false);
-    }
-}
-
-function openUsernameModal() {
-    const lastChange = currentAccountData.lastUsernameChange || 0;
-    const timeSince = Date.now() - lastChange;
-    const warnText = document.getElementById('usernameCooldownText');
-
-    if (timeSince < SEVEN_DAYS_MS) {
-        const daysLeft = Math.ceil((SEVEN_DAYS_MS - timeSince) / (1000 * 60 * 60 * 24));
-        warnText.textContent = `Cooldown active. Change available in ${daysLeft} day(s).`;
-        warnText.style.display = 'block';
-    } else {
-        warnText.style.display = 'none';
-        document.getElementById('newUsernameInput').value = '';
-        openPopup('changeUsernameModal');
-    }
-}
-
-async function executeUsernameChange() {
-    let newName = document.getElementById('newUsernameInput').value.replace(/ /g, '_');
-    if (newName.length < 3 || newName.length > 20) return showAlert("3-20 characters required.");
-	if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(newName)) return showAlert("Letters, numbers, underscores, and dashes only.");
-    if (newName === authSession.username) return showAlert("That is already your username.");
-
-    setButtonLoading('confirmUsernameBtn', true);
-    try {
-        const data = await apiFetch(`/api/account/username`, {
-            method: 'PUT',
-            body: JSON.stringify({ newUsername: newName })
-        });
-        
-        // Migrate locally
-        authSession.uid = newName; authSession.username = newName;
-        localStorage.setItem(SESSION_KEY, JSON.stringify(authSession));
-        
-        closePopup('changeUsernameModal'); showToast("Username changed!");
-        fetchCloudProfile(); // Full re-fetch to ensure sync
-    } catch (err) { 
-        showAlert(err.message || "Error changing username."); 
-    } finally {
-        setButtonLoading('confirmUsernameBtn', false);
-    }
-}
-
-async function changePassword() {
-    const cp = document.getElementById('secCurrentPass').value, np = document.getElementById('secNewPass').value, cnp = document.getElementById('secConfirmPass').value;
-    if (!cp || !np || !cnp) return showAlert("All fields required.");
-    if (np.length < 6) return showAlert("New password min 6 characters.");
-    if (np !== cnp) return showAlert("Passwords do not match.");
-    
-    setButtonLoading('updatePasswordBtn', true);
-    try {
-        await apiFetch(`/api/account/password`, {
-            method: 'PUT',
-            body: JSON.stringify({ currentPassword: cp, newPassword: np })
-        });
-        
-        document.getElementById('secCurrentPass').value = ''; document.getElementById('secNewPass').value = ''; document.getElementById('secConfirmPass').value = '';
-        showToast("Password updated successfully.");
-    } catch(err) { 
-        showAlert(err.message || "Error changing password."); 
-    } finally {
-        setButtonLoading('updatePasswordBtn', false);
-    }
-}
-
-async function loadSessions() {
-    const container = document.getElementById('sessionsListContainer');
-    container.innerHTML = `<div style="text-align:center; color:var(--fg2); padding: 20px;">Loading sessions...</div>`;
-    
-    try {
-        const data = await apiFetch(`/api/account/sessions`);
-        container.innerHTML = '';
-        
-        if (!data.sessions || Object.keys(data.sessions).length === 0) {
-            container.innerHTML = `<div style="text-align:center; color:var(--fg2); padding: 20px;">No active sessions found.</div>`;
-            return;
-        }
-
-        for (const [sid, sData] of Object.entries(data.sessions)) {
-            const isCurrent = sid === currentSessionId;
-            const lastActive = new Date(sData.lastActive).toLocaleString();
-            
-            const card = document.createElement('div');
-            card.className = `session-card ${isCurrent ? 'current' : ''}`;
-            card.innerHTML = `
-                <div class="session-info">
-                    <strong>${isCurrent ? 'This Device' : 'Other Device'}</strong>
-                    <span>Last Active: ${lastActive}</span>
-                </div>
-                ${!isCurrent ? `<button class="btn sec" style="width:auto; margin:0; padding:6px 12px; font-size:16px;" onclick="revokeSession('${sid}')">Revoke</button>` : `<span style="color:var(--red); font-weight:bold;">Active</span>`}
-            `;
-            container.appendChild(card);
-        }
-    } catch(err) {
-        container.innerHTML = `<div style="text-align:center; color:#ff3333; padding: 20px;">Failed to load sessions.</div>`;
-    }
-}
-
-async function revokeSession(sid) {
-    if(!confirm("Are you sure you want to log out this device?")) return;
-    try {
-        await apiFetch(`/api/account/sessions`, {
-            method: 'DELETE',
-            body: JSON.stringify({ sessionId: sid })
-        });
-        showToast("Session revoked.");
-        loadSessions();
-    } catch(err) {
-        showAlert("Failed to revoke session.");
-    }
-}
-
-async function exportData() {
-    setButtonLoading('exportDataBtn', true, "Preparing Data...");
-    try {
-        const data = await apiFetch(`/api/export-data`);
-        
-        const zip = new JSZip();
-        zip.file("profile.json", JSON.stringify(data.profile, null, 2));
-        if (data.messages) zip.file("messages.json", JSON.stringify(data.messages, null, 2));
-        if (data.game_saves) zip.file("game_saves.json", JSON.stringify(data.game_saves, null, 2));
-        
-        const content = await zip.generateAsync({ type: "blob" });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(content);
-        a.download = `bsms_export_${authSession.username}.zip`;
-        a.click();
-        
-        showToast("Export complete.");
-    } catch(err) {
-        showAlert("Failed to export data.");
-    } finally {
-        setButtonLoading('exportDataBtn', false, "Request Data Export");
-    }
-}
-
-function verifyAccountDeletion() {
-    const iu = document.getElementById('delAuthUser').value.trim(), ip = document.getElementById('delAuthPass').value.trim();
-    if (iu !== authSession.username) return showAlert("Incorrect username.");
-    if (!ip) return showAlert("Password is required.");
-
-    // Note: True validation happens on the backend during the execute step.
-    closePopup('deleteAccountModal');
-    
-    deleteTimer = 10;
-    document.getElementById('deleteCountdownDisplay').textContent = deleteTimer;
-    openPopup('deleteCountdownModal');
-    deleteInterval = setInterval(() => {
-        deleteTimer--; document.getElementById('deleteCountdownDisplay').textContent = deleteTimer;
-        if (deleteTimer <= 0) { clearInterval(deleteInterval); executeFinalDeletion(ip); }
-    }, 1000);
-}
-
-function cancelDeletion() {
-    if (deleteInterval) clearInterval(deleteInterval);
-    closePopup('deleteCountdownModal'); 
-    document.getElementById('delAuthUser').value = ''; document.getElementById('delAuthPass').value = '';
-    showToast("Deletion Canceled.");
-}
-
-async function executeFinalDeletion(password) {
-    showAction("Deleting account...");
-    try {
-        await apiFetch(`/api/account`, {
-            method: 'DELETE',
-            body: JSON.stringify({ password })
-        });
-        
-        closePopup('deleteCountdownModal');
-        localStorage.removeItem(SESSION_KEY);
-        authSession = null;
-        showAlert("Account successfully deleted.");
-        setTimeout(() => window.location.hash = '#login', 1500);
-    } catch (err) { 
-        hideAction();
-        closePopup('deleteCountdownModal'); 
-        showAlert(err.message || "Failed to delete account. Incorrect password?"); 
-    }
-}
-
-// Add Enter listeners
-document.getElementById('authUsername').addEventListener('keydown', e => { if(e.key === 'Enter') document.getElementById('authPassword').focus(); });
-document.getElementById('authPassword').addEventListener('keydown', e => { if(e.key === 'Enter') handleAuth(); });
-
-setTimeout(init, 300);
-</script>
-
-<script>
-    window.BSMS_WEB_PAGE_VERSION = "5.0";
-    window.BSMS_WEB_PAGE_NAME = "accounts";
-</script>
-
-<script src="/js/version-check.js"></script>
-    
 </body>
 </html>
