@@ -3,7 +3,6 @@ BSMS Web
 Copyright © 2026 Jellyfish Jelly
 SPDX-License-Identifier: MIT
 -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,26 +14,31 @@ SPDX-License-Identifier: MIT
 <meta name="theme-color" content="#BB001E">
 <meta name="color-scheme" content="#BB001E">
 <meta name="application-name" content="BSMS Accounts">
-<meta name="application-version" content="v4.0.0">
+<meta name="application-version" content="v5.0.0">
 <meta property="og:title" content="BSMS Accounts">
 <meta property="og:description" content="Manage your unified profile and security settings.">
 <meta property="og:category" content="Education">
-<meta property="og:url" content="https://bsms-web.page.gd/accounts">
+<meta property="og:url" content="https://bsms-web.vercel.app/accounts">
+<meta property="og:image" content="/img/app-icon.png">
 <meta property="og:type" content="website">
 <title>BSMS Web Accounts</title>
 
-    <!-- Analytics -->
-    <script type="text/javascript">
-        (function(c,l,a,r,i,t,y){
-            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-        })(window, document, "clarity", "script", "y87hnhpoob");
-    </script>
+<!-- Favicons -->
+<link rel="icon" href="/img/icon.png">
+<link rel="apple-touch-icon" href="/img/app-icon.png">
 
-<!-- Firebase SDK (Compat) -->
-<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-database-compat.js"></script>
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2TKPQV995W"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-2TKPQV995W');
+</script>
+<script src="/js/analytics.js"></script>
+
+<!-- JSZip for Data Export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
@@ -70,21 +74,30 @@ html,body{margin:0;padding:0;height:100%;width:100%;font-family:var(--font);back
 @keyframes slideLeft{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
 @keyframes notifIn{from{opacity:0;transform:translateY(14px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}
 
+/* Offline Banner */
+#offlineBanner {
+  position: fixed; top: 0; left: 0; width: 100%; background: #ef4444; color: #fff;
+  text-align: center; padding: 10px; font-family: var(--font); font-size: 18px;
+  z-index: 10000; transform: translateY(-100%); transition: transform 0.3s ease;
+}
+#offlineBanner.show { transform: translateY(0); }
+
 /* UI Elements */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:3000;animation:fadeIn .2s ease; backdrop-filter:blur(4px);}
-.overlay.show{display:flex}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:3000;opacity:0;transition:opacity 0.3s ease;backdrop-filter:blur(4px);}
+.overlay.show{display:flex;opacity:1;}
 .popup{background:var(--bg);border:2px solid var(--red);border-radius:20px;padding:26px 24px 20px;width:min(420px,92vw);animation:popIn .22s ease; display:flex; flex-direction:column; max-height: 90vh; overflow-y:auto; box-shadow:0 10px 40px rgba(0,0,0,0.5);}
 .popup h2{font-size:28px;margin:0 0 8px; color:var(--fg);}
 .popup p{font-size:18px;color:var(--fg2);margin:0 0 14px;line-height:1.45}
 
-.btn{display:block;width:100%;font-family:var(--font);font-size:21px;padding:10px 14px;border-radius:12px;border:2px solid var(--red);background:var(--red);color:#fff;cursor:pointer;transition:transform .13s,background .13s,border-color .13s,box-shadow .13s;margin-bottom:9px;line-height:1.2; text-align:center;}
+.btn{display:block;width:100%;font-family:var(--font);font-size:21px;padding:10px 14px;border-radius:12px;border:2px solid var(--red);background:var(--red);color:#fff;cursor:pointer;transition:transform .13s,background .13s,border-color .13s,box-shadow .13s;margin-bottom:9px;line-height:1.2; text-align:center; text-decoration: none;}
 .btn:last-child{margin-bottom:0}
-.btn:hover{background:var(--red-h);transform:scale(1.02);box-shadow:0 4px 18px var(--red-glow)}
-.btn:active{transform:scale(.97)}
+.btn:hover:not(:disabled){background:var(--red-h);transform:scale(1.02);box-shadow:0 4px 18px var(--red-glow)}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn:disabled{opacity:0.5;cursor:not-allowed;}
 .btn.sec{background:transparent;border-color:var(--border);color:var(--fg);}
-.btn.sec:hover{background:var(--msg-bg);border-color:var(--fg2);box-shadow:none}
+.btn.sec:hover:not(:disabled){background:var(--msg-bg);border-color:var(--fg2);box-shadow:none}
 .btn.warn{background:#7a0010;border-color:#7a0010;color:#fff;}
-.btn.warn:hover{background:#9a0015;border-color:#9a0015}
+.btn.warn:hover:not(:disabled){background:#9a0015;border-color:#9a0015}
 
 input,textarea{width:100%;font-family:var(--font);font-size:20px;padding:10px 13px;border-radius:12px;border:2px solid var(--border);background:var(--input-bg);color:var(--fg);margin:5px 0 12px;display:block;transition:border-color .2s,box-shadow .2s; outline:none;}
 input:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 14px var(--red-glow);}
@@ -96,16 +109,16 @@ textarea{resize:vertical;height:110px}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* Screens */
-.screen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;animation:fadeIn .25s ease;overflow-y:auto;}
-.screen.show{display:flex}
+.screen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity 0.3s ease;overflow-y:auto;}
+.screen.show{display:flex;opacity:1;}
 .card{width:min(440px,100%);background:var(--bg);border:3px solid var(--red);border-radius:26px;padding:32px 26px;animation:popIn .3s ease;text-align:center;box-shadow:0 0 60px rgba(var(--theme-rgb),0.15); position:relative;}
 .card h1{font-size:42px;margin:0 0 4px;line-height:1.1; color:var(--fg);}
 .card>p{font-size:19px;color:var(--fg2);margin:0 0 24px}
 .logo-img{width:72px;height:72px;object-fit:contain;margin:0 auto 15px;display:block;border-radius:14px; background: var(--msg-bg); border: 2px solid var(--border);}
 
 /* Dashboard Shell */
-#appShell{position:fixed;inset:0;display:none;flex-direction:row}
-#appShell.show{display:flex;animation:fadeIn .3s ease}
+#appShell{position:fixed;inset:0;display:none;flex-direction:row;opacity:0;transition:opacity 0.3s ease;}
+#appShell.show{display:flex;opacity:1;}
 #sidebar{width:260px;min-width:260px;border-right:3px solid var(--red);padding:24px 16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;background:var(--bg);z-index:50;}
 .sidebar-title { font-size: 26px; margin: 0 0 15px 5px; color: var(--fg); font-weight: bold; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
 .navBtn{width:100%;font-family:var(--font);font-size:19px;padding:12px 16px;border-radius:12px;border:2px solid transparent;background:transparent;color:var(--fg2);cursor:pointer;text-align:left;transition:all .15s;display:flex;align-items:center;gap:12px;}
@@ -137,15 +150,16 @@ textarea{resize:vertical;height:110px}
 .avatar-preview { width: 110px; height: 110px; border-radius: 50%; border: 3px solid var(--red); background: var(--input-bg); margin-bottom: 15px; display:flex; align-items:center; justify-content:center; font-size: 46px; color: var(--fg); font-weight:bold; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.2);}
 .avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
 
+/* Sessions View */
+.session-card { background: var(--input-bg); border: 1px solid var(--border); padding: 12px 16px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.session-card.current { border-color: var(--red); box-shadow: 0 0 10px rgba(var(--theme-rgb), 0.2); }
+.session-info { display: flex; flex-direction: column; gap: 4px; }
+.session-info strong { font-size: 18px; color: var(--fg); }
+.session-info span { font-size: 15px; color: var(--fg2); }
+
 /* Notifications */
 #notifContainer{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:9000;pointer-events:none;width:min(400px,92vw)}
 .notif{background:rgba(20,20,20,0.96);border:2px solid var(--red);border-radius:12px;padding:10px 16px;font-size:17px;color:#fff;pointer-events:all;cursor:pointer;animation:notifIn .26s ease;width:100%;text-align:center;transition:opacity .28s,transform .28s; box-shadow: 0 6px 20px rgba(0,0,0,0.5);}
-
-/* Global User Button */
-#globalUserBtn { position: fixed; top: 16px; right: 20px; width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--border); background: var(--input-bg); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; z-index: 2000; overflow: hidden; color:var(--fg); font-weight:bold; font-size:22px; box-shadow: 0 4px 14px rgba(0,0,0,0.3);}
-#globalUserBtn:hover { border-color: var(--red); box-shadow: 0 8px 24px rgba(0,0,0,0.4); transform: scale(1.05); }
-#globalUserBtn svg { width: 24px; height: 24px; fill: var(--fg); transition: fill 0.2s; }
-#globalUserBtn img { width: 100%; height: 100%; object-fit: cover; }
 
 #deleteCountdownDisplay { font-size: 80px; font-weight: bold; color: #ff3333; margin: 10px 0 20px; font-family: 'VT323', monospace; line-height:1;}
 
@@ -153,16 +167,12 @@ textarea{resize:vertical;height:110px}
     #sidebar{display:none;}
     #mobileTopbar{display:flex;}
     #mainView{padding:20px 16px;}
-    #globalUserBtn { top: 6px; right: 14px; width: 40px; height: 40px; }
 }
 </style>
 </head>
 <body>
 
-<!-- Global User Button (Disabled within Accounts dynamically if needed, but keeping for uniform structure) -->
-<div id="globalUserBtn" onclick="window.location.hash='#profile'" title="Profile">
-  <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-</div>
+<div id="offlineBanner">You are currently offline</div>
 
 <!-- Loaders & Modals -->
 <div id="initLoadingScreen" class="screen show">
@@ -183,7 +193,7 @@ textarea{resize:vertical;height:110px}
 <div id="alertOverlay" class="overlay" onclick="if(event.target===this) closePopup('alertOverlay')">
   <div class="popup">
     <p id="alertText" style="font-size:22px;margin-bottom:24px;color:var(--fg)"></p>
-    <button class="btn" onclick="closePopup('alertOverlay')">OK</button>
+    <button class="btn" onclick="closePopup('alertOverlay')" data-ga="alert_ok">OK</button>
   </div>
 </div>
 
@@ -193,8 +203,8 @@ textarea{resize:vertical;height:110px}
     <h2>Change Username</h2>
     <p>You can only change your username once every 7 days. Your new username must not be taken.</p>
     <input type="text" id="newUsernameInput" placeholder="New Username (3-20 chars)" maxlength="20"/>
-    <p style="font-size: 15px; color:var(--fg2); margin-top:-5px;">Spaces will be replaced with underscores.</p>
-    <button class="btn warn" onclick="executeUsernameChange()">Confirm Change</button>
+    <p style="font-size: 15px; color:var(--fg2); margin-top:-5px;">Only letters, numbers, dashes, and underscores allowed.</p>
+    <button class="btn warn" id="confirmUsernameBtn" onclick="executeUsernameChange()" data-ga="confirm_username_change">Confirm Change</button>
     <button class="btn sec" onclick="closePopup('changeUsernameModal')">Cancel</button>
   </div>
 </div>
@@ -206,7 +216,7 @@ textarea{resize:vertical;height:110px}
     <p style="font-size: 16px;">Please confirm your credentials to proceed.</p>
     <input type="text" id="delAuthUser" placeholder="Enter your username"/>
     <input type="password" id="delAuthPass" placeholder="Enter your password"/>
-    <button class="btn warn" onclick="verifyAccountDeletion()">Proceed</button>
+    <button class="btn warn" id="confirmDeleteBtn" onclick="verifyAccountDeletion()" data-ga="confirm_delete_account">Proceed</button>
     <button class="btn sec" onclick="closePopup('deleteAccountModal')">Cancel</button>
   </div>
 </div>
@@ -217,7 +227,7 @@ textarea{resize:vertical;height:110px}
     <p>Your account will be permanently deleted in:</p>
     <div id="deleteCountdownDisplay">10</div>
     <p style="font-size:18px;">This is your last chance to abort.</p>
-    <button class="btn sec" style="border-color:var(--border);" onclick="cancelDeletion()">Cancel Deletion</button>
+    <button class="btn sec" style="border-color:var(--border);" onclick="cancelDeletion()" data-ga="cancel_deletion">Cancel Deletion</button>
   </div>
 </div>
 
@@ -235,11 +245,12 @@ textarea{resize:vertical;height:110px}
       <input id="authPassword" type="password" placeholder="Password" autocomplete="current-password"/>
     </div>
     
-    <button class="btn" id="authSubmitBtn" onclick="handleAuth()" style="margin-top: 14px;">Login</button>
+    <button class="btn" id="authSubmitBtn" onclick="handleAuth()" style="margin-top: 14px;" data-ga="auth_submit">Login</button>
+    <a href="/" class="btn sec" style="margin-top: 10px;" data-ga="auth_home">Go Back Home</a>
     
     <div style="margin-top: 22px; font-size: 18px; color: var(--fg2);">
       <span id="authToggleText">Don't have an account?</span> 
-      <strong style="color:var(--red); cursor:pointer;" onclick="toggleAuthMode()">Sign up here</strong>
+      <strong style="color:var(--red); cursor:pointer;" onclick="toggleAuthMode()" data-ga="auth_toggle">Sign up here</strong>
     </div>
   </div>
 </div>
@@ -248,11 +259,13 @@ textarea{resize:vertical;height:110px}
 <div id="appShell">
   <div id="sidebar">
     <div class="sidebar-title">Accounts</div>
-    <button class="navBtn active" id="dock-profile" onclick="switchPanel('profile')">Profile</button>
-    <button class="navBtn" id="dock-security" onclick="switchPanel('security')">Security</button>
+    <button class="navBtn active" id="dock-profile" onclick="switchPanel('profile')" data-ga="tab_profile">Profile</button>
+    <button class="navBtn" id="dock-security" onclick="switchPanel('security')" data-ga="tab_security">Security</button>
+    <button class="navBtn" id="dock-sessions" onclick="switchPanel('sessions')" data-ga="tab_sessions">Sessions</button>
     <div class="sidebar-gap"></div>
+    <a href="/" class="btn sec" style="text-align: left; padding: 12px 16px; font-size: 19px; border-color: transparent;" data-ga="dash_home">← Go Back Home</a>
     <div style="font-size: 15px; color:var(--fg2); text-align:center; margin-bottom:10px;">Logged in as <br><strong id="sidebarUsername" style="color:var(--fg);font-size:17px;">---</strong></div>
-    <button class="navBtn" style="border-color:var(--border); color:#ff4444; justify-content:center; font-weight:bold;" onclick="logout()">Logout</button>
+    <button class="navBtn" style="border-color:var(--border); color:#ff4444; justify-content:center; font-weight:bold;" onclick="logout()" data-ga="dash_logout">Logout</button>
   </div>
 
   <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;">
@@ -270,7 +283,9 @@ textarea{resize:vertical;height:110px}
       <div class="sidebar-title">Menu</div>
       <button class="navBtn active" id="mob-profile" onclick="switchPanel('profile'); closeMobileDrawer()">Profile</button>
       <button class="navBtn" id="mob-security" onclick="switchPanel('security'); closeMobileDrawer()">Security</button>
+      <button class="navBtn" id="mob-sessions" onclick="switchPanel('sessions'); closeMobileDrawer()">Sessions</button>
       <div class="sidebar-gap"></div>
+      <a href="/" class="btn sec" style="text-align: left; padding: 12px 16px; font-size: 19px; border-color: transparent;">← Go Back Home</a>
       <div style="font-size: 15px; color:var(--fg2); text-align:center; margin-bottom:10px;">Logged in as <br><strong id="mobileSidebarUsername" style="color:var(--fg);font-size:17px;">---</strong></div>
       <button class="navBtn" style="border-color:var(--border); color:#ff4444; justify-content:center; font-weight:bold;" onclick="logout()">Logout</button>
     </div>
@@ -288,7 +303,7 @@ textarea{resize:vertical;height:110px}
         <div class="form-group" style="display:flex; flex-direction:column; align-items:center;">
             <div class="avatar-preview" id="avatarPreviewContainer"></div>
             <input type="file" id="avatarUpload" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)"/>
-            <button class="btn sec" style="width:auto; padding: 8px 18px; font-size:18px;" onclick="document.getElementById('avatarUpload').click()">Upload Picture</button>
+            <button class="btn sec" style="width:auto; padding: 8px 18px; font-size:18px;" onclick="document.getElementById('avatarUpload').click()" data-ga="upload_avatar">Upload Picture</button>
             <p style="font-size:15px; color:var(--fg2); margin: 12px 0 20px 0;">Account created: <strong id="accountCreatedDate">---</strong></p>
         </div>
 
@@ -296,7 +311,7 @@ textarea{resize:vertical;height:110px}
             <label>Username <span style="font-size:14px; color:var(--fg2);">(Used for login)</span></label>
             <div style="display:flex; gap:10px;">
                 <input type="text" id="profileUsername" disabled style="margin:0;"/>
-                <button class="btn sec" style="width:auto; margin:0;" onclick="openUsernameModal()">Change</button>
+                <button class="btn sec" style="width:auto; margin:0;" onclick="openUsernameModal()" data-ga="open_username_modal">Change</button>
             </div>
             <div id="usernameCooldownText" style="font-size: 15px; color:var(--red); margin-top:8px; display:none;"></div>
         </div>
@@ -325,14 +340,14 @@ textarea{resize:vertical;height:110px}
             <input type="tel" id="profilePhone" placeholder="(123) 456-7890"/>
         </div>
 
-        <button class="btn" onclick="saveProfile()" style="margin-top: 20px; margin-bottom: 60px;">Save Profile Changes</button>
+        <button class="btn" id="saveProfileBtn" onclick="saveProfile()" style="margin-top: 20px; margin-bottom: 60px;" data-ga="save_profile">Save Profile Changes</button>
       </div>
 
       <!-- Security Panel -->
       <div id="securityPanel" class="panel">
         <div class="panel-header">
             <h1>Security</h1>
-            <p>Update your password and manage sensitive data.</p>
+            <p>Update your password and export your data.</p>
         </div>
         
         <div class="form-group">
@@ -348,13 +363,32 @@ textarea{resize:vertical;height:110px}
             <input type="password" id="secConfirmPass" placeholder="Confirm new password"/>
         </div>
         
-        <button class="btn warn" onclick="changePassword()" style="margin-top: 14px;">Update Password</button>
+        <button class="btn warn" id="updatePasswordBtn" onclick="changePassword()" style="margin-top: 14px;" data-ga="update_password">Update Password</button>
 
-        <div style="margin-top: 80px; padding-top: 30px; border-top: 2px solid var(--border);">
+        <div style="margin-top: 60px; padding-top: 30px; border-top: 2px solid var(--border);">
+            <h2 style="margin: 0 0 12px; font-size:32px;">Export Data</h2>
+            <p style="font-size:18px; color:var(--fg2); margin:0 0 20px;">Download a ZIP file containing your unified profile, chats, and configurations.</p>
+            <button class="btn sec" id="exportDataBtn" onclick="exportData()" data-ga="export_data">Request Data Export</button>
+        </div>
+
+        <div style="margin-top: 60px; padding-top: 30px; border-top: 2px solid var(--border); margin-bottom: 40px;">
             <h2 style="color: #ff3333; margin: 0 0 12px; font-size:32px;">Danger Zone</h2>
             <p style="font-size:18px; color:var(--fg2); margin:0 0 20px;">Once you delete your account, there is no going back. Please be certain.</p>
-            <button class="btn warn" style="background:transparent; color:#ff3333; border-color:#ff3333;" onclick="openPopup('deleteAccountModal')">Delete Account</button>
+            <button class="btn warn" style="background:transparent; color:#ff3333; border-color:#ff3333;" onclick="openPopup('deleteAccountModal')" data-ga="open_delete_modal">Delete Account</button>
         </div>
+      </div>
+
+      <!-- Sessions Panel -->
+      <div id="sessionsPanel" class="panel">
+        <div class="panel-header">
+            <h1>Active Sessions</h1>
+            <p>Manage the devices currently logged into your account.</p>
+        </div>
+
+        <div id="sessionsListContainer">
+            <div style="text-align:center; color:var(--fg2); padding: 20px;">Loading sessions...</div>
+        </div>
+
       </div>
 
     </div>
@@ -370,8 +404,20 @@ textarea{resize:vertical;height:110px}
  * SPDX-License-Identifier: MIT
  */
 
-firebase.initializeApp({ databaseURL: "https://bsms-web-default-rtdb.firebaseio.com" });
-const db = firebase.database();
+// Initialize standard offline checking
+window.addEventListener('offline', () => document.getElementById('offlineBanner').classList.add('show'));
+window.addEventListener('online', () => document.getElementById('offlineBanner').classList.remove('show'));
+if (!navigator.onLine) document.getElementById('offlineBanner').classList.add('show');
+
+// Establish global session ID
+if (!localStorage.getItem('session_id')) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let sid = '';
+    for (let i = 0; i < 10; i++) sid += chars.charAt(Math.floor(Math.random() * chars.length));
+    localStorage.setItem('session_id', sid);
+    console.log("[BSMS Web :: Auth] Generated new session_id.");
+}
+const currentSessionId = localStorage.getItem('session_id');
 
 const SESSION_KEY = 'bsms_auth_session';
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -401,50 +447,96 @@ function init() {
     handleHash();
 }
 
+async function apiFetch(endpoint, options = {}) {
+    if (!options.headers) options.headers = {};
+    options.headers['X-Session-ID'] = currentSessionId;
+    options.headers['Content-Type'] = 'application/json';
+
+    try {
+        const response = await fetch(endpoint, options);
+        const data = await response.json().catch(() => ({}));
+        
+        if (response.status === 403 && data.account_status === "banned") {
+            console.warn("[BSMS Web :: Auth] Device/Account banned. Redirecting.");
+            localStorage.removeItem(SESSION_KEY);
+            window.location.href = '/device-banned.html';
+            return null;
+        }
+        
+        if (!response.ok) {
+            throw new Error(data.error || `HTTP error ${response.status}`);
+        }
+        
+        return data;
+    } catch (err) {
+        console.error(`[BSMS Web :: API] Fetch failed for ${endpoint}:`, err);
+        throw err;
+    }
+}
+
 async function fetchCloudProfile() {
     try {
-        const snap = await db.ref(`/accounts/${authSession.uid}`).once('value');
-        const data = snap.val();
-        if (data) {
-            currentAccountData = data;
+        const data = await apiFetch(`/api/account`);
+        if (data && data.profile) {
+            currentAccountData = data.profile;
             loadDashboard();
         } else {
-            // Invalid session
-            localStorage.removeItem(SESSION_KEY);
-            authSession = null;
-            handleHash();
+            throw new Error("Invalid session data");
         }
     } catch(err) {
+        localStorage.removeItem(SESSION_KEY);
+        authSession = null;
         handleHash();
     }
 }
 
 function handleHash() {
     let hash = window.location.hash || '#';
-    document.getElementById('initLoadingScreen').classList.remove('show');
     
-    if (authSession && authSession.loggedIn) {
-        showScreen('appShell');
-        if (hash === '#security') switchPanel('security');
-        else switchPanel('profile');
-    } else {
-        showScreen('authScreen');
-        if (hash === '#signup') {
-            authMode = 'signup';
+    // Small timeout to allow CSS transitions if needed, but we handle it via classes
+    setTimeout(() => {
+        document.getElementById('initLoadingScreen').classList.remove('show');
+        
+        if (authSession && authSession.loggedIn) {
+            showScreen('appShell');
+            if (hash === '#security') switchPanel('security');
+            else if (hash === '#sessions') { switchPanel('sessions'); loadSessions(); }
+            else switchPanel('profile');
         } else {
-            authMode = 'login';
+            showScreen('authScreen');
+            if (hash === '#signup') {
+                authMode = 'signup';
+            } else {
+                authMode = 'login';
+            }
+            updateAuthUI();
         }
-        updateAuthUI();
-    }
+    }, 50);
 }
 
 // ---------- UI HELPERS ----------
 function showScreen(id) {
     document.querySelectorAll('.screen, #appShell').forEach(s => s.classList.remove('show'));
+    // Force reflow
+    void document.getElementById(id).offsetWidth;
     document.getElementById(id).classList.add('show');
 }
 function openPopup(id) { document.getElementById(id).classList.add('show'); }
 function closePopup(id) { document.getElementById(id).classList.remove('show'); }
+
+function setButtonLoading(btnId, isLoading, originalText = "") {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    if (isLoading) {
+        btn.disabled = true;
+        btn.dataset.originalText = btn.textContent;
+        btn.textContent = "Please wait...";
+    } else {
+        btn.disabled = false;
+        btn.textContent = originalText || btn.dataset.originalText || "Submit";
+    }
+}
+
 function showAction(msg) { document.getElementById('actionLoadingText').textContent = msg; document.getElementById('actionLoadingScreen').classList.add('show'); }
 function hideAction() { document.getElementById('actionLoadingScreen').classList.remove('show'); }
 function showAlert(msg) { document.getElementById('alertText').innerText = msg; openPopup('alertOverlay'); }
@@ -503,52 +595,54 @@ async function handleAuth() {
     const pass = document.getElementById('authPassword').value.trim();
 
     if (user.length < 3 || user.length > 20) return showAlert("Username must be between 3 and 20 characters.");
-    if (!/^[a-zA-Z0-9_]+$/.test(user)) return showAlert("Username can only contain letters, numbers, and underscores.");
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(user)) return showAlert("Username must start with a letter/number and contain only letters, numbers, dashes, and underscores.");
     if (!pass) return showAlert("Password is required.");
 
-    showAction(authMode === 'signup' ? "Creating account..." : "Logging in...");
+    setButtonLoading('authSubmitBtn', true);
 
     try {
-        const ref = db.ref(`/accounts/${user}`);
-        const snap = await ref.once('value');
-        const data = snap.val();
-
-        if (authMode === 'signup') {
-            if (data) { hideAction(); return showAlert("Username is taken. Choose another."); }
-            
-            const newAcc = {
-                password: btoa(encodeURIComponent(pass)), 
-                displayName: user, bio: "", avatar: "", email: "", phone: "",
-                createdAt: Date.now(), lastUsernameChange: 0
-            };
-            await ref.set(newAcc);
-            completeLogin(user, newAcc);
-        } else {
-            if (!data) { hideAction(); return showAlert("Account not found."); }
-            let decodedPass = "";
-            try { decodedPass = decodeURIComponent(atob(data.password)); } catch(e) { decodedPass = data.password; }
-            if (decodedPass !== pass) { hideAction(); return showAlert("Incorrect password."); }
-            completeLogin(user, data);
+        const data = await apiFetch(`/api/auth`, {
+            method: 'POST',
+            body: JSON.stringify({ mode: authMode, username: user, password: pass })
+        });
+        
+        if (data && data.success) {
+            completeLogin(data.profile);
         }
-    } catch (err) { hideAction(); showAlert("Connection error."); }
+    } catch (err) { 
+        showAlert(err.message || "Connection error."); 
+    } finally {
+        setButtonLoading('authSubmitBtn', false);
+    }
 }
 
-function completeLogin(username, data) {
+function completeLogin(data) {
     const sessionObj = {
-        loggedIn: true, uid: username, username: username,
-        displayName: data.displayName || username, pfp: data.avatar || ""
+        loggedIn: true, uid: data.username, username: data.username,
+        displayName: data.displayName || data.username, pfp: data.avatar || ""
     };
     localStorage.setItem(SESSION_KEY, JSON.stringify(sessionObj));
     authSession = sessionObj;
     currentAccountData = data;
     
     document.getElementById('authPassword').value = '';
-    hideAction();
-    window.location.hash = '#profile';
-    loadDashboard();
+    
+    // Check for callback URL to redirect safely
+    const cb = new URLSearchParams(window.location.search).get('callback_url');
+    if (cb && cb.startsWith('/') && !cb.startsWith('//')) {
+        window.location.href = cb;
+    } else {
+        window.location.hash = '#profile';
+        loadDashboard();
+    }
 }
 
-function logout() {
+async function logout() {
+    try {
+        await apiFetch(`/api/auth/logout`, { method: 'POST' });
+    } catch(e) {
+        console.warn("[BSMS Web :: Auth] Backend logout failed, clearing locally.");
+    }
     localStorage.removeItem(SESSION_KEY);
     authSession = null; currentAccountData = null; pendingAvatarBase64 = null;
     showToast("Logged out.");
@@ -563,11 +657,6 @@ function loadDashboard() {
     // Sidebar Updates
     document.getElementById('sidebarUsername').textContent = authSession.username;
     document.getElementById('mobileSidebarUsername').textContent = authSession.username;
-    
-    // Global User Icon Update
-    const gu = document.getElementById('globalUserBtn');
-    if(authSession.pfp) { gu.innerHTML = `<img src="${authSession.pfp}">`; gu.style.border = "none"; }
-    else { gu.innerHTML = authSession.displayName.charAt(0).toUpperCase(); gu.style.border = "2px solid var(--border)"; }
     
     // Form fields
     document.getElementById('profileUsername').value = authSession.username;
@@ -592,10 +681,29 @@ function renderAvatarPreview() {
 function handleAvatarUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 500 * 1024) { showAlert("Image too large. Please select an image under 500KB."); e.target.value = ""; return; }
+    if (!file.type.startsWith('image/')) return showAlert("Please select a valid image.");
 
+    // Client-side compression
     const reader = new FileReader();
-    reader.onload = event => { pendingAvatarBase64 = event.target.result; renderAvatarPreview(); };
+    reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            
+            // Calculate cover sizing
+            const scale = Math.max(256 / img.width, 256 / img.height);
+            const x = (256 / 2) - (img.width / 2) * scale;
+            const y = (256 / 2) - (img.height / 2) * scale;
+            
+            ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
+            
+            pendingAvatarBase64 = canvas.toDataURL('image/jpeg', 0.85);
+            renderAvatarPreview();
+        };
+        img.src = event.target.result;
+    };
     reader.readAsDataURL(file);
 }
 
@@ -604,7 +712,8 @@ async function saveProfile() {
     const dName = document.getElementById('profileDisplayName').value.trim();
     if (dName.length > 30) return showAlert("Display name cannot exceed 30 characters.");
     
-    showAction("Saving...");
+    setButtonLoading('saveProfileBtn', true);
+    
     try {
         const updateObj = {
             displayName: dName || authSession.username,
@@ -613,7 +722,12 @@ async function saveProfile() {
             phone: document.getElementById('profilePhone').value.trim(),
             avatar: pendingAvatarBase64 || ""
         };
-        await db.ref(`/accounts/${authSession.uid}`).update(updateObj);
+        
+        await apiFetch(`/api/account`, {
+            method: 'PUT',
+            body: JSON.stringify(updateObj)
+        });
+        
         Object.assign(currentAccountData, updateObj);
         
         // Update Local Session
@@ -621,8 +735,13 @@ async function saveProfile() {
         authSession.pfp = updateObj.avatar;
         localStorage.setItem(SESSION_KEY, JSON.stringify(authSession));
         
-        hideAction(); showToast("Profile updated!"); loadDashboard();
-    } catch (err) { hideAction(); showAlert("Failed to save."); }
+        showToast("Profile updated!"); 
+        loadDashboard();
+    } catch (err) { 
+        showAlert(err.message || "Failed to save profile."); 
+    } finally {
+        setButtonLoading('saveProfileBtn', false);
+    }
 }
 
 function openUsernameModal() {
@@ -644,28 +763,27 @@ function openUsernameModal() {
 async function executeUsernameChange() {
     let newName = document.getElementById('newUsernameInput').value.replace(/ /g, '_');
     if (newName.length < 3 || newName.length > 20) return showAlert("3-20 characters required.");
-	if (!/^[a-zA-Z0-9_-]+$/.test(newName)) return showAlert("Letters, numbers, underscores, and dashes only.");
+	if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(newName)) return showAlert("Letters, numbers, underscores, and dashes only.");
     if (newName === authSession.username) return showAlert("That is already your username.");
 
-    showAction("Checking...");
+    setButtonLoading('confirmUsernameBtn', true);
     try {
-        const existSnap = await db.ref(`/accounts/${newName}`).once('value');
-        if (existSnap.exists()) { hideAction(); return showAlert("Taken."); }
-
-        document.getElementById('actionLoadingText').textContent = "Migrating...";
-        const newData = { ...currentAccountData };
-        newData.lastUsernameChange = Date.now();
-
-        await db.ref(`/accounts/${newName}`).set(newData);
-        await db.ref(`/accounts/${authSession.uid}`).remove();
-
+        const data = await apiFetch(`/api/account/username`, {
+            method: 'PUT',
+            body: JSON.stringify({ newUsername: newName })
+        });
+        
+        // Migrate locally
         authSession.uid = newName; authSession.username = newName;
         localStorage.setItem(SESSION_KEY, JSON.stringify(authSession));
-        currentAccountData = newData;
         
-        closePopup('changeUsernameModal'); hideAction(); showToast("Username changed!");
-        loadDashboard();
-    } catch (err) { hideAction(); showAlert("Error changing username."); }
+        closePopup('changeUsernameModal'); showToast("Username changed!");
+        fetchCloudProfile(); // Full re-fetch to ensure sync
+    } catch (err) { 
+        showAlert(err.message || "Error changing username."); 
+    } finally {
+        setButtonLoading('confirmUsernameBtn', false);
+    }
 }
 
 async function changePassword() {
@@ -674,52 +792,135 @@ async function changePassword() {
     if (np.length < 6) return showAlert("New password min 6 characters.");
     if (np !== cnp) return showAlert("Passwords do not match.");
     
-    showAction("Verifying...");
+    setButtonLoading('updatePasswordBtn', true);
     try {
-        let decodedOld = ""; try { decodedOld = decodeURIComponent(atob(currentAccountData.password)); } catch(e) { decodedOld = currentAccountData.password; }
-        if (decodedOld !== cp) { hideAction(); return showAlert("Incorrect current password."); }
-        
-        const newEncoded = btoa(encodeURIComponent(np));
-        await db.ref(`/accounts/${authSession.uid}`).update({ password: newEncoded });
-        currentAccountData.password = newEncoded;
+        await apiFetch(`/api/account/password`, {
+            method: 'PUT',
+            body: JSON.stringify({ currentPassword: cp, newPassword: np })
+        });
         
         document.getElementById('secCurrentPass').value = ''; document.getElementById('secNewPass').value = ''; document.getElementById('secConfirmPass').value = '';
-        hideAction(); showToast("Password updated.");
-    } catch(err) { hideAction(); showAlert("Error."); }
+        showToast("Password updated successfully.");
+    } catch(err) { 
+        showAlert(err.message || "Error changing password."); 
+    } finally {
+        setButtonLoading('updatePasswordBtn', false);
+    }
+}
+
+async function loadSessions() {
+    const container = document.getElementById('sessionsListContainer');
+    container.innerHTML = `<div style="text-align:center; color:var(--fg2); padding: 20px;">Loading sessions...</div>`;
+    
+    try {
+        const data = await apiFetch(`/api/account/sessions`);
+        container.innerHTML = '';
+        
+        if (!data.sessions || Object.keys(data.sessions).length === 0) {
+            container.innerHTML = `<div style="text-align:center; color:var(--fg2); padding: 20px;">No active sessions found.</div>`;
+            return;
+        }
+
+        for (const [sid, sData] of Object.entries(data.sessions)) {
+            const isCurrent = sid === currentSessionId;
+            const lastActive = new Date(sData.lastActive).toLocaleString();
+            
+            const card = document.createElement('div');
+            card.className = `session-card ${isCurrent ? 'current' : ''}`;
+            card.innerHTML = `
+                <div class="session-info">
+                    <strong>${isCurrent ? 'This Device' : 'Other Device'}</strong>
+                    <span>Last Active: ${lastActive}</span>
+                </div>
+                ${!isCurrent ? `<button class="btn sec" style="width:auto; margin:0; padding:6px 12px; font-size:16px;" onclick="revokeSession('${sid}')">Revoke</button>` : `<span style="color:var(--red); font-weight:bold;">Active</span>`}
+            `;
+            container.appendChild(card);
+        }
+    } catch(err) {
+        container.innerHTML = `<div style="text-align:center; color:#ff3333; padding: 20px;">Failed to load sessions.</div>`;
+    }
+}
+
+async function revokeSession(sid) {
+    if(!confirm("Are you sure you want to log out this device?")) return;
+    try {
+        await apiFetch(`/api/account/sessions`, {
+            method: 'DELETE',
+            body: JSON.stringify({ sessionId: sid })
+        });
+        showToast("Session revoked.");
+        loadSessions();
+    } catch(err) {
+        showAlert("Failed to revoke session.");
+    }
+}
+
+async function exportData() {
+    setButtonLoading('exportDataBtn', true, "Preparing Data...");
+    try {
+        const data = await apiFetch(`/api/export-data`);
+        
+        const zip = new JSZip();
+        zip.file("profile.json", JSON.stringify(data.profile, null, 2));
+        if (data.messages) zip.file("messages.json", JSON.stringify(data.messages, null, 2));
+        if (data.game_saves) zip.file("game_saves.json", JSON.stringify(data.game_saves, null, 2));
+        
+        const content = await zip.generateAsync({ type: "blob" });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(content);
+        a.download = `bsms_export_${authSession.username}.zip`;
+        a.click();
+        
+        showToast("Export complete.");
+    } catch(err) {
+        showAlert("Failed to export data.");
+    } finally {
+        setButtonLoading('exportDataBtn', false, "Request Data Export");
+    }
 }
 
 function verifyAccountDeletion() {
     const iu = document.getElementById('delAuthUser').value.trim(), ip = document.getElementById('delAuthPass').value.trim();
     if (iu !== authSession.username) return showAlert("Incorrect username.");
-    let decodedOld = ""; try { decodedOld = decodeURIComponent(atob(currentAccountData.password)); } catch(e) { decodedOld = currentAccountData.password; }
-    if (ip !== decodedOld) return showAlert("Incorrect password.");
+    if (!ip) return showAlert("Password is required.");
 
+    // Note: True validation happens on the backend during the execute step.
     closePopup('deleteAccountModal');
-    document.getElementById('delAuthUser').value = ''; document.getElementById('delAuthPass').value = '';
     
     deleteTimer = 10;
     document.getElementById('deleteCountdownDisplay').textContent = deleteTimer;
     openPopup('deleteCountdownModal');
     deleteInterval = setInterval(() => {
         deleteTimer--; document.getElementById('deleteCountdownDisplay').textContent = deleteTimer;
-        if (deleteTimer <= 0) { clearInterval(deleteInterval); executeFinalDeletion(); }
+        if (deleteTimer <= 0) { clearInterval(deleteInterval); executeFinalDeletion(ip); }
     }, 1000);
 }
 
 function cancelDeletion() {
     if (deleteInterval) clearInterval(deleteInterval);
-    closePopup('deleteCountdownModal'); showToast("Canceled.");
+    closePopup('deleteCountdownModal'); 
+    document.getElementById('delAuthUser').value = ''; document.getElementById('delAuthPass').value = '';
+    showToast("Deletion Canceled.");
 }
 
-async function executeFinalDeletion() {
+async function executeFinalDeletion(password) {
+    showAction("Deleting account...");
     try {
-        await db.ref(`/accounts/${authSession.uid}`).remove();
+        await apiFetch(`/api/account`, {
+            method: 'DELETE',
+            body: JSON.stringify({ password })
+        });
+        
         closePopup('deleteCountdownModal');
         localStorage.removeItem(SESSION_KEY);
         authSession = null;
-        showAlert("Account deleted.");
+        showAlert("Account successfully deleted.");
         setTimeout(() => window.location.hash = '#login', 1500);
-    } catch (err) { closePopup('deleteCountdownModal'); showAlert("Failed."); }
+    } catch (err) { 
+        hideAction();
+        closePopup('deleteCountdownModal'); 
+        showAlert(err.message || "Failed to delete account. Incorrect password?"); 
+    }
 }
 
 // Add Enter listeners
@@ -734,7 +935,7 @@ setTimeout(init, 300);
     window.BSMS_WEB_PAGE_NAME = "accounts";
 </script>
 
-<script src="/version-check.js"></script>
+<script src="/js/version-check.js"></script>
     
 </body>
 </html>

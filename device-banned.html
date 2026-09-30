@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>404 - Page Not Found</title>
+<title>Access Suspended</title>
 
 <!-- Favicons -->
 <link rel="icon" href="/img/icon.png">
@@ -64,51 +64,40 @@ body{
 #offlineBanner.show { transform: translateY(0); }
 
 /* animations */
-@keyframes fadeIn{
-  from{opacity:0}
-  to{opacity:1}
-}
-
-@keyframes popIn{
-  from{
-    opacity:0;
-    transform:scale(.92) translateY(14px);
-  }
-  to{
-    opacity:1;
-    transform:scale(1) translateY(0);
-  }
-}
+@keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+@keyframes popIn{ from{opacity:0; transform:scale(.92) translateY(14px);} to{opacity:1; transform:scale(1) translateY(0);} }
 
 /* CARD */
 .card{
   width:min(560px,100%);
-  background:rgba(0,0,0,0.97);
-  border:3px solid var(--red);
+  background:rgba(20,0,0,0.97);
+  border:3px solid #ff3333;
   border-radius:28px;
   padding:40px 30px;
   text-align:center;
   animation:fadeIn .25s ease, popIn .3s ease;
+  box-shadow: 0 0 50px rgba(255,51,51,0.2);
 }
 
-.error-code{
-  font-size:120px;
-  line-height:1;
-  margin:0;
-  color:var(--red);
-  text-shadow:0 0 35px rgba(187,0,30,0.55);
+.error-icon{
+  width: 90px;
+  height: 90px;
+  fill: #ff3333;
+  margin: 0 auto 15px;
+  filter: drop-shadow(0 0 15px rgba(255,51,51,0.5));
 }
 
 .title{
   font-size:42px;
   margin:10px 0 12px;
+  color: #ff3333;
 }
 
 .desc{
   font-size:22px;
-  color:rgba(255,255,255,0.65);
+  color:rgba(255,255,255,0.75);
   line-height:1.5;
-  margin:0;
+  margin:0 0 24px;
 }
 
 .btn {
@@ -117,13 +106,11 @@ body{
   background: var(--red); color: #fff; cursor: pointer;
   transition: transform .15s, background .15s, box-shadow .15s, border-color .15s;
   text-decoration: none; text-align: center; line-height: 1.2; width: auto;
-  margin-top: 24px;
 }
 .btn:hover { background: var(--red-h); transform: scale(1.03); box-shadow: 0 4px 18px var(--red-glow); }
 .btn:active { transform: scale(.97); }
 
 @media(max-width:600px){
-  .error-code{font-size:90px;}
   .title{font-size:34px;}
   .desc{font-size:19px;}
 }
@@ -135,16 +122,17 @@ body{
 <div id="offlineBanner">You are currently offline</div>
 
 <div class="card">
-  <h1 class="error-code">404</h1>
+  <svg class="error-icon" viewBox="0 0 24 24">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+  </svg>
 
-  <div class="title">Page Not Found</div>
+  <div class="title">Access Suspended</div>
 
   <p class="desc">
-    The page you are looking for does<br>
-    not exist or may have been removed.
+    Your device or account has been permanently banned from the BSMS Web ecosystem due to violations of our policies.
   </p>
   
-  <a href="/" class="btn" data-ga="404_home_btn">Go Back Home</a>
+  <a href="/" class="btn" data-ga="banned_home_btn">Go Back Home</a>
 </div>
 
 <script>
@@ -156,14 +144,6 @@ body{
 window.addEventListener('offline', () => document.getElementById('offlineBanner').classList.add('show'));
 window.addEventListener('online', () => document.getElementById('offlineBanner').classList.remove('show'));
 if (!navigator.onLine) document.getElementById('offlineBanner').classList.add('show');
-
-if (!localStorage.getItem('session_id')) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let sid = '';
-    for (let i = 0; i < 10; i++) sid += chars.charAt(Math.floor(Math.random() * chars.length));
-    localStorage.setItem('session_id', sid);
-    console.log("[BSMS Web :: System] Generated new session_id.");
-}
 </script>
 
 </body>

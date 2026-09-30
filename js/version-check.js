@@ -135,5 +135,5 @@
     }
 
     checkForUpdate();
-    setInterval(checkForUpdate, 1000);
+    setInterval(checkForUpdate, 10000);
 })();
