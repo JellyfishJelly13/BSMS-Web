@@ -481,7 +481,6 @@ window.addEventListener('online', () => document.getElementById('offlineBanner')
 if (!navigator.onLine) document.getElementById('offlineBanner').classList.add('show');
 
 const SESSION_KEY = 'session_id';
-let currentSessionId = localStorage.getItem('session_id') || "";
 
 const State = {
     user: null,
@@ -576,7 +575,8 @@ const ApiClient = {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Session-ID': currentSessionId
+                    // CRITICAL FIX: Fetch dynamically from localStorage in case it changes
+                    'X-Session-ID': localStorage.getItem('session_id') || ""
                 },
                 body: JSON.stringify(params)
             });
