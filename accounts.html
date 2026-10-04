@@ -476,7 +476,11 @@ async function apiFetch(endpoint, options = {}) {
 
 async function fetchCloudProfile() {
     try {
-        const data = await apiFetch(`/api/account`);
+        // FIXED ROUTE: Using /api/auth with action payload
+        const data = await apiFetch(`/api/auth`, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'getProfile' })
+        });
         if (data && data.profile) {
             currentAccountData = data.profile;
             loadDashboard();
@@ -604,14 +608,15 @@ async function handleAuth() {
         const data = await apiFetch(`/api/auth`, {
             method: 'POST',
             body: JSON.stringify({ 
-    action: authMode === 'signup' ? 'register' : 'login',
-    username: user, 
-    password: pass 
-})
+                action: authMode === 'signup' ? 'register' : 'login',
+                username: user, 
+                password: pass 
+            })
         });
         
         if (data && data.success) {
-            completeLogin(data.profile);
+            // BUG FIX: Pass the ENTIRE object to completeLogin, not just data.profile
+            completeLogin(data);
         }
     } catch (err) { 
         showAlert(err.message || "Connection error."); 
@@ -619,14 +624,20 @@ async function handleAuth() {
         setButtonLoading('authSubmitBtn', false);
     }
 }
+
 function completeLogin(data) {
+    // BUG FIX: data.uid is the database push key! It was previously being overwritten by data.username
     const sessionObj = {
-        loggedIn: true, uid: data.username, username: data.username,
-        displayName: data.displayName || data.username, pfp: data.avatar || ""
+        loggedIn: true, 
+        uid: data.uid, 
+        username: data.profile.username,
+        displayName: data.profile.displayName || data.profile.username, 
+        pfp: data.profile.avatar || ""
     };
+    
     localStorage.setItem(SESSION_KEY, JSON.stringify(sessionObj));
     authSession = sessionObj;
-    currentAccountData = data;
+    currentAccountData = data.profile;
     
     document.getElementById('authPassword').value = '';
     
@@ -643,9 +654,9 @@ function completeLogin(data) {
 async function logout() {
     try {
         await apiFetch(`/api/auth`, { 
-    method: 'POST', 
-    body: JSON.stringify({ action: 'logout' }) 
-});
+            method: 'POST', 
+            body: JSON.stringify({ action: 'logout' }) 
+        });
     } catch(e) {
         console.warn("[BSMS Web :: Auth] Backend logout failed, clearing locally.");
     }
@@ -722,6 +733,7 @@ async function saveProfile() {
     
     try {
         const updateObj = {
+            action: 'updateProfile', // FIXED ROUTE Action
             displayName: dName || authSession.username,
             bio: document.getElementById('profileBio').value.trim(),
             email: document.getElementById('profileEmail').value.trim(),
@@ -729,8 +741,8 @@ async function saveProfile() {
             avatar: pendingAvatarBase64 || ""
         };
         
-        await apiFetch(`/api/account`, {
-            method: 'PUT',
+        await apiFetch(`/api/auth`, {
+            method: 'POST',
             body: JSON.stringify(updateObj)
         });
         
@@ -769,18 +781,18 @@ function openUsernameModal() {
 async function executeUsernameChange() {
     let newName = document.getElementById('newUsernameInput').value.replace(/ /g, '_');
     if (newName.length < 3 || newName.length > 20) return showAlert("3-20 characters required.");
-	if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(newName)) return showAlert("Letters, numbers, underscores, and dashes only.");
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(newName)) return showAlert("Letters, numbers, underscores, and dashes only.");
     if (newName === authSession.username) return showAlert("That is already your username.");
 
     setButtonLoading('confirmUsernameBtn', true);
     try {
-        const data = await apiFetch(`/api/account/username`, {
-            method: 'PUT',
-            body: JSON.stringify({ newUsername: newName })
+        const data = await apiFetch(`/api/auth`, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'changeUsername', newUsername: newName })
         });
         
-        // Migrate locally
-        authSession.uid = newName; authSession.username = newName;
+        // Migrate locally (Only update username string, keep uid intact)
+        authSession.username = newName;
         localStorage.setItem(SESSION_KEY, JSON.stringify(authSession));
         
         closePopup('changeUsernameModal'); showToast("Username changed!");
@@ -800,9 +812,9 @@ async function changePassword() {
     
     setButtonLoading('updatePasswordBtn', true);
     try {
-        await apiFetch(`/api/account/password`, {
-            method: 'PUT',
-            body: JSON.stringify({ currentPassword: cp, newPassword: np })
+        await apiFetch(`/api/auth`, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'changePassword', currentPassword: cp, newPassword: np })
         });
         
         document.getElementById('secCurrentPass').value = ''; document.getElementById('secNewPass').value = ''; document.getElementById('secConfirmPass').value = '';
@@ -819,7 +831,10 @@ async function loadSessions() {
     container.innerHTML = `<div style="text-align:center; color:var(--fg2); padding: 20px;">Loading sessions...</div>`;
     
     try {
-        const data = await apiFetch(`/api/account/sessions`);
+        const data = await apiFetch(`/api/auth`, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'getSessions' })
+        });
         container.innerHTML = '';
         
         if (!data.sessions || Object.keys(data.sessions).length === 0) {
@@ -850,9 +865,9 @@ async function loadSessions() {
 async function revokeSession(sid) {
     if(!confirm("Are you sure you want to log out this device?")) return;
     try {
-        await apiFetch(`/api/account/sessions`, {
-            method: 'DELETE',
-            body: JSON.stringify({ sessionId: sid })
+        await apiFetch(`/api/auth`, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'revokeSession', sessionId: sid })
         });
         showToast("Session revoked.");
         loadSessions();
@@ -864,6 +879,7 @@ async function revokeSession(sid) {
 async function exportData() {
     setButtonLoading('exportDataBtn', true, "Preparing Data...");
     try {
+        // This relies on your existing api/export-data.js which handles GET implicitly - left untouched.
         const data = await apiFetch(`/api/export-data`);
         
         const zip = new JSZip();
@@ -912,9 +928,9 @@ function cancelDeletion() {
 async function executeFinalDeletion(password) {
     showAction("Deleting account...");
     try {
-        await apiFetch(`/api/account`, {
-            method: 'DELETE',
-            body: JSON.stringify({ password })
+        await apiFetch(`/api/auth`, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'deleteAccount', password })
         });
         
         closePopup('deleteCountdownModal');
