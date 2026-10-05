@@ -86,7 +86,6 @@ button, input, textarea, select { font-family: var(--font); font-size: inherit; 
 svg.ic { width: 24px; height: 24px; min-width: 24px; fill: currentColor; display: block; flex-shrink: 0; }
 a { color: var(--accent); text-decoration: none; }
 
-/* Offline Banner */
 #offlineBanner {
     position: fixed; top: 0; left: 0; width: 100%; background: #ef4444; color: #fff;
     text-align: center; padding: 10px; font-family: var(--font); font-size: 18px;
@@ -507,7 +506,7 @@ a { color: var(--accent); text-decoration: none; }
         <svg class="ic" style="width: 72px; height: 72px; fill: var(--accent); margin-bottom: 20px;"><use href="#ico-chat"></use></svg>
         <h2 style="font-size: 2rem;">Welcome to BSMS Chat</h2>
         <p>You need to be logged in to your BSMS Web account to use the messaging system.</p>
-        <button class="btn" onclick="window.location.href='/accounts#signup?callback_url=/chat'" data-ga="chat_login" style="font-size: 1.3rem; padding: 14px;">Log In</button>
+        <button class="btn" onclick="window.location.href='/accounts#signup'" data-ga="chat_login" style="font-size: 1.3rem; padding: 14px;">Log In</button>
     </div>
 </div>
 
@@ -765,7 +764,7 @@ a { color: var(--accent); text-decoration: none; }
         </div>
 
         <button id="smartScrollPill" onclick="ScrollManager.scrollToBottom(true)" data-ga="chat_smart_scroll">
-            New message <svg class="ic" style="width:18px;height:18px;"><use href="#ico-down"></use></svg>
+            New messages <svg class="ic" style="width:18px;height:18px;"><use href="#ico-down"></use></svg>
         </button>
 
         <div id="typingIndicator"></div>
@@ -941,7 +940,7 @@ const ApiClient = {
                 window.location.href = '/device-banned.html';
                 return null;
             }
-            if (res.status === 400 && data.error && data.error.includes("Profanity")) {
+            if (res.status === 400 && data.error && data.error.includes("filter")) {
                 const inp = document.getElementById('msgInput');
                 if (inp) {
                     inp.style.borderColor = '#ef4444'; inp.style.animation = 'none'; void inp.offsetWidth;
@@ -982,9 +981,19 @@ const PollingManager = {
                 }
             }
 
+            const oldMessages = State.activeChannelId && State.channels[State.activeChannelId] 
+                                ? State.channels[State.activeChannelId].messages : null;
+
             State.usersCache = data.users || {};
             State.accountsCache = data.accounts || {};
             State.channels = data.channels || {};
+            
+            if (State.activeChannelId && State.channels[State.activeChannelId] && oldMessages) {
+                State.channels[State.activeChannelId].messages = { 
+                    ...oldMessages, 
+                    ...State.channels[State.activeChannelId].messages 
+                };
+            }
             
             SidebarManager.render();
             if (State.activeChannelId) {
@@ -1364,7 +1373,7 @@ const ScrollManager = {
         const feed = document.getElementById('chatLog');
         if(feed) {
             feed.addEventListener('scroll', () => {
-                State.isScrolledUp = (feed.scrollHeight - feed.scrollTop - feed.clientHeight) > 80;
+                State.isScrolledUp = (feed.scrollHeight - feed.scrollTop - feed.clientHeight) > 100;
                 if (!State.isScrolledUp) {
                     document.getElementById('smartScrollPill').classList.remove('show');
                 }
@@ -1397,7 +1406,7 @@ const ScrollManager = {
         document.getElementById('smartScrollPill').classList.remove('show');
     },
     onNewMessage: function(isMine) {
-        if (isMine || !State.isScrolledUp) this.scrollToBottom();
+        if (isMine || !State.isScrolledUp) this.scrollToBottom(true);
         else document.getElementById('smartScrollPill').classList.add('show');
     },
     scrollToPin: function() {
@@ -1579,7 +1588,7 @@ const ChatManager = {
         const c = State.channels[State.activeChannelId];
         if (c && c.messages && c.messages[mId]) {
             const m = c.messages[mId];
-            if (m.status?.temp) return; // Prevent overwriting "Sending..."
+            if (m.status?.temp) return; 
             
             const stat = document.getElementById(`stat-${mId}`);
             if (!stat) return;
@@ -1606,8 +1615,17 @@ const ChatManager = {
             const m = newMsgs[mid];
             if (!m) continue;
 
-            if (!c.messages[mid]) {
-                // Check if this matches a local optimistic message
+            const existingEl = document.getElementById(`msg-${mid}`);
+
+            if (existingEl) {
+                const old = c.messages[mid];
+                if (JSON.stringify(old) !== JSON.stringify(m)) {
+                    c.messages[mid] = m;
+                    existingEl.outerHTML = this.buildMessageHTML(mid, m);
+                    if (m.contentType === 'audio' && !m.status?.unsent && !m.status?.deletedByMod) AudioManager.bindPlayer(mid);
+                    if(ScrollManager.observer) ScrollManager.observer.observe(document.getElementById(`msg-${mid}`));
+                }
+            } else {
                 let foundTemp = null;
                 for (let tempKey in c.messages) {
                     if (tempKey.startsWith('temp-') && c.messages[tempKey].content === m.content && c.messages[tempKey].senderUid === m.senderUid) {
@@ -1619,11 +1637,13 @@ const ChatManager = {
                 if (foundTemp) {
                     c.messages[mid] = m;
                     delete c.messages[foundTemp];
-                    const el = document.getElementById(`msg-${foundTemp}`);
-                    if (el) {
-                        el.id = `msg-${mid}`;
-                        el.classList.remove('sending');
-                        el.outerHTML = this.buildMessageHTML(mid, m);
+                    const tempEl = document.getElementById(`msg-${foundTemp}`);
+                    if (tempEl) {
+                        tempEl.id = `msg-${mid}`;
+                        tempEl.classList.remove('sending');
+                        tempEl.outerHTML = this.buildMessageHTML(mid, m);
+                        if (m.contentType === 'audio' && !m.status?.unsent && !m.status?.deletedByMod) AudioManager.bindPlayer(mid);
+                        if(ScrollManager.observer) ScrollManager.observer.observe(document.getElementById(`msg-${mid}`));
                     }
                 } else {
                     c.messages[mid] = m;
@@ -1633,17 +1653,6 @@ const ChatManager = {
                     if (m.contentType === 'audio' && !m.status?.unsent && !m.status?.deletedByMod) AudioManager.bindPlayer(mid);
                     if(ScrollManager.observer) ScrollManager.observer.observe(document.getElementById(`msg-${mid}`));
                     if (m.senderUid !== State.user.uid && Date.now() - m.timestamp < 5000) AudioFX.receive();
-                }
-            } else {
-                const old = c.messages[mid];
-                if (JSON.stringify(old) !== JSON.stringify(m)) {
-                    c.messages[mid] = m;
-                    const el = document.getElementById(`msg-${mid}`);
-                    if (el) {
-                        el.outerHTML = this.buildMessageHTML(mid, m);
-                        if (m.contentType === 'audio' && !m.status?.unsent && !m.status?.deletedByMod) AudioManager.bindPlayer(mid);
-                        if(ScrollManager.observer) ScrollManager.observer.observe(document.getElementById(`msg-${mid}`));
-                    }
                 }
             }
         }
@@ -1864,8 +1873,17 @@ const AuthManager = {
                 inp.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ComposerManager.send(); } });
             }
 
-            // Pseudo-onDisconnect keepalive typing clear
+            document.addEventListener("visibilitychange", () => {
+                if (document.visibilityState === 'visible') ApiClient.call('status', { status: 'online' });
+                else ApiClient.call('status', { status: 'offline' });
+            });
+
             window.addEventListener('beforeunload', () => {
+                fetch(`/api/chat?action=status`, {
+                    method: 'POST', keepalive: true,
+                    headers: { 'Content-Type': 'application/json', 'X-Session-ID': localStorage.getItem('session_id') || "" },
+                    body: JSON.stringify({ status: 'offline' })
+                });
                 if (State.activeChannelId) {
                     fetch(`/api/chat?action=typing`, {
                         method: 'POST', keepalive: true,
@@ -1942,7 +1960,6 @@ const ComposerManager = {
             setTimeout(() => { State.isCooldown = false; btn.classList.remove('greyed'); }, 5000);
         }
 
-        // Optimistic UI Render
         const tempId = 'temp-' + Date.now();
         const tempMsg = {
             senderUid: State.user.uid,
@@ -2174,7 +2191,7 @@ const ContextMenu = {
         document.addEventListener('click', e => { if (!e.target.closest('#ctxMenu') && !e.target.closest('.msg-ctx-trigger')) this.close(); });
     },
     open: function(e, msgId) {
-        if (msgId.startsWith('temp-')) return; // Block context menu on optimistic messages
+        if (msgId.startsWith('temp-')) return; 
 
         this.targetId = msgId;
         const menu = document.getElementById('ctxMenu');
@@ -2198,8 +2215,9 @@ const ContextMenu = {
         menu.classList.add('show');
         menu.style.top = '-9999px'; menu.style.left = '-9999px';
 
+        const rect = e.currentTarget.getBoundingClientRect();
+        
         requestAnimationFrame(() => {
-            const rect = e.currentTarget.getBoundingClientRect();
             let y = rect.top - (menu.offsetHeight / 2) + (rect.height / 2);
             let x = rect.left;
 
