@@ -3,7 +3,9 @@ BSMS Web
 Copyright © 2026 Jellyfish Jelly
 SPDX-License-Identifier: MIT
 -->
+
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -26,18 +28,21 @@ SPDX-License-Identifier: MIT
 <link rel="apple-touch-icon" href="/img/app-icon.png">
 
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-2TKPQV995W"></script>
+
 <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', 'G-2TKPQV995W');
 </script>
+
 <script src="/js/analytics.js"></script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
 
 *,*::before,*::after { box-sizing:border-box; }
+
 :root {
   --theme-rgb: 187,0,30;
   --red: rgb(var(--theme-rgb));
@@ -62,191 +67,632 @@ body.light-mode {
 }
 
 html, body {
-  margin: 0; padding: 0; height: 100%; width: 100%;
-  font-family: var(--font); background: var(--bg); color: var(--fg);
-  overflow-x: hidden; transition: background 0.3s, color 0.3s;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--fg);
+  overflow-x: hidden;
+  transition: background 0.3s, color 0.3s;
 }
 
-@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-@keyframes popIn { from { opacity:0; transform:scale(.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
-@keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn {
+  from { opacity:0; }
+  to { opacity:1; }
+}
+
+@keyframes popIn {
+  from {
+    opacity:0;
+    transform:scale(.92) translateY(10px);
+  }
+  to {
+    opacity:1;
+    transform:scale(1) translateY(0);
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity:0;
+    transform:translateY(20px);
+  }
+  to {
+    opacity:1;
+    transform:translateY(0);
+  }
+}
 
 #offlineBanner {
-  position: fixed; top: 0; left: 0; width: 100%; background: #ef4444; color: #fff;
-  text-align: center; padding: 10px; font-family: var(--font); font-size: 18px;
-  z-index: 10000; transform: translateY(-100%); transition: transform 0.3s ease;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: #ef4444;
+  color: #fff;
+  text-align: center;
+  padding: 10px;
+  font-family: var(--font);
+  font-size: 18px;
+  z-index: 10000;
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
 }
-#offlineBanner.show { transform: translateY(0); }
 
-#globalUserBtn { 
-  position: fixed; top: 20px; right: 24px; width: 50px; height: 50px; 
-  border-radius: 50%; border: 2px solid var(--border); background: var(--input-bg); 
-  display: flex; align-items: center; justify-content: center; cursor: pointer; 
-  transition: all 0.2s; z-index: 2000; overflow: hidden; color:var(--fg); 
-  font-weight:bold; font-size:22px; box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+#offlineBanner.show {
+  transform: translateY(0);
 }
-#globalUserBtn:hover { border-color: var(--red); box-shadow: 0 8px 24px rgba(0,0,0,0.4); transform: scale(1.05); }
-#globalUserBtn svg { width: 24px; height: 24px; fill: var(--fg); transition: fill 0.2s; }
-#globalUserBtn img { width: 100%; height: 100%; object-fit: cover; }
+
+#globalUserBtn {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--input-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 2000;
+  overflow: hidden;
+  color: var(--fg);
+  font-weight: bold;
+  font-size: 22px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+}
+
+#globalUserBtn:hover {
+  border-color: var(--red);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  transform: scale(1.05);
+}
+
+#globalUserBtn svg {
+  width: 24px;
+  height: 24px;
+  fill: var(--fg);
+  transition: fill 0.2s;
+}
+
+#globalUserBtn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 .btn {
-  display: inline-block; font-family: var(--font); font-size: 19px;
-  padding: 10px 18px; border-radius: 12px; border: 2px solid var(--red);
-  background: var(--red); color: #fff; cursor: pointer;
-  transition: transform .15s, background .15s, box-shadow .15s, border-color .15s;
-  text-decoration: none; text-align: center; line-height: 1.2; width:100%;
+  display: inline-block;
+  font-family: var(--font);
+  font-size: 19px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: 2px solid var(--red);
+  background: var(--red);
+  color: #fff;
+  cursor: pointer;
+  transition:
+    transform .15s,
+    background .15s,
+    box-shadow .15s,
+    border-color .15s;
+  text-decoration: none;
+  text-align: center;
+  line-height: 1.2;
+  width: 100%;
 }
-.btn:hover { background: var(--red-h); transform: scale(1.03); box-shadow: 0 4px 18px var(--red-glow); }
-.btn:active { transform: scale(.97); }
-.btn.sec { background: transparent; border-color: var(--border); color: var(--fg); }
-.btn.sec:hover { background: var(--msg-bg); border-color: var(--fg2); box-shadow: none; }
+
+.btn:hover {
+  background: var(--red-h);
+  transform: scale(1.03);
+  box-shadow: 0 4px 18px var(--red-glow);
+}
+
+.btn:active {
+  transform: scale(.97);
+}
+
+.btn.sec {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--fg);
+}
+
+.btn.sec:hover {
+  background: var(--msg-bg);
+  border-color: var(--fg2);
+  box-shadow: none;
+}
 
 .hero {
-  text-align: center; padding: 100px 20px 60px;
+  text-align: center;
+  padding: 100px 20px 60px;
   animation: fadeUp 0.6s ease forwards;
 }
+
 .hero-logo {
-  width: 90px; height: 90px; border-radius: 18px;
+  width: 90px;
+  height: 90px;
+  border-radius: 18px;
   box-shadow: 0 8px 24px rgba(var(--theme-rgb), 0.3);
   margin-bottom: 24px;
 }
-.hero h1 { font-size: 64px; margin: 0 0 12px; line-height: 1.1; color:var(--fg);}
-.hero h1 span { color: var(--red); }
-.hero p { font-size: 22px; color: var(--fg2); max-width: 620px; margin: 0 auto; line-height: 1.5; }
 
-.launcher-container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+.hero h1 {
+  font-size: 64px;
+  margin: 0 0 12px;
+  line-height: 1.1;
+  color: var(--fg);
+}
+
+.hero h1 span {
+  color: var(--red);
+}
+
+.hero p {
+  font-size: 22px;
+  color: var(--fg2);
+  max-width: 620px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+.launcher-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
 .launcher-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
 }
+
 .app-card {
-  background: var(--msg-bg); border: 2px solid var(--border); border-radius: 20px;
-  padding: 30px 26px; display: flex; flex-direction: column; align-items: flex-start;
-  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-  animation: popIn 0.5s ease forwards; opacity: 0; position:relative; overflow:hidden;
+  background: var(--msg-bg);
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  padding: 30px 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transition:
+    transform 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s;
+  animation: popIn 0.5s ease forwards;
+  opacity: 0;
+  position: relative;
+  overflow: hidden;
 }
-.app-card:nth-child(1) { animation-delay: 0.1s; }
-.app-card:nth-child(2) { animation-delay: 0.2s; }
+
+.app-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.app-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.app-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
 .app-card:hover {
-  border-color: var(--red); transform: translateY(-6px);
+  border-color: var(--red);
+  transform: translateY(-6px);
   box-shadow: 0 12px 30px rgba(var(--theme-rgb), 0.2);
 }
+
 .app-icon {
-  width: 58px; height: 58px; fill: var(--red); margin-bottom: 20px;
-  background: rgba(var(--theme-rgb), 0.1); padding: 12px; border-radius: 14px;
+  width: 58px;
+  height: 58px;
+  fill: var(--red);
+  margin-bottom: 20px;
+  background: rgba(var(--theme-rgb), 0.1);
+  padding: 12px;
+  border-radius: 14px;
   border: 1px solid rgba(var(--theme-rgb), 0.3);
 }
-.app-title { font-size: 32px; margin: 0 0 8px; color: var(--fg); }
-.app-desc { font-size: 19px; color: var(--fg2); margin: 0 0 24px; line-height: 1.45; flex: 1; }
 
-.oss-section {
-  text-align: center; padding: 60px 20px;
-  max-width: 700px; margin: 40px auto 0;
-  border-top: 1px solid var(--border);
-  animation: fadeUp 0.6s ease forwards; animation-delay: 0.3s; opacity: 0;
+.app-title {
+  font-size: 32px;
+  margin: 0 0 8px;
+  color: var(--fg);
 }
-.oss-icon {
-  width: 52px; height: 52px; fill: var(--fg); margin-bottom: 16px;
+
+.app-desc {
+  font-size: 19px;
+  color: var(--fg2);
+  margin: 0 0 24px;
+  line-height: 1.45;
+  flex: 1;
+}
+
+.bug-report-section {
+  text-align: center;
+  padding: 60px 20px;
+  max-width: 700px;
+  margin: 40px auto 0;
+  border-top: 1px solid var(--border);
+  animation: fadeUp 0.6s ease forwards;
+  animation-delay: 0.3s;
+  opacity: 0;
+}
+
+.bug-report-icon {
+  width: 52px;
+  height: 52px;
+  fill: var(--fg);
+  margin-bottom: 16px;
   transition: fill 0.3s;
 }
-.oss-section h2 { font-size: 36px; margin: 0 0 12px; color: var(--fg); }
-.oss-section p { font-size: 20px; color: var(--fg2); margin: 0 0 28px; line-height: 1.6; }
+
+.bug-report-section h2 {
+  font-size: 36px;
+  margin: 0 0 12px;
+  color: var(--fg);
+}
+
+.bug-report-section p {
+  font-size: 20px;
+  color: var(--fg2);
+  margin: 0 0 28px;
+  line-height: 1.6;
+}
+
+.bug-report-btn {
+  width: auto;
+  min-width: 200px;
+}
+
+.oss-section {
+  text-align: center;
+  padding: 60px 20px;
+  max-width: 700px;
+  margin: 40px auto 0;
+  border-top: 1px solid var(--border);
+  animation: fadeUp 0.6s ease forwards;
+  animation-delay: 0.3s;
+  opacity: 0;
+}
+
+.oss-icon {
+  width: 52px;
+  height: 52px;
+  fill: var(--fg);
+  margin-bottom: 16px;
+  transition: fill 0.3s;
+}
+
+.oss-section h2 {
+  font-size: 36px;
+  margin: 0 0 12px;
+  color: var(--fg);
+}
+
+.oss-section p {
+  font-size: 20px;
+  color: var(--fg2);
+  margin: 0 0 28px;
+  line-height: 1.6;
+}
+
 .oss-section code {
   font-family: 'Courier New', Courier, monospace;
-  background: var(--msg-bg); padding: 4px 10px; border-radius: 8px;
-  border: 1px solid var(--border); color: var(--fg); font-size: 18px;
+  background: var(--msg-bg);
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-size: 18px;
 }
-.oss-btn { width: auto; min-width: 200px; }
+
+.oss-btn {
+  width: auto;
+  min-width: 200px;
+}
 
 .overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-  display: none; align-items: center; justify-content: center;
-  z-index: 3000; animation: fadeIn .2s ease; padding: 20px; backdrop-filter:blur(4px);
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  animation: fadeIn .2s ease;
+  padding: 20px;
+  backdrop-filter: blur(4px);
 }
-.overlay.show { display: flex; }
-.popup {
-  background: var(--bg); border: 2px solid var(--red); border-radius: 20px;
-  padding: 30px 24px 24px; width: min(400px, 100%); animation: popIn .22s ease;
-  text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-}
-.popup p { font-size: 20px; color: var(--fg2); margin: 0 0 24px; line-height: 1.5; }
-.popup h2 { font-size: 28px; margin: 0 0 8px; color:var(--fg); }
 
-.footer { text-align: center; padding: 30px 20px; color: var(--fg2); font-size: 16px; }
-.footer a { color: var(--red); text-decoration: none; transition: opacity 0.2s; }
-.footer a:hover { opacity: 0.8; }
+.overlay.show {
+  display: flex;
+}
+
+.popup {
+  background: var(--bg);
+  border: 2px solid var(--red);
+  border-radius: 20px;
+  padding: 30px 24px 24px;
+  width: min(400px, 100%);
+  animation: popIn .22s ease;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+
+.popup p {
+  font-size: 20px;
+  color: var(--fg2);
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.popup h2 {
+  font-size: 28px;
+  margin: 0 0 8px;
+  color: var(--fg);
+}
+
+.footer {
+  text-align: center;
+  padding: 30px 20px;
+  color: var(--fg2);
+  font-size: 16px;
+}
+
+.footer a {
+  color: var(--red);
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.footer a:hover {
+  opacity: 0.8;
+}
 
 @media (max-width: 600px) {
-  .hero { padding-top: 80px; }
-  .hero h1 { font-size: 48px; }
-  .hero p { font-size: 19px; }
-  #globalUserBtn { top: 16px; right: 16px; width: 44px; height: 44px; }
-  .oss-section h2 { font-size: 30px; }
-  .oss-section p { font-size: 18px; }
-  .oss-section code { font-size: 16px; }
+  .hero {
+    padding-top: 80px;
+  }
+
+  .hero h1 {
+    font-size: 48px;
+  }
+
+  .hero p {
+    font-size: 19px;
+  }
+
+  #globalUserBtn {
+    top: 16px;
+    right: 16px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .bug-report-section h2 {
+    font-size: 30px;
+  }
+
+  .bug-report-section p {
+    font-size: 18px;
+  }
+
+  .oss-section h2 {
+    font-size: 30px;
+  }
+
+  .oss-section p {
+    font-size: 18px;
+  }
+
+  .oss-section code {
+    font-size: 16px;
+  }
 }
 </style>
+
 </head>
+
 <body>
 
 <div id="offlineBanner">You are currently offline</div>
 
-<div id="globalUserBtn" onclick="handleUserIconClick()" data-ga="global_user_btn"></div>
+<div id="globalUserBtn"
+     onclick="handleUserIconClick()"
+     data-ga="global_user_btn"></div>
 
-<div id="accountPopup" class="overlay" onclick="if(event.target===this) closePopup('accountPopup')">
+<div id="accountPopup"
+     class="overlay"
+     onclick="if(event.target===this) closePopup('accountPopup')">
+
   <div class="popup" style="align-items:center;">
-    <div id="accPopupAvatar" style="width:86px;height:86px;border-radius:50%;border:3px solid var(--red);margin:0 auto 12px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:36px;background:var(--msg-bg);font-weight:bold;color:var(--fg);"></div>
-    <h2 id="accPopupName" style="margin-bottom:2px;">---</h2>
-    <p style="font-size:16px; margin-bottom:22px;">@<span id="accPopupUser">---</span></p>
-    <a href="/accounts" class="btn" data-ga="manage_account_popup">Manage Account</a>
-    <button class="btn sec" onclick="closePopup('accountPopup')" style="border:none; margin-top:6px;">Close</button>
+
+
+<div id="accPopupAvatar"
+     style="width:86px;height:86px;border-radius:50%;border:3px solid var(--red);margin:0 auto 12px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:36px;background:var(--msg-bg);font-weight:bold;color:var(--fg);">
+</div>
+
+<h2 id="accPopupName" style="margin-bottom:2px;">---</h2>
+
+<p style="font-size:16px; margin-bottom:22px;">
+  @<span id="accPopupUser">---</span>
+</p>
+
+<a href="/accounts"
+   class="btn"
+   data-ga="manage_account_popup">
+  Manage Account
+</a>
+
+<button class="btn sec"
+        onclick="closePopup('accountPopup')"
+        style="border:none; margin-top:6px;">
+  Close
+</button>
+
+
   </div>
 </div>
 
 <div class="hero">
-  <img src="/img/icon.png" alt="BSMS Web" class="hero-logo">
-  <h1>Welcome to <span>BSMS Web</span></h1>
-  <p>The unified digital ecosystem for Boiling Springs Middle School. Connect with classmates, track your schedule, and manage your account in one seamless suite.</p>
+
+<img src="/img/icon.png"
+    alt="BSMS Web"
+    class="hero-logo">
+
+  <h1>
+    Welcome to <span>BSMS Web</span>
+  </h1>
+
+  <p>
+    The unified digital ecosystem for Boiling Springs Middle School.
+    Connect with classmates, track your schedule, and manage your account
+    in one seamless suite.
+  </p>
+
   <div id="heroAuthContainer" style="margin-top: 30px;"></div>
+
 </div>
 
 <div class="launcher-container">
+
   <div class="launcher-grid">
-    <div class="app-card">
-      <svg class="app-icon" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
-      <h3 class="app-title">Countdown</h3>
-      <p class="app-desc">Track how much time is left until the next period with beautiful, visual customization.</p>
-      <a href="/countdown" class="btn" data-ga="launch_countdown">Launch Countdown</a>
-    </div>
 
-    <div class="app-card">
-      <svg class="app-icon" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/></svg>
-      <h3 class="app-title">Chat</h3>
-      <p class="app-desc">A lightning-fast real-time chat platform. Create shared spaces to connect and talk with friends instantly.</p>
-      <a href="/chat" class="btn" data-ga="launch_chat">Launch Chat</a>
-    </div>
+<div class="app-card">
 
-    <div class="app-card">
-      <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M21.58 16.09l-1.6-6.39A5.01 5.01 0 0 0 15.12 6H8.88a5.01 5.01 0 0 0-4.86 3.7l-1.6 6.39a2.99 2.99 0 0 0 5.72 1.64l.86-2.15c.15-.36.5-.6.89-.6h4.22c.39 0 .74.24.89.6l.86 2.15a2.99 2.99 0 0 0 5.72-1.64zM9 12H7v2H5v-2H3v-2h2V8h2v2h2v2zm6-1.5a1 1 0 1 1 1-1 1 1 0 0 1-1 1zm3 3a1 1 0 1 1 1-1 1 1 0 0 1-1 1z"/>
-      </svg>
-      <h3 class="app-title">Games</h3>
-      <p class="app-desc">A massive collection of interactive HTML5 games.</p>
-      <a href="/g" class="btn" data-ga="launch_games">Launch Games</a>
-    </div>
+  <svg class="app-icon" viewBox="0 0 24 24">
+    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+  </svg>
+
+  <h3 class="app-title">Countdown</h3>
+
+  <p class="app-desc">
+    Track how much time is left until the next period with beautiful,
+    visual customization.
+  </p>
+
+  <a href="/countdown"
+     class="btn"
+     data-ga="launch_countdown">
+    Launch Countdown
+  </a>
+
+</div>
+
+<div class="app-card">
+
+  <svg class="app-icon" viewBox="0 0 24 24">
+    <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/>
+  </svg>
+
+  <h3 class="app-title">Chat</h3>
+
+  <p class="app-desc">
+    A lightning-fast real-time chat platform. Create shared spaces to
+    connect and talk with friends instantly.
+  </p>
+
+  <a href="/chat"
+     class="btn"
+     data-ga="launch_chat">
+    Launch Chat
+  </a>
+
+</div>
+
+<div class="app-card">
+
+  <svg class="app-icon"
+       viewBox="0 0 24 24"
+       aria-hidden="true">
+
+    <path d="M21.58 16.09l-1.6-6.39A5.01 5.01 0 0 0 15.12 6H8.88a5.01 5.01 0 0 0-4.86 3.7l-1.6 6.39a2.99 2.99 0 0 0 5.72 1.64l.86-2.15c.15-.36.5-.6.89-.6h4.22c.39 0 .74.24.89.6l.86 2.15a2.99 2.99 0 0 0 5.72-1.64zM9 12H7v2H5v-2H3v-2h2V8h2v2h2v2zm6-1.5a1 1 0 1 1 1-1 1 1 0 0 1-1 1zm3 3a1 1 0 1 1 1-1 1 1 0 0 1-1 1z"/>
+
+  </svg>
+
+  <h3 class="app-title">Games</h3>
+
+  <p class="app-desc">
+    A massive collection of interactive HTML5 games.
+  </p>
+
+  <a href="/g"
+     class="btn"
+     data-ga="launch_games">
+    Launch Games
+  </a>
+
+</div>
+
+
   </div>
+
+</div>
+
+<div class="bug-report-section">
+
+<svg class="bug-report-icon"
+    viewBox="0 0 24 24"
+    aria-hidden="true">
+
+
+<path d="M19 8h-1.81A5.99 5.99 0 0 0 15 5.81V4h1V2h-3v2h-2V2H8v2h1v1.81A5.99 5.99 0 0 0 6.81 8H5V6H3v4h2v2H3v4h2v-2h1.81A5.99 5.99 0 0 0 9 16.19V18H8v2h3v-2h2v2h3v-2h-1v-1.81A5.99 5.99 0 0 0 17.19 14H19v2h2v-4h-2v-2h2V6h-2v2zm-4 5a3 3 0 0 1-6 0V9a3 3 0 0 1 6 0v4z"/>
+
+
+  </svg>
+
+  <h2>Found a bug?</h2>
+
+  <p>
+    Is there something not working correctly? Let us know by submitting a bug report
+    and helping make BSMS Web better.
+  </p>
+
+<a href="/bug-report"
+  class="btn bug-report-btn"
+  data-ga="launch_bug_report">
+Report a Bug </a>
+
 </div>
 
 <div class="oss-section">
+
   <svg class="oss-icon" viewBox="0 0 24 24">
-    <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+
+<path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+
   </svg>
+
   <h2>BSMS Web is open-source</h2>
-  <p>You can view the repository on GitHub at <code>JellyfishJelly13/BSMS-Web</code>.</p>
-  <a href="https://github.com/JellyfishJelly13/BSMS-Web" target="_blank" rel="noopener noreferrer" class="btn oss-btn" data-ga="view_github_repo">View Repository</a>
+
+  <p>
+    You can view the repository on GitHub at
+    <code>JellyfishJelly13/BSMS-Web</code>.
+  </p>
+
+<a href="https://github.com/JellyfishJelly13/BSMS-Web"
+  target="_blank"
+  rel="noopener noreferrer"
+  class="btn oss-btn"
+  data-ga="view_github_repo">
+View Repository </a>
+
 </div>
 
 <div class="footer">
-  &copy; 2026 Jellyfish Jelly. <a href="/privacy.html" data-ga="footer_privacy">Privacy Policy</a>
+
+© 2026 Jellyfish Jelly. <a href="/privacy.html"
+  data-ga="footer_privacy">
+Privacy Policy </a>
+
 </div>
 
 <script>
@@ -256,76 +702,151 @@ html, body {
  * SPDX-License-Identifier: MIT
  */
 
-window.addEventListener('offline', () => document.getElementById('offlineBanner').classList.add('show'));
-window.addEventListener('online', () => document.getElementById('offlineBanner').classList.remove('show'));
-if (!navigator.onLine) document.getElementById('offlineBanner').classList.add('show');
+window.addEventListener('offline', () =>
+  document.getElementById('offlineBanner').classList.add('show')
+);
+
+window.addEventListener('online', () =>
+  document.getElementById('offlineBanner').classList.remove('show')
+);
+
+if (!navigator.onLine) {
+  document.getElementById('offlineBanner').classList.add('show');
+}
 
 if (!localStorage.getItem('session_id')) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+    const chars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
     let sid = '';
-    for (let i = 0; i < 10; i++) sid += chars.charAt(Math.floor(Math.random() * chars.length));
+
+    for (let i = 0; i < 10; i++) {
+        sid += chars.charAt(
+          Math.floor(Math.random() * chars.length)
+        );
+    }
+
     localStorage.setItem('session_id', sid);
 }
 
 const SESSION_KEY = 'bsms_auth_session';
+
 let authSession = null;
 let isGuest = true;
 
 function syncAuthSession() {
+
     const raw = localStorage.getItem(SESSION_KEY);
+
     if (raw) {
+
         authSession = JSON.parse(raw);
         isGuest = !authSession.loggedIn;
+
     } else {
+
         authSession = null;
         isGuest = true;
+
     }
+
     renderUserIcon();
 }
 
 window.addEventListener('storage', (e) => {
-    if (e.key === SESSION_KEY) syncAuthSession();
+
+    if (e.key === SESSION_KEY) {
+        syncAuthSession();
+    }
+
 });
 
 function renderUserIcon() {
+
     const btn = document.getElementById('globalUserBtn');
+
     if (isGuest) {
-        btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
+
+        btn.innerHTML = `
+          <svg viewBox="0 0 24 24">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          </svg>
+        `;
+
         btn.style.border = "2px solid var(--border)";
+
     } else {
+
         if (authSession.pfp) {
-            btn.innerHTML = `<img src="${authSession.pfp}" alt="Avatar">`;
+
+            btn.innerHTML =
+              `<img src="${authSession.pfp}" alt="Avatar">`;
+
             btn.style.border = "none";
+
         } else {
-            btn.innerHTML = (authSession.displayName || authSession.username || "?").charAt(0).toUpperCase();
+
+            btn.innerHTML =
+              (authSession.displayName ||
+               authSession.username ||
+               "?").charAt(0).toUpperCase();
+
             btn.style.border = "2px solid var(--border)";
         }
     }
 }
 
 function handleUserIconClick() {
+
     if (isGuest) {
+
         window.location.href = '/accounts#signup';
+
     } else {
-        document.getElementById('accPopupName').textContent = authSession.displayName || authSession.username;
-        document.getElementById('accPopupUser').textContent = authSession.username;
-        const ava = document.getElementById('accPopupAvatar');
-        if(authSession.pfp) ava.innerHTML = `<img src="${authSession.pfp}" style="width:100%;height:100%;object-fit:cover;">`;
-        else ava.innerHTML = (authSession.displayName || authSession.username).charAt(0).toUpperCase();
+
+        document.getElementById('accPopupName').textContent =
+          authSession.displayName || authSession.username;
+
+        document.getElementById('accPopupUser').textContent =
+          authSession.username;
+
+        const ava =
+          document.getElementById('accPopupAvatar');
+
+        if (authSession.pfp) {
+
+            ava.innerHTML =
+              `<img src="${authSession.pfp}" style="width:100%;height:100%;object-fit:cover;">`;
+
+        } else {
+
+            ava.innerHTML =
+              (authSession.displayName ||
+               authSession.username).charAt(0).toUpperCase();
+
+        }
+
         openPopup('accountPopup');
     }
 }
 
-function openPopup(id) { document.getElementById(id).classList.add('show'); }
-function closePopup(id) { document.getElementById(id).classList.remove('show'); }
+function openPopup(id) {
+    document.getElementById(id).classList.add('show');
+}
+
+function closePopup(id) {
+    document.getElementById(id).classList.remove('show');
+}
 
 syncAuthSession();
 </script>
-    
+
 <script>
     window.BSMS_WEB_PAGE_VERSION = "5.0";
     window.BSMS_WEB_PAGE_NAME = "home";
 </script>
+
 <script src="/js/version-check.js"></script>
 
 </body>
