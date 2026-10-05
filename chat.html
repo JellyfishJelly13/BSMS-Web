@@ -428,6 +428,14 @@ a { color: var(--accent); text-decoration: none; }
     </div>
 </div>
 
+<div id="devNoticeModal" class="overlay layer-top" onclick="if(event.target===this) UI.closeModal('devNoticeModal')">
+    <div class="modal-card">
+        <h2>Development Notice</h2>
+        <p>The backend for BSMS Chat is currently under active development. You may encounter incomplete features, occasional software bugs, or unexpected behavior. Rest assured, our team is working hard and everything will be functioning perfectly soon!</p>
+        <button class="btn" onclick="UI.closeModal('devNoticeModal')">Got it</button>
+    </div>
+</div>
+
 <div id="ctxMenu">
     <button class="ctx-item" id="ctxBtnCopy" onclick="ContextMenu.copy()" data-ga="ctx_copy"><svg class="ic"><use href="#ico-copy"></use></svg> Copy</button>
     <button class="ctx-item" id="ctxBtnReply" onclick="ContextMenu.reply()" data-ga="ctx_reply"><svg class="ic"><use href="#ico-reply"></use></svg> Reply</button>
@@ -725,6 +733,7 @@ const AuthManager = {
                 if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('hidden');
                 else document.getElementById('sidebar').classList.remove('hidden');
                 SearchManager.init();
+                UI.openModal('devNoticeModal');
             }, 800);
 
         } catch (err) {
