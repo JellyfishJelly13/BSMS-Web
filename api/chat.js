@@ -45,10 +45,10 @@ async function getUserBySession(sessionId) {
 async function checkProfanity(text) {
     if (!text) return false;
     let strippedText = text
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove accents
-        .replace(/[\u200B-\u200D\uFEFF]/g, "") // Remove invisible characters
-        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") // Remove punctuation
-        .replace(/\s+/g, "") // Remove spaces to catch spaced-out words
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[\u200B-\u200D\uFEFF]/g, "")
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+        .replace(/\s+/g, "")
         .replace(/@/g, "a").replace(/\$/g, "s").replace(/0/g, "o")
         .replace(/1/g, "i").replace(/3/g, "e").replace(/4/g, "a")
         .replace(/5/g, "s").replace(/7/g, "t")
@@ -66,13 +66,8 @@ async function checkProfanity(text) {
 }
 
 export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
-
-    if (!db) {
-        return res.status(500).json({ error: "Database failed to initialize. Check environment variables." });
-    }
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    if (!db) return res.status(500).json({ error: "Database failed to initialize. Check environment variables." });
 
     const action = req.query.action;
     const sessionId = req.headers['x-session-id'];
@@ -83,9 +78,7 @@ export default async function handler(req, res) {
         if (!userLookup) return res.status(401).json({ error: 'Unauthorized session.' });
 
         const { uid, account } = userLookup;
-        if (account.account_status === 'banned') {
-            return res.status(403).json({ error: 'Account banned.', account_status: 'banned' });
-        }
+        if (account.account_status === 'banned') return res.status(403).json({ error: 'Account banned.', account_status: 'banned' });
 
         await db.ref(`/accounts/${uid}/sessions/${sessionId}/lastActive`).set(Date.now());
 
@@ -101,7 +94,8 @@ export default async function handler(req, res) {
                 
                 for (const [id, acc] of Object.entries(allAccounts)) {
                     if (acc.account_status !== 'deleted') {
-                        accountsCache[id] = { displayName: acc.displayName, avatar: acc.avatar };
+                        // FIX: Expose username alongside displayName for accurate searching
+                        accountsCache[id] = { displayName: acc.displayName, username: acc.username, avatar: acc.avatar };
                     }
                 }
 
@@ -114,7 +108,8 @@ export default async function handler(req, res) {
                             if (channel.members && channel.members[uid]) {
                                 let strippedMessages = {};
                                 if (channel.messages) {
-                                    const mKeys = Object.keys(channel.messages);
+                                    // FIX: Protect against Firebase turning integer keys into arrays full of nulls
+                                    let mKeys = Object.keys(channel.messages).filter(k => channel.messages[k] !== null);
                                     if (mKeys.length > 0) {
                                         const lastKey = mKeys[mKeys.length - 1];
                                         strippedMessages[lastKey] = channel.messages[lastKey];
@@ -130,8 +125,9 @@ export default async function handler(req, res) {
                         }
                     }
                 }
-
-                return res.status(200).json({ users: usersCache, accounts: accountsCache, channels: myChannels });
+                
+                // FIX: Force return myUid so the frontend can auto-correct poisoned local storage
+                return res.status(200).json({ myUid: uid, users: usersCache, accounts: accountsCache, channels: myChannels });
             }
 
             case 'messages': {
@@ -141,10 +137,7 @@ export default async function handler(req, res) {
                 const chSnap = await db.ref(`/chat/conversations/${type}/${cid}`).once('value');
                 const channel = chSnap.val();
                 
-                if (!channel || !channel.members || !channel.members[uid]) {
-                    return res.status(403).json({ error: "Not a member of this channel." });
-                }
-
+                if (!channel || !channel.members || !channel.members[uid]) return res.status(403).json({ error: "Not a member of this channel." });
                 return res.status(200).json({ messages: channel.messages || {}, members: channel.members || {} });
             }
 
@@ -154,18 +147,11 @@ export default async function handler(req, res) {
 
                 const chSnap = await db.ref(`/chat/conversations/${type}/${cid}`).once('value');
                 const channel = chSnap.val();
-                if (!channel || !channel.members || !channel.members[uid]) {
-                    return res.status(403).json({ error: "Not a member." });
-                }
+                if (!channel || !channel.members || !channel.members[uid]) return res.status(403).json({ error: "Not a member." });
 
                 const validTextRegex = /^[\x20-\x7E\p{Emoji}\s]*$/u;
-                if (!validTextRegex.test(content)) {
-                    return res.status(400).json({ error: 'Invalid characters or formatting detected.' });
-                }
-
-                if (await checkProfanity(content)) {
-                    return res.status(400).json({ error: 'Profanity detected.' });
-                }
+                if (!validTextRegex.test(content)) return res.status(400).json({ error: 'Invalid characters or formatting detected.' });
+                if (await checkProfanity(content)) return res.status(400).json({ error: 'Profanity detected.' });
 
                 const lastMsgSnap = await db.ref(`/chat/users/${uid}/lastMessageTimestamp`).once('value');
                 const lastTs = lastMsgSnap.val() || 0;
@@ -188,7 +174,6 @@ export default async function handler(req, res) {
 
                 await db.ref(`/chat/conversations/${type}/${cid}/messages/${newId}`).set(msgObj);
                 await db.ref(`/chat/users/${uid}/lastMessageTimestamp`).set(now);
-                
                 return res.status(200).json({ success: true, messageId: newId });
             }
 
@@ -223,7 +208,6 @@ export default async function handler(req, res) {
             case 'typing': {
                 const { cid, type, isTyping } = payload;
                 if (!cid || !type) return res.status(400).json({ error: "Missing data" });
-                
                 await db.ref(`/chat/conversations/${type}/${cid}/members/${uid}/isTyping`).set(Boolean(isTyping));
                 return res.status(200).json({ success: true });
             }
@@ -248,24 +232,17 @@ export default async function handler(req, res) {
                 const dms = convosSnap.val() || {};
                 
                 for (const [id, c] of Object.entries(dms)) {
-                    if (c.members && c.members[uid] && c.members[targetUid]) {
-                        return res.status(200).json({ cid: id }); 
-                    }
+                    if (c.members && c.members[uid] && c.members[targetUid]) return res.status(200).json({ cid: id }); 
                 }
 
                 const newCid = db.ref('/chat/conversations/dms').push().key;
                 await db.ref(`/chat/conversations/dms/${newCid}`).set({
                     config: { createdAt: Date.now(), lastMessageId: 99999 },
-                    members: {
-                        [uid]: { role: 'member', isTyping: false },
-                        [targetUid]: { role: 'member', isTyping: false }
-                    }
+                    members: { [uid]: { role: 'member', isTyping: false }, [targetUid]: { role: 'member', isTyping: false } }
                 });
 
                 return res.status(200).json({ cid: newCid });
             }
-
-            // === RESTORED GROUP CHAT ENDPOINTS ===
 
             case 'createGroup': {
                 const { name } = payload;
@@ -278,9 +255,7 @@ export default async function handler(req, res) {
                 await db.ref(`/chat/conversations/gcs/${newCid}`).set({
                     name: name,
                     config: { createdAt: Date.now(), lastMessageId: 99999, joinCode: joinCode, ownerUid: uid },
-                    members: {
-                        [uid]: { role: 'owner', isTyping: false }
-                    }
+                    members: { [uid]: { role: 'owner', isTyping: false } }
                 });
                 return res.status(200).json({ success: true, cid: newCid });
             }
@@ -302,10 +277,7 @@ export default async function handler(req, res) {
                 
                 if (!targetCid) return res.status(404).json({ error: "Invalid invite code." });
                 
-                await db.ref(`/chat/conversations/gcs/${targetCid}/members/${uid}`).set({
-                    role: 'member',
-                    isTyping: false
-                });
+                await db.ref(`/chat/conversations/gcs/${targetCid}/members/${uid}`).set({ role: 'member', isTyping: false });
                 return res.status(200).json({ success: true, cid: targetCid });
             }
 
@@ -316,19 +288,13 @@ export default async function handler(req, res) {
                 const gcsSnap = await db.ref(`/chat/conversations/gcs/${cid}`).once('value');
                 const group = gcsSnap.val();
                 
-                if (!group || !group.members || !group.members[uid]) {
-                    return res.status(404).json({ error: "Group not found or you are not a member." });
-                }
+                if (!group || !group.members || !group.members[uid]) return res.status(404).json({ error: "Group not found or you are not a member." });
                 
-                // Remove member
                 await db.ref(`/chat/conversations/gcs/${cid}/members/${uid}`).remove();
                 
-                // Clean up group if empty
                 const updatedMembers = { ...group.members };
                 delete updatedMembers[uid];
-                if (Object.keys(updatedMembers).length === 0) {
-                    await db.ref(`/chat/conversations/gcs/${cid}`).remove();
-                }
+                if (Object.keys(updatedMembers).length === 0) await db.ref(`/chat/conversations/gcs/${cid}`).remove();
                 
                 return res.status(200).json({ success: true });
             }
