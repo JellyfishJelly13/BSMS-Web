@@ -194,6 +194,8 @@ a { color: var(--accent); text-decoration: none; }
     border-bottom: 1px solid var(--section-border); transition: 0.15s;
 }
 .search-item:hover { background: var(--section-bg); }
+.search-item:last-child { border-bottom: none; }
+#searchHint { font-size: 0.85rem; color: var(--fg2); text-align: center; margin-top:-6px; }
 
 #plusMenu {
     display: none; position: absolute; top: 100%; right: 0; background: var(--ctrl-bg);
@@ -233,17 +235,35 @@ a { color: var(--accent); text-decoration: none; }
 .c-name { font-size: 1.2rem; color: var(--fg); font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; display: flex; align-items: center; gap: 6px;}
 .bot-badge { font-size: 0.75rem; background: #eab308; color: #000; padding: 2px 6px; border-radius: 6px; font-weight: bold; text-transform: uppercase;}
 .c-prev { font-size: 0.95rem; color: var(--fg2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; margin-top: 2px;}
+.chat-row.unread .c-name { color: var(--accent); }
+.chat-row.unread .c-prev { color: var(--fg); font-weight: bold; }
+.unread-badge { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
 
 #mainView { flex: 1; display: flex; flex-direction: column; background: var(--chat-bg, var(--bg)); position: relative; overflow: hidden; }
-#mainView::before { content: ''; position: absolute; inset: 0; background-image: var(--chat-wp, none); background-size: cover; background-position: center; z-index: 0; pointer-events: none; }
-#mainView::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0, var(--chat-wp-dim, 0)); z-index: 1; pointer-events: none; }
 
-#chatHeader, #pinnedBanner, #feedWrap, #smartScrollPill, #typingIndicator, #sysBotNotice, #composerWrap { z-index: 2; position: relative; }
+#mainView::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: var(--chat-wp, none);
+    background-size: cover; background-position: center;
+    z-index: 0; pointer-events: none;
+}
+#mainView::after {
+    content: ''; position: absolute; inset: 0;
+    background: rgba(0,0,0, var(--chat-wp-dim, 0));
+    z-index: 1; pointer-events: none;
+}
+#chatHeader, #pinnedBanner, #feedWrap, #smartScrollPill, #typingIndicator, #sysBotNotice, #composerWrap {
+    z-index: 2; position: relative;
+}
 
 #emptyState { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); z-index: 100; text-align: center; padding: 24px; color: var(--fg2); }
 #emptyState svg.ic { width: 80px; height: 80px; fill: var(--pill-bg); margin-bottom: 20px; }
+#emptyState h2 { font-size: 1.6rem; color: var(--fg); margin: 0 0 8px; }
 
-#chatHeader { height: 70px; border-bottom: 1px solid var(--border); background: var(--chat-bg, var(--bg)); display: none; align-items: center; padding: 0 20px; gap: 12px; flex-shrink: 0; z-index: 20; }
+#chatHeader {
+    height: 70px; border-bottom: 1px solid var(--border); background: var(--chat-bg, var(--bg));
+    display: none; align-items: center; padding: 0 20px; gap: 12px; flex-shrink: 0; z-index: 20;
+}
 #mobBackBtn { display: none; }
 #activeChatInfo { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 #activeChatInfo.clickable { cursor: pointer; transition: 0.2s; }
@@ -251,14 +271,24 @@ a { color: var(--accent); text-decoration: none; }
 #activeChatName { display: flex; align-items: center; gap: 8px; font-size: 1.4rem; color: var(--chat-fg, var(--fg)); font-weight: bold; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
 #activeChatStatus { font-size: 0.95rem; color: var(--fg2); line-height: 1.2; margin-top: 2px;}
 
-#pinnedBanner { display: none; background: var(--section-bg); border-bottom: 1px solid var(--border); padding: 10px 20px; color: var(--chat-fg, var(--fg)); align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; flex-shrink: 0; z-index: 15; backdrop-filter: blur(5px); }
+#pinnedBanner {
+    display: none; background: var(--section-bg); border-bottom: 1px solid var(--border);
+    padding: 10px 20px; color: var(--chat-fg, var(--fg)); align-items: center; gap: 12px; cursor: pointer;
+    transition: 0.2s; flex-shrink: 0; z-index: 15; backdrop-filter: blur(5px);
+}
 #pinnedBanner:hover { background: rgba(255,255,255,0.08); }
 #pinnedBanner svg.pin-icon { color: var(--chat-accent, var(--accent)); flex-shrink: 0; width: 20px; height: 20px; }
+#pinnedText { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 1rem;}
 
 #feedWrap { flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column; }
 #chatLog { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 4px; scroll-behavior: auto; padding-bottom: 40px; }
 
-#smartScrollPill { position: absolute; bottom: 20px; right: 24px; background: var(--ctrl-bg); color: var(--fg); border: 2px solid var(--border); padding: 10px 16px; border-radius: 20px; font-size: 1.1rem; cursor: pointer; box-shadow: var(--shadow-sm); display: none; align-items: center; gap: 8px; z-index: 100; transition: 0.2s; }
+#smartScrollPill {
+    position: absolute; bottom: 20px; right: 24px; background: var(--ctrl-bg); color: var(--fg);
+    border: 2px solid var(--border); padding: 10px 16px; border-radius: 20px; font-size: 1.1rem;
+    cursor: pointer; box-shadow: var(--shadow-sm); display: none; align-items: center; gap: 8px;
+    z-index: 100; transition: 0.2s;
+}
 #smartScrollPill:hover { border-color: var(--chat-accent, var(--accent)); color: var(--chat-accent, var(--accent)); }
 #smartScrollPill.show { display: flex; animation: slideUp 0.2s ease; }
 
@@ -284,10 +314,34 @@ a { color: var(--accent); text-decoration: none; }
 
 .msg-text { white-space: pre-wrap; }
 .msg-meta { display: inline-block; font-size: 0.8rem; opacity: 0.7; margin-left: 12px; float: right; margin-top: 8px; }
+.msg-status { font-size: 0.8rem; color: var(--fg2); margin-top: 4px; text-align: right; min-height: 16px; margin-right: 4px;}
 .sys-msg { align-self: center; background: var(--section-bg); border: 1px solid var(--border); padding: 6px 16px; border-radius: 12px; font-size: 0.95rem; color: var(--fg2); font-style: italic; text-align: center; margin-bottom: 8px; backdrop-filter: blur(5px);}
 
-.quote-box { background: rgba(0,0,0,0.15); border-left: 3px solid currentColor; padding: 8px 12px; border-radius: 6px; font-size: 0.95rem; margin-bottom: 8px; max-height: 80px; overflow: hidden; cursor: pointer; }
+.poll-opt { position: relative; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 6px; cursor: pointer; overflow: hidden; border: 1px solid transparent; transition: 0.2s; }
+.poll-opt:hover { border-color: rgba(255,255,255,0.3); }
+.poll-opt .bar { position: absolute; top: 0; bottom: 0; left: 0; background: var(--chat-accent, var(--accent)); opacity: 0.5; transition: width 0.3s; pointer-events: none; }
+.poll-opt .content { position: relative; padding: 8px 12px; display: flex; justify-content: space-between; z-index: 2; pointer-events: none; gap: 12px; }
+
+.invite-card { margin-top: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+.invite-card-title { font-weight: bold; margin-bottom: 8px; font-size: 1rem; }
+
+.quote-box {
+    background: rgba(0,0,0,0.15); border-left: 3px solid currentColor; padding: 8px 12px;
+    border-radius: 6px; font-size: 0.95rem; margin-bottom: 8px; max-height: 80px; overflow: hidden; cursor: pointer;
+}
 .quote-box strong { display: block; margin-bottom: 4px; font-size: 1rem;}
+.msg-row.mine .quote-box { background: rgba(0,0,0,0.2); border-color: #fff; color: #fff; }
+.msg-row.theirs .quote-box { border-color: var(--chat-accent, var(--accent)); color: var(--fg2); }
+
+.audio-player { display: flex; align-items: center; gap: 12px; width: 240px; }
+.ap-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.2); color: inherit; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: 0.2s; }
+.ap-btn svg.ic { width: 18px; height: 18px; }
+.ap-btn:hover { background: rgba(255,255,255,0.1); }
+.msg-row.mine .ap-btn { color: #fff; }
+.ap-track { flex: 1; height: 6px; background: rgba(0,0,0,0.2); border-radius: 4px; position: relative; overflow: hidden; }
+.msg-row.theirs .ap-track { background: var(--border); }
+.ap-progress { position: absolute; left: 0; top: 0; bottom: 0; background: currentColor; width: 0%; pointer-events: none; transition: width 0.1s linear;}
+.ap-time { font-size: 0.9rem; min-width: 36px; text-align: right; }
 
 .msg-ctx-trigger {
     position: absolute; top: 50%; transform: translateY(-50%); opacity: 0;
@@ -301,15 +355,39 @@ a { color: var(--accent); text-decoration: none; }
 .msg-ctx-trigger:hover { background: var(--section-bg); color: var(--chat-fg, var(--fg)); border-color: var(--fg2); opacity: 1; }
 .msg-ctx-trigger svg.ic { width: 18px; height: 18px; pointer-events: none;}
 
-#ctxMenu { position: fixed; background: var(--ctrl-bg); border: 2px solid var(--ctrl-border); border-radius: 16px; box-shadow: var(--shadow); display: none; flex-direction: column; z-index: 6000; padding: 8px 0; min-width: 190px; }
+#ctxMenu {
+    position: fixed; background: var(--ctrl-bg); border: 2px solid var(--ctrl-border);
+    border-radius: 16px; box-shadow: var(--shadow); display: none; flex-direction: column;
+    z-index: 6000; padding: 8px 0; min-width: 190px;
+}
 #ctxMenu.show { display: flex; animation: fadeIn 0.15s ease; }
-.ctx-item { display: flex; align-items: center; gap: 12px; padding: 10px 16px; cursor: pointer; color: var(--fg); font-size: 1.1rem; transition: 0.15s; background: transparent; width: 100%; text-align: left; }
+.ctx-item {
+    display: flex; align-items: center; gap: 12px; padding: 10px 16px; cursor: pointer;
+    color: var(--fg); font-size: 1.1rem; transition: 0.15s; background: transparent; width: 100%; text-align: left;
+}
 .ctx-item:hover { background: var(--section-bg); color: var(--chat-accent, var(--accent)); }
+.ctx-item svg.ic { width: 20px; height: 20px; }
 .ctx-item.danger { color: #ef4444; }
 .ctx-item.danger:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
 .ctx-divider { height: 1px; background: var(--border); margin: 4px 0; }
+.ctx-reactions { display: flex; justify-content: space-between; padding: 8px 16px; border-bottom: 1px solid var(--border); margin-bottom: 4px;}
+.ctx-rx-btn { font-size: 1.5rem; line-height: 1; cursor: pointer; transition: 0.15s; padding: 4px; border-radius: 8px; }
+.ctx-rx-btn:hover { transform: scale(1.2); background: var(--section-bg); }
+
+.rx-rack { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.msg-row.mine .rx-rack { justify-content: flex-end; padding-right: 8px; }
+.msg-row.theirs .rx-rack { justify-content: flex-start; padding-left: 8px; }
+.rx-badge {
+    background: var(--ctrl-bg); border: 1px solid var(--border); padding: 2px 8px;
+    border-radius: 12px; font-size: 0.95rem; box-shadow: var(--shadow-sm);
+    display: flex; align-items: center; gap: 6px; cursor: pointer; transition: 0.15s; color: var(--fg);
+}
+.rx-badge:hover { border-color: var(--chat-accent, var(--accent)); transform: translateY(-2px); }
+.rx-badge.self { border-color: var(--chat-accent, var(--accent)); background: rgba(187,0,30,0.1); }
+.rx-count { font-size: 0.85rem; color: var(--fg2); }
 
 #sysBotNotice { background: var(--chat-bg, var(--bg)); border-top: 1px solid var(--border); padding: 16px; text-align: center; color: var(--fg2); font-size: 1rem; display: none; z-index: 20; }
+
 #typingIndicator { padding: 4px 20px; font-size: 0.95rem; color: var(--chat-accent, var(--accent)); min-height: 28px; display: flex; align-items: center;}
 #composerWrap { border-top: 1px solid var(--border); background: var(--chat-bg, var(--bg)); display: none; flex-direction: column; z-index: 20; flex-shrink: 0; padding-bottom: 12px;}
 
@@ -317,17 +395,46 @@ a { color: var(--accent); text-decoration: none; }
 #charCounter.warn { color: #eab308; font-weight: bold; }
 #charCounter.danger { color: #ef4444; font-weight: bold; }
 
+#activeReplyBar { display: none; background: var(--section-bg); padding: 12px 20px; border-left: 4px solid var(--chat-accent, var(--accent)); justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); backdrop-filter: blur(5px); }
+#attachmentPreview { display: none; padding: 10px 20px; background: rgba(0,0,0,0.4); border-top: 1px solid var(--border); align-items: center; gap: 10px; }
+
 .cmp-row { display: flex; align-items: flex-end; gap: 10px; padding: 0 16px; }
-.rich-input { flex: 1; padding: 12px 16px; border-radius: 16px; border: 2px solid var(--border); background: var(--input-bg); color: var(--chat-fg, var(--fg)); font-size: 1.15rem; line-height: 1.4; min-height: 50px; max-height: 160px; overflow-y: auto; transition: 0.2s; word-break: break-word; }
+.rich-input {
+    flex: 1; padding: 12px 16px; border-radius: 16px; border: 2px solid var(--border);
+    background: var(--input-bg); color: var(--chat-fg, var(--fg)); font-size: 1.15rem; line-height: 1.4;
+    min-height: 50px; max-height: 160px; overflow-y: auto; transition: 0.2s; word-break: break-word;
+}
 .rich-input:focus { border-color: var(--chat-accent, var(--accent)); }
 .rich-input:empty::before { content: attr(data-placeholder); color: var(--fg2); pointer-events: none; }
-
-.cmp-btn { width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--border); background: var(--pill-bg); color: var(--chat-fg, var(--fg)); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; flex-shrink: 0; }
+.cmp-btn {
+    width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--border); background: var(--pill-bg);
+    color: var(--chat-fg, var(--fg)); display: flex; align-items: center; justify-content: center; cursor: pointer;
+    transition: 0.2s; flex-shrink: 0;
+}
 .cmp-btn svg.ic { width: 22px; height: 22px; }
 .cmp-btn:hover:not(:disabled) { background: var(--section-bg); color: var(--chat-accent, var(--accent)); border-color: var(--chat-accent, var(--accent)); }
 .cmp-btn.send { background: var(--chat-accent, var(--accent)); color: #fff; border-color: var(--chat-accent, var(--accent)); }
 .cmp-btn.send:hover:not(:disabled) { background: var(--accent-hover); transform: scale(1.05); }
 .cmp-btn.disabled, .cmp-btn:disabled { background: var(--pill-bg); border-color: var(--border); color: var(--fg2); cursor: not-allowed; transform: none; }
+
+#recUI { display: none; flex: 1; align-items: center; justify-content: space-between; background: var(--pill-bg); border-radius: 16px; border: 2px solid var(--chat-accent, var(--accent)); padding: 0 20px; height: 50px; }
+.rec-pulse { display: flex; align-items: center; gap: 10px; color: #ef4444; font-weight: bold; font-size: 1.1rem; }
+.rec-dot { width: 12px; height: 12px; background: #ef4444; border-radius: 50%; animation: pulseRecord 1.5s infinite; }
+#recTimer { font-size: 1.1rem; color: var(--chat-fg, var(--fg)); font-weight: bold; }
+#previewUI { display: none; flex: 1; align-items: center; justify-content: space-between; background: var(--section-bg); border-radius: 16px; border: 2px solid var(--border); padding: 0 16px; height: 50px; }
+
+.member-item { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--section-bg); border-radius: 12px; margin-bottom: 8px; border: 1px solid transparent; gap: 10px; }
+.member-item:hover { border-color: var(--border); }
+.member-info { display: flex; align-items: center; gap: 12px; overflow: hidden; }
+.role-badge { font-size: 0.8rem; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--accent); background: rgba(187,0,30,0.1); color: var(--accent); font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;}
+
+#joinOverlay { background: var(--bg); flex-direction: column; align-items: center; justify-content: center; z-index: 4000;}
+
+#mobSidebarOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 40; display: none; }
+
+.theme-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.theme-mode-btn { flex: 1; padding: 8px; border-radius: 10px; border: 2px solid var(--border); background: var(--input-bg); color: var(--fg); cursor: pointer; text-align: center; font-size: 1rem; }
+.theme-mode-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(187,0,30,0.08); }
 
 @media (max-width: 768px) {
     #sidebar { position: absolute; inset: 0; width: 85%; z-index: 50; transform: translateX(0); box-shadow: var(--shadow); }
@@ -335,6 +442,7 @@ a { color: var(--accent); text-decoration: none; }
     #mobBackBtn { display: flex; }
     .msg-row.mine .msg-ctx-trigger { left: -10px; top: -16px; transform: none; width: 28px; height: 28px; opacity: 1; background: var(--bg);}
     .msg-row.theirs .msg-ctx-trigger { right: -10px; top: -16px; transform: none; width: 28px; height: 28px; opacity: 1; background: var(--bg);}
+    #ctxMenu { width: 220px; }
 }
 </style>
 </head>
@@ -351,15 +459,25 @@ a { color: var(--accent); text-decoration: none; }
         <g id="ico-pin"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></g>
         <g id="ico-unpin"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></g>
         <g id="ico-send"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></g>
+        <g id="ico-mic"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></g>
         <g id="ico-close"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></g>
         <g id="ico-dots"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></g>
         <g id="ico-reply"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></g>
+        <g id="ico-edit"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></g>
         <g id="ico-trash"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></g>
+        <g id="ico-play"><path d="M8 5v14l11-7z"/></g>
+        <g id="ico-pause"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></g>
         <g id="ico-down"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></g>
         <g id="ico-chat"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></g>
+        <g id="ico-check"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></g>
+        <g id="ico-poll"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-5h2v5zm4 0h-2V7h2v10zm4 0h-2v-3h2v3z"/></g>
+        <g id="ico-file"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></g>
         <g id="ico-leave"><path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H9c-1.11 0-2 .9-2 2v4h2V5h10v14H9v-4H7v4c0 1.1.89 2 2 2h10c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></g>
+        <g id="ico-refresh"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></g>
         <g id="ico-shield"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></g>
         <g id="ico-copy"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></g>
+        <g id="ico-upload"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></g>
+        <g id="ico-crown"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></g>
     </defs>
 </svg>
 
@@ -380,7 +498,19 @@ a { color: var(--accent); text-decoration: none; }
         <svg class="ic" style="width: 72px; height: 72px; fill: var(--accent); margin-bottom: 20px;"><use href="#ico-chat"></use></svg>
         <h2 style="font-size: 2rem;">Welcome to BSMS Chat</h2>
         <p>You need to be logged in to your BSMS Web account to use the messaging system.</p>
-        <button class="btn" onclick="window.location.href='/accounts#signup'" style="font-size: 1.3rem; padding: 14px;" data-ga="chat_login">Log In</button>
+        <button class="btn" onclick="window.location.href='/accounts#signup'" data-ga="chat_login" style="font-size: 1.3rem; padding: 14px;">Log In</button>
+    </div>
+</div>
+
+<div id="joinOverlay" class="overlay">
+    <div class="modal-card" style="align-items: center; text-align: center;">
+        <div class="c-av" style="width: 80px; height: 80px; font-size: 2rem; margin-bottom: 16px;">
+            <div class="c-av-inner" id="joinAvatar"></div>
+        </div>
+        <h2 id="joinTitle" style="font-size: 2rem; margin-bottom: 8px;">Group Name</h2>
+        <p id="joinDesc">You have been invited to join this group.</p>
+        <button class="btn" id="btnJoinConfirm" style="font-size: 1.3rem; margin-bottom: 10px;" data-ga="chat_join_confirm">Join Group</button>
+        <button class="btn sec" onclick="Router.clearHash()">Cancel</button>
     </div>
 </div>
 
@@ -391,46 +521,188 @@ a { color: var(--accent); text-decoration: none; }
         <button class="btn" onclick="UI.closeModal('alertModal')" data-ga="chat_alert_ok">OK</button>
     </div>
 </div>
-
-<!-- Restored Group Creation Modal -->
-<div id="createGroupModal" class="overlay layer-top" onclick="if(event.target===this) UI.closeModal('createGroupModal')">
+<div id="confirmModal" class="overlay layer-top">
     <div class="modal-card">
-        <h2>Create Group Chat</h2>
-        <p>Start a new community space.</p>
-        <input type="text" id="newGroupName" class="input-field" placeholder="Group Name (3-30 chars)" maxlength="30">
-        <button class="btn" onclick="GroupManager.create()">Create Group</button>
-        <button class="btn sec" onclick="UI.closeModal('createGroupModal')" style="margin-top: 8px;">Cancel</button>
+        <h2 id="confirmTitle">Confirm</h2>
+        <p id="confirmMsg"></p>
+        <div id="confirmBtns" style="display: flex; gap: 12px; flex-direction:column; margin-top: 10px;"></div>
     </div>
 </div>
 
-<!-- Restored Group Join Modal -->
-<div id="joinGroupModal" class="overlay layer-top" onclick="if(event.target===this) UI.closeModal('joinGroupModal')">
+<div id="joinCodeModal" class="overlay" onclick="if(event.target===this) UI.closeModal('joinCodeModal')">
     <div class="modal-card">
-        <h2>Join Group Chat</h2>
-        <p>Enter an invite code to join an existing group.</p>
-        <input type="text" id="joinGroupCode" class="input-field" placeholder="Enter Invite Code (e.g. ABCDEF)" style="text-transform: uppercase;">
-        <button class="btn" onclick="GroupManager.join()">Join Group</button>
-        <button class="btn sec" onclick="UI.closeModal('joinGroupModal')" style="margin-top: 8px;">Cancel</button>
-    </div>
-</div>
-
-<!-- Restored Group Info Modal -->
-<div id="groupInfoModal" class="overlay layer-top" onclick="if(event.target===this) UI.closeModal('groupInfoModal')">
-    <div class="modal-card">
-        <h2 id="giName">Group Info</h2>
-        <p id="giMembers" style="margin-bottom: 12px; font-weight: bold;">Members: 1</p>
-        <div id="giInviteSection">
-            <p style="margin-bottom: 8px; font-size: 0.95rem; color: var(--fg2);">Invite Code:</p>
-            <div class="join-code-box" id="giCode">------</div>
-            <button class="btn sec" onclick="GroupManager.copyCode()" style="margin-bottom: 20px;"><svg class="ic"><use href="#ico-copy"></use></svg> Copy Code</button>
+        <h2>Join Group</h2>
+        <p>Enter a join code to access an existing group.</p>
+        <input type="text" id="jcInput" class="input-field" placeholder="ABCDEF" maxlength="12" style="text-align: center; font-size: 1.5rem; letter-spacing: 4px; font-weight: bold; text-transform: uppercase;">
+        <div style="display: flex; gap: 12px; margin-top: 10px;">
+            <button class="btn sec" onclick="UI.closeModal('joinCodeModal')">Cancel</button>
+            <button class="btn" onclick="GroupManager.joinWithCode()">Join</button>
         </div>
-        <button class="btn warn" onclick="GroupManager.leaveGroup()"><svg class="ic"><use href="#ico-leave"></use></svg> Leave Group</button>
+    </div>
+</div>
+
+<div id="newGroupModal" class="overlay" onclick="if(event.target===this) UI.closeModal('newGroupModal')">
+    <div class="modal-card">
+        <h2>Create Group</h2>
+        <p>Start a new group conversation.</p>
+        <input type="text" id="ngName" class="input-field" placeholder="Group Name" maxlength="40">
+
+        <label style="color: var(--fg2); margin-bottom: 6px; display: block;">Group Icon (Optional)</label>
+        <input type="file" id="ngIcon" accept="image/*" class="input-field" style="padding: 8px;">
+
+        <input type="text" id="ngCustomCode" class="input-field" placeholder="Custom Join Code (Optional)" maxlength="12" style="margin-bottom: 12px; text-transform: uppercase;">
+
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:var(--fg); margin: 10px 0 20px;">
+            <input type="checkbox" id="ngRequireApproval" style="width:18px;height:18px;"> Require admin approval to join
+        </label>
+
+        <div style="display: flex; gap: 12px;">
+            <button class="btn sec" onclick="UI.closeModal('newGroupModal')">Cancel</button>
+            <button class="btn" id="btnCreateGroup" onclick="GroupManager.create()">Create</button>
+        </div>
+    </div>
+</div>
+
+<div id="groupCreatedModal" class="overlay">
+    <div class="modal-card" style="text-align: center;">
+        <h2>Group Created!</h2>
+        <p>Your group is ready. Invite others using this code:</p>
+        <div class="join-code-box" id="gcCodeDisplay">------</div>
+        <button class="btn" onclick="UI.closeModal('groupCreatedModal')">Awesome</button>
+    </div>
+</div>
+
+<div id="membersListModal" class="overlay" onclick="if(event.target===this) UI.closeModal('membersListModal')">
+    <div class="modal-card" style="width: min(500px, 92vw);">
+        <h2 style="margin-bottom: 20px;">Group Members</h2>
+
+        <div id="myNicknameSection" style="display: none; gap: 8px; margin-bottom: 16px;">
+            <input type="text" id="myNicknameInput" class="input-field" placeholder="My Group Nickname" style="margin: 0; flex:1;">
+            <button class="btn sec" style="width:auto;" onclick="GroupManager.saveNickname()">Save</button>
+        </div>
+
+        <div id="mlList" style="display: flex; flex-direction: column; gap: 8px; max-height: 350px; overflow-y: auto; padding-right: 4px; margin-bottom: 20px;"></div>
+
+        <div style="display: flex; gap: 12px;">
+            <button class="btn sec" onclick="UI.closeModal('membersListModal')">Close</button>
+            <button id="btnInviteMembers" class="btn" style="display:none; background:#22c55e; border-color:#22c55e;" onclick="UI.closeModal('membersListModal'); UI.openModal('inviteModal')">Invite</button>
+        </div>
+    </div>
+</div>
+
+<div id="inviteModal" class="overlay" onclick="if(event.target===this) { UI.closeModal('inviteModal'); document.getElementById('inviteSearchResults').innerHTML=''; }">
+    <div class="modal-card">
+        <h2>Invite Users</h2>
+        <div class="search-box" style="margin-bottom: 16px;">
+            <svg class="ic"><use href="#ico-search"></use></svg>
+            <input type="text" id="inviteSearchInput" class="input-field" placeholder="Search accounts to invite..." autocomplete="off" style="margin:0; padding-left:44px;">
+        </div>
+        <div id="inviteSearchResults" style="max-height: 250px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>
+        <button class="btn sec" style="margin-top:16px;" onclick="UI.closeModal('inviteModal')">Done</button>
+    </div>
+</div>
+
+<div id="groupSettingsModal" class="overlay" onclick="if(event.target===this) UI.closeModal('groupSettingsModal')">
+    <div class="modal-card" style="width: min(500px, 92vw);">
+        <h2 id="gsTitle" style="text-align: center; margin-bottom: 4px;">Group Settings</h2>
+        <p style="text-align:center; color:var(--fg2); margin-bottom:16px;">ID: <span id="gsIdDisplay" style="font-weight:bold;color:var(--fg);">------</span></p>
+
+        <div id="gsIconWrap" style="display: flex; justify-content: center; margin-top: 10px; margin-bottom: 20px; position:relative;"></div>
+        <input type="file" id="gsIconUpload" accept="image/*" style="display:none;" onchange="GroupManager.updateIcon(event)">
+
+        <div class="join-code-box" style="font-size: 2rem; padding: 10px; position:relative;">
+            <span style="font-size:1rem; color:var(--fg2); display:block; letter-spacing:0; margin-bottom:4px; font-weight:normal;">Join Code</span>
+            <span id="gsCodeDisplayText">------</span>
+            <button id="btnRegenCode" class="icon-btn" style="position:absolute; top:10px; right:10px;" onclick="GroupManager.regenerateCode()" title="Regenerate Code"><svg class="ic"><use href="#ico-refresh"></use></svg></button>
+        </div>
+        <div id="gsCustomCodeRow" style="display:flex; gap:8px; margin-bottom:16px;">
+            <input type="text" id="gsCustomCodeInput" class="input-field" placeholder="Set custom join code" maxlength="12" style="margin:0; flex:1; text-transform: uppercase;">
+            <button class="btn sec" style="width:auto;" onclick="GroupManager.setCustomCode()">Set</button>
+        </div>
+
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:var(--fg); margin: 0 0 10px;">
+            <input type="checkbox" id="gsRequireApprovalToggle" style="width:18px;height:18px;" onchange="GroupManager.updateConfig('requireJoinApproval', this.checked)"> Require admin approval to join
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:var(--fg); margin: 0 0 20px;">
+            <input type="checkbox" id="gsAllowNickToggle" style="width:18px;height:18px;" onchange="GroupManager.updateConfig('allowCustomNicknames', this.checked)"> Allow custom nicknames
+        </label>
+
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 20px;">
+            <div style="display: flex; gap:8px;">
+                <input type="text" id="gsRenameInput" class="input-field" placeholder="Rename Group" style="margin: 0; flex:1;">
+                <button class="btn sec" style="width:auto;" onclick="GroupManager.rename()">Save</button>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 20px;">
+            <h3 style="margin: 0; font-size: 1.2rem;">Group Theme (this group only)</h3>
+            <p style="margin:0 0 8px; font-size:0.9rem; color:var(--fg2);">Choose a solid color OR a wallpaper image - not both.</p>
+            <div class="theme-row">
+                <div class="theme-mode-btn" id="themeModeColorBtn" onclick="GroupManager.setThemeMode('color')">Solid Color</div>
+                <div class="theme-mode-btn" id="themeModeImageBtn" onclick="GroupManager.setThemeMode('image')">Image</div>
+            </div>
+            <div id="themeColorWrap" style="display:flex; gap:12px; margin-bottom:12px;">
+                <input type="color" id="gsThemeBgColor" style="height:42px; width:60px; padding:0; background:none; border:none; cursor:pointer;">
+                <span style="color:var(--fg2); align-self:center;">Background color</span>
+            </div>
+            <div id="themeImageWrap" style="display:none; margin-bottom:12px;">
+                <input type="file" id="gsThemeWpFile" accept="image/*" class="input-field" style="margin:0; padding:8px;">
+                <p style="font-size:0.85rem; color:var(--fg2); margin:6px 0 0;">Max 25MB</p>
+            </div>
+            <div style="display:flex; gap:12px; margin-bottom:16px;">
+                <div style="flex:1;"><label style="font-size:0.9rem; color:var(--fg2);">Text Color</label><input type="color" id="gsThemeFg" style="width:100%;height:40px;border:none;padding:0;"></div>
+                <div style="flex:1;"><label style="font-size:0.9rem; color:var(--fg2);">Accent Color</label><input type="color" id="gsThemeAccent" style="width:100%;height:40px;border:none;padding:0;"></div>
+            </div>
+            <button class="btn sec" onclick="GroupManager.saveTheme()">Apply Theme</button>
+        </div>
+
+        <div id="gsRequestsSection" style="display:none; margin-bottom:20px;">
+            <h3 style="margin: 0 0 12px; font-size: 1.3rem; color: #eab308;">Join Requests</h3>
+            <div id="gsRequestsList" style="display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto;"></div>
+        </div>
+
+        <div style="display:flex; gap:12px;">
+            <button class="btn sec" onclick="UI.closeModal('groupSettingsModal')">Close</button>
+        </div>
+    </div>
+</div>
+
+<div id="dmSettingsModal" class="overlay" onclick="if(event.target===this) UI.closeModal('dmSettingsModal')">
+    <div class="modal-card" style="align-items:center; text-align:center;">
+        <h2>Direct Message Details</h2>
+        <p style="color:var(--fg2); margin-bottom: 24px;">Conversation ID: <span id="dmIdDisplay" style="font-weight:bold; color:var(--fg);">----</span></p>
+        <div id="dmMembersList" style="width:100%; display:flex; flex-direction:column; gap:8px; margin-bottom:20px;"></div>
+        <button class="btn sec" onclick="UI.closeModal('dmSettingsModal')">Close</button>
+    </div>
+</div>
+
+<div id="pollModal" class="overlay" onclick="if(event.target===this) UI.closeModal('pollModal')">
+    <div class="modal-card">
+        <h2>Create Poll</h2>
+        <input type="text" id="pollQuestion" class="input-field" placeholder="Poll Question..." maxlength="120">
+        <div id="pollOptionsContainer" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+            <input type="text" class="input-field" placeholder="Option 1" style="margin:0;" maxlength="60">
+            <input type="text" class="input-field" placeholder="Option 2" style="margin:0;" maxlength="60">
+        </div>
+        <button class="btn sec" style="margin-bottom:20px;" onclick="ComposerManager.addPollOption()">+ Add Option</button>
+        <div style="display:flex; gap:12px;">
+            <button class="btn sec" onclick="UI.closeModal('pollModal')">Cancel</button>
+            <button class="btn" onclick="ComposerManager.sendPoll()">Send Poll</button>
+        </div>
     </div>
 </div>
 
 <div id="ctxMenu">
+    <div class="ctx-reactions">
+        <button class="ctx-rx-btn" onclick="ContextMenu.react('&#10084;&#65039;')">&#10084;&#65039;</button>
+        <button class="ctx-rx-btn" onclick="ContextMenu.react('&#128077;')">&#128077;</button>
+        <button class="ctx-rx-btn" onclick="ContextMenu.react('&#128514;')">&#128514;</button>
+        <button class="ctx-rx-btn" onclick="ContextMenu.react('&#128293;')">&#128293;</button>
+        <button class="ctx-rx-btn" onclick="ContextMenu.react('&#128558;')">&#128558;</button>
+    </div>
     <button class="ctx-item" id="ctxBtnCopy" onclick="ContextMenu.copy()" data-ga="ctx_copy"><svg class="ic"><use href="#ico-copy"></use></svg> Copy</button>
     <button class="ctx-item" id="ctxBtnReply" onclick="ContextMenu.reply()" data-ga="ctx_reply"><svg class="ic"><use href="#ico-reply"></use></svg> Reply</button>
+    <button class="ctx-item" id="ctxBtnEdit" onclick="ContextMenu.edit()" data-ga="ctx_edit"><svg class="ic"><use href="#ico-edit"></use></svg> Edit</button>
     <button class="ctx-item" id="ctxBtnPin" onclick="ContextMenu.pin()" data-ga="ctx_pin"><svg class="ic"><use href="#ico-pin"></use></svg> <span id="ctxPinText">Pin</span></button>
     <div class="ctx-divider" id="ctxDivDanger"></div>
     <button class="ctx-item danger" id="ctxBtnMod" onclick="ContextMenu.moderate()" data-ga="ctx_moderate"><svg class="ic"><use href="#ico-shield"></use></svg> Moderate (Delete)</button>
@@ -438,15 +710,19 @@ a { color: var(--accent); text-decoration: none; }
 </div>
 
 <div id="appShell">
+
+    <div id="mobSidebarOverlay" onclick="SidebarManager.hideMobile()"></div>
+
     <div id="sidebar" class="hidden">
         <div id="sideHeader">
             <div class="side-title-row">
                 <h1>Chats</h1>
-                <!-- Restored Plus Button and Menu -->
-                <button class="icon-btn" id="btnPlus" onclick="UI.togglePlusMenu(event)"><svg class="ic"><use href="#ico-plus"></use></svg></button>
-                <div id="plusMenu">
-                    <button class="plus-item" onclick="GroupManager.showCreateModal()"><svg class="ic" style="display:inline-block; vertical-align:middle; width:18px; margin-right:8px;"><use href="#ico-chat"></use></svg> Create Group</button>
-                    <button class="plus-item" onclick="GroupManager.showJoinModal()"><svg class="ic" style="display:inline-block; vertical-align:middle; width:18px; margin-right:8px;"><use href="#ico-plus"></use></svg> Join with Code</button>
+                <div style="position:relative;">
+                    <button class="icon-btn" onclick="SidebarManager.togglePlusMenu()" title="Add"><svg class="ic"><use href="#ico-plus"></use></svg></button>
+                    <div id="plusMenu">
+                        <div class="plus-item" onclick="SidebarManager.togglePlusMenu(); UI.openModal('joinCodeModal')">Join Group</div>
+                        <div class="plus-item" onclick="SidebarManager.togglePlusMenu(); UI.openModal('newGroupModal')">Create Group</div>
+                    </div>
                 </div>
             </div>
             <div class="search-box">
@@ -454,6 +730,7 @@ a { color: var(--accent); text-decoration: none; }
                 <input type="text" id="searchInput" class="input-field" placeholder="Search accounts..." autocomplete="off">
                 <div id="searchResults"></div>
             </div>
+            <div id="searchHint">Search BSMS Web to start chatting!</div>
         </div>
         <div id="chatList"></div>
     </div>
@@ -467,12 +744,12 @@ a { color: var(--accent); text-decoration: none; }
 
         <div id="chatHeader">
             <button id="mobBackBtn" class="icon-btn" onclick="SidebarManager.showMobile()"><svg class="ic"><use href="#ico-back"></use></svg></button>
-            <div id="activeChatInfo" class="clickable">
+            <div id="activeChatInfo" class="clickable" onclick="GroupManager.openMembersList()">
                 <h3 id="activeChatName">---</h3>
                 <span id="activeChatStatus">---</span>
             </div>
-            <!-- Restored Chat Info/Settings Button -->
-            <button id="btnChatInfo" class="icon-btn" onclick="GroupManager.showInfo()" style="display:none;"><svg class="ic"><use href="#ico-settings"></use></svg></button>
+            <button class="icon-btn" id="btnGroupSettings" style="display:none;" onclick="UI.openSettings()"><svg class="ic"><use href="#ico-settings"></use></svg></button>
+            <button class="icon-btn" id="btnLeaveGroup" style="display:none;color:#ef4444;" onclick="GroupManager.leaveGroup()" data-ga="chat_leave_group"><svg class="ic"><use href="#ico-leave"></use></svg></button>
         </div>
 
         <div id="pinnedBanner" onclick="ScrollManager.scrollToPin()">
@@ -494,7 +771,7 @@ a { color: var(--accent); text-decoration: none; }
         <div id="sysBotNotice">This is an official system account. You cannot reply to this conversation.</div>
 
         <div id="composerWrap">
-            <div id="activeReplyBar" style="display: none; background: var(--section-bg); padding: 12px 20px; border-left: 4px solid var(--chat-accent, var(--accent)); justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
+            <div id="activeReplyBar">
                 <div style="flex:1; overflow:hidden;">
                     <strong style="color:var(--accent); font-size: 0.95rem;">Replying to <span id="rplName"></span></strong>
                     <div id="rplText" style="color:var(--fg); font-size: 1.05rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></div>
@@ -502,10 +779,42 @@ a { color: var(--accent); text-decoration: none; }
                 <button class="icon-btn" onclick="ComposerManager.cancelReply()"><svg class="ic"><use href="#ico-close"></use></svg></button>
             </div>
 
+            <div id="attachmentPreview">
+                <div id="attThmb" style="width:50px;height:50px;background-size:cover;background-position:center;border-radius:8px;flex-shrink:0;"></div>
+                <div id="attName" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--chat-fg,var(--fg));"></div>
+                <button class="icon-btn" onclick="ComposerManager.clearAttachment()"><svg class="ic"><use href="#ico-close"></use></svg></button>
+            </div>
+
             <div id="charCounter">0/100</div>
 
             <div class="cmp-row">
+                <button class="cmp-btn" onclick="document.getElementById('fileUploadInput').click()" title="Attach File"><svg class="ic"><use href="#ico-upload"></use></svg></button>
+                <input type="file" id="fileUploadInput" style="display:none;" onchange="ComposerManager.attachFile(event)">
+
                 <div id="msgInput" class="rich-input" contenteditable="true" data-placeholder="Message..."></div>
+
+                <div id="recUI">
+                    <button class="icon-btn" style="color:#ef4444;" onclick="AudioManager.cancelRecording()"><svg class="ic"><use href="#ico-trash"></use></svg></button>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div class="rec-dot"></div>
+                        <span id="recTimer">0:00</span>
+                    </div>
+                    <button class="icon-btn" style="color:#22c55e;" onclick="AudioManager.finishRecording()"><svg class="ic"><use href="#ico-check"></use></svg></button>
+                </div>
+
+                <div id="previewUI">
+                    <button class="icon-btn" style="color:#ef4444;" onclick="AudioManager.cancelRecording()"><svg class="ic"><use href="#ico-trash"></use></svg></button>
+                    <div class="audio-player" style="width:160px;">
+                        <button class="ap-btn" id="prev-play-btn" onclick="AudioManager.togglePreviewPlay()"><svg class="ic"><use href="#ico-play"></use></svg></button>
+                        <div class="ap-track"><div class="ap-progress" id="prev-prog"></div></div>
+                        <div class="ap-time" id="prev-time">0:00</div>
+                        <audio id="prev-audio" style="display:none;"></audio>
+                    </div>
+                    <button class="cmp-btn send" onclick="AudioManager.sendPreview()"><svg class="ic"><use href="#ico-send"></use></svg></button>
+                </div>
+
+                <button class="cmp-btn" id="btnPoll" onclick="UI.openModal('pollModal')" title="Create Poll"><svg class="ic"><use href="#ico-poll"></use></svg></button>
+                <button class="cmp-btn" id="btnMic" onclick="AudioManager.startRecording()"><svg class="ic"><use href="#ico-mic"></use></svg></button>
                 <button class="cmp-btn send" id="btnSend" onclick="ComposerManager.send()" data-ga="chat_send"><svg class="ic"><use href="#ico-send"></use></svg></button>
             </div>
         </div>
@@ -524,6 +833,9 @@ window.addEventListener('offline', () => document.getElementById('offlineBanner'
 window.addEventListener('online', () => document.getElementById('offlineBanner').classList.remove('show'));
 if (!navigator.onLine) document.getElementById('offlineBanner').classList.add('show');
 
+const BOT_UID = "bsms_web_system";
+const BOT_PFP = "https://uploads.onecompiler.io/44jajt6dm/1789516766282/bsms-web-pfp.png";
+
 const State = {
     user: null,
     channels: {},
@@ -536,11 +848,15 @@ const State = {
     isScrolledUp: false,
     lastRenderedDate: null,
     searchTimeout: null,
+    inviteSearchTimeout: null,
     typingTimeout: null,
+    toastTimeout: null,
 
     isCooldown: false,
-    lastMessageTime: 0,
+    editContext: null,
     replyContext: null,
+    attachmentData: null,
+    attachmentName: null,
 
     pendingRoute: null,
     syncInterval: null,
@@ -553,10 +869,14 @@ const Utils = {
         return str.replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t]));
     },
     formatTime: (ts) => new Date(ts).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+    formatDuration: (sec) => {
+        const s = Math.max(0, Math.floor(sec));
+        return `${Math.floor(s/60)}:${(s%60).toString().padStart(2, '0')}`;
+    },
     timeAgo: (ts) => {
         if(!ts) return "a while ago";
         const diff = Math.floor((Date.now() - ts) / 1000);
-        if(diff < 60) return "Just now";
+        if(diff < 60) return "just now";
         if(diff < 3600) return `${Math.floor(diff/60)} mins ago`;
         if(diff < 86400) return `${Math.floor(diff/3600)} hours ago`;
         return `${Math.floor(diff/86400)} days ago`;
@@ -576,53 +896,41 @@ const Utils = {
         range.collapse(false);
         sel.removeAllRanges();
         sel.addRange(range);
+    },
+    displayName: (uid, ch) => {
+        if(ch && ch._type === 'gcs' && ch.config && ch.config.allowCustomNicknames !== false && ch.members && ch.members[uid] && ch.members[uid].nickname) return ch.members[uid].nickname;
+        if(State.accountsCache[uid] && State.accountsCache[uid].displayName) return State.accountsCache[uid].displayName;
+        return uid;
     }
 };
 
-const UI = {
-    show: id => { const e = document.getElementById(id); if(e) e.style.display = 'flex'; },
-    hide: id => { const e = document.getElementById(id); if(e) e.style.display = 'none'; },
-    openModal: id => document.getElementById(id).classList.add('show'),
-    closeModal: id => document.getElementById(id).classList.remove('show'),
-    togglePlusMenu: (e) => {
-        e.stopPropagation();
-        document.getElementById('plusMenu').classList.toggle('show');
+const AudioFX = {
+    ctx: null,
+    init: () => { if(!AudioFX.ctx) AudioFX.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+    play: (f, t, d, v=0.05) => {
+        if(!AudioFX.ctx) return;
+        if(AudioFX.ctx.state === 'suspended') AudioFX.ctx.resume();
+        const o = AudioFX.ctx.createOscillator(), g = AudioFX.ctx.createGain();
+        o.type = t; o.frequency.setValueAtTime(f, AudioFX.ctx.currentTime);
+        g.gain.setValueAtTime(v, AudioFX.ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.01, AudioFX.ctx.currentTime + d);
+        o.connect(g); g.connect(AudioFX.ctx.destination);
+        o.start(); o.stop(AudioFX.ctx.currentTime + d);
     },
-    setLoad: (pct, label) => {
-        const lb = document.getElementById('loadBar');
-        const lp = document.getElementById('loadPct');
-        const ls = document.getElementById('loadingScreen');
-        if(lb) lb.style.width = Math.min(100,pct) + "%";
-        if(lp) lp.innerText = Math.min(100,pct) + "%" + (label ? (" - " + label) : "");
-        if(pct >= 100) {
-            setTimeout(() => { if(ls) ls.style.opacity = '0'; }, 250);
-            setTimeout(() => { if(ls) ls.style.display = 'none'; }, 650);
-        }
-    },
-    showError: (msg, title = "Error") => {
-        document.getElementById('alertTitle').innerText = title;
-        document.getElementById('alertMsg').innerText = msg;
-        UI.openModal('alertModal');
-    },
-    toast: (msg) => {
-        const t = document.getElementById('toastContainer');
-        document.getElementById('toastText').innerText = msg;
-        t.classList.add('show');
-        clearTimeout(State.toastTimeout);
-        State.toastTimeout = setTimeout(() => t.classList.remove('show'), 3000);
-    },
-    hideToast: () => document.getElementById('toastContainer').classList.remove('show'),
+    send: () => AudioFX.play(600, 'sine', 0.15),
+    receive: () => AudioFX.play(800, 'sine', 0.2),
+    startRec: () => AudioFX.play(400, 'square', 0.1),
+    stopRec: () => AudioFX.play(300, 'square', 0.1),
+    react: () => AudioFX.play(1200, 'triangle', 0.1)
 };
+document.addEventListener('click', AudioFX.init, { once: true });
 
 const ApiClient = {
     call: async (action, params = {}) => {
         try {
             const res = await fetch(`/api/chat?action=${action}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Session-ID': localStorage.getItem('session_id') || ""
-                },
+                headers: { 'Content-Type': 'application/json', 'X-Session-ID': localStorage.getItem('session_id') || "" },
                 body: JSON.stringify(params)
             });
             const data = await res.json();
@@ -634,13 +942,10 @@ const ApiClient = {
             if (res.status === 400 && data.error && data.error.includes("Profanity")) {
                 const inp = document.getElementById('msgInput');
                 if (inp) {
-                    inp.style.borderColor = '#ef4444';
-                    inp.style.animation = 'none';
-                    void inp.offsetWidth;
-                    inp.style.animation = 'pulseRecord 0.5s';
-                    setTimeout(() => inp.style.borderColor = '', 1000);
+                    inp.style.borderColor = '#ef4444'; inp.style.animation = 'none'; void inp.offsetWidth;
+                    inp.style.animation = 'pulseRecord 0.5s'; setTimeout(() => inp.style.borderColor = '', 1000);
                 }
-                throw new Error("Message flagged by profanity filter.");
+                throw new Error("Content flagged by profanity filter.");
             }
             if (!res.ok) throw new Error(data.error || "API Error");
             return data;
@@ -665,10 +970,7 @@ const PollingManager = {
             const data = await ApiClient.call('sync');
             if (!data) return;
             
-            // FIX: Poisoned UID auto-correction.
-            // Old accounts.html saved "username" as the uid. We MUST use the backend push key.
             if (data.myUid && State.user.uid !== data.myUid) {
-                console.warn("[BSMS Web] Fixing poisoned UID in localStorage...");
                 State.user.uid = data.myUid;
                 let sessStr = localStorage.getItem('bsms_auth_session');
                 if (sessStr) {
@@ -681,8 +983,18 @@ const PollingManager = {
             State.usersCache = data.users || {};
             State.accountsCache = data.accounts || {};
             State.channels = data.channels || {};
+            
             SidebarManager.render();
-            if (State.activeChannelId) ChatManager.updateHeader();
+            if (State.activeChannelId) {
+                if (!State.channels[State.activeChannelId]) {
+                    ChatManager.close();
+                    UI.showError("You are no longer in this conversation.");
+                } else {
+                    ChatManager.updateHeader();
+                    ChatManager.updateReadReceipts();
+                    if (State.currentRole === 'owner') GroupManager.renderRequests();
+                }
+            }
         } catch(e) {}
     },
     syncMessages: async () => {
@@ -695,37 +1007,216 @@ const PollingManager = {
     }
 };
 
+const UI = {
+    show: id => { const e = document.getElementById(id); if(e) e.style.display = 'flex'; },
+    hide: id => { const e = document.getElementById(id); if(e) e.style.display = 'none'; },
+    openModal: id => document.getElementById(id).classList.add('show'),
+    closeModal: id => document.getElementById(id).classList.remove('show'),
+
+    setLoad: (pct, label) => {
+        const lb = document.getElementById('loadBar');
+        const lp = document.getElementById('loadPct');
+        const ls = document.getElementById('loadingScreen');
+        if(lb) lb.style.width = Math.min(100,pct) + "%";
+        if(lp) lp.innerText = Math.min(100,pct) + "%" + (label ? (" - " + label) : "");
+        if(pct >= 100) {
+            setTimeout(() => { if(ls) ls.style.opacity = '0'; }, 250);
+            setTimeout(() => { if(ls) ls.style.display = 'none'; }, 650);
+        }
+    },
+
+    showError: (msg, title = "Error") => {
+        document.getElementById('alertTitle').innerText = title;
+        document.getElementById('alertMsg').innerText = msg;
+        UI.openModal('alertModal');
+    },
+
+    showConfirm: (msg, actions, title = "Confirm") => {
+        document.getElementById('confirmTitle').innerText = title;
+        document.getElementById('confirmMsg').innerText = msg;
+        const b = document.getElementById('confirmBtns');
+        b.innerHTML = '';
+        actions.forEach(a => {
+            const btn = document.createElement('button');
+            btn.className = `btn ${a.danger ? 'warn' : (a.sec ? 'sec' : '')}`;
+            btn.innerText = a.text;
+            btn.onclick = () => { UI.closeModal('confirmModal'); if(a.cb) a.cb(); };
+            b.appendChild(btn);
+        });
+        UI.openModal('confirmModal');
+    },
+
+    toast: (msg) => {
+        const t = document.getElementById('toastContainer');
+        document.getElementById('toastText').innerText = msg;
+        t.classList.add('show');
+        clearTimeout(State.toastTimeout);
+        State.toastTimeout = setTimeout(() => t.classList.remove('show'), 3000);
+    },
+
+    hideToast: () => document.getElementById('toastContainer').classList.remove('show'),
+
+    openSettings: () => {
+        if(!State.activeChannelId) return;
+        const c = State.channels[State.activeChannelId];
+
+        if(State.activeType === 'dms') {
+            document.getElementById('dmIdDisplay').innerText = State.activeChannelId;
+            let html = '';
+            for(let uid in c.members) {
+                const acc = State.accountsCache[uid] || { displayName: uid };
+                html += `<div style="padding:10px;background:var(--section-bg);border-radius:12px;display:flex;align-items:center;gap:12px;">
+                    <div class="c-av" style="width:40px;height:40px;font-size:1.1rem;cursor:default;">
+                        <div class="c-av-inner">${acc.avatar ? `<img src="${Utils.escapeHTML(acc.avatar)}">` : uid.charAt(0).toUpperCase()}</div>
+                    </div>
+                    <div style="text-align:left;">
+                        <div style="font-weight:bold;color:var(--fg);">${Utils.escapeHTML(acc.displayName || uid)}</div>
+                        <div style="font-size:0.85rem;color:var(--fg2);">@${Utils.escapeHTML(uid)}</div>
+                    </div>
+                </div>`;
+            }
+            document.getElementById('dmMembersList').innerHTML = html;
+            UI.openModal('dmSettingsModal');
+        } else {
+            document.getElementById('gsIdDisplay').innerText = State.activeChannelId;
+            document.getElementById('gsCodeDisplayText').innerText = c.config?.joinCode || '------';
+            document.getElementById('gsRequireApprovalToggle').checked = c.config?.requireJoinApproval || false;
+            document.getElementById('gsAllowNickToggle').checked = c.config?.allowCustomNicknames !== false;
+
+            document.getElementById('gsThemeFg').value = c.config?.theme?.text || '#ffffff';
+            document.getElementById('gsThemeAccent').value = c.config?.theme?.accent || '#BB001E';
+            const bgVal = c.config?.theme?.background;
+            const isImage = bgVal && bgVal.startsWith('data:');
+            GroupManager.setThemeMode(isImage ? 'image' : 'color');
+            document.getElementById('gsThemeBgColor').value = (bgVal && !isImage) ? bgVal : '#000000';
+
+            const isOwner = State.currentRole === 'owner';
+            ['gsRequireApprovalToggle','gsAllowNickToggle','gsThemeFg','gsThemeAccent','gsThemeBgColor','gsThemeWpFile','gsRenameInput','gsCustomCodeInput'].forEach(id => {
+                document.getElementById(id).disabled = !isOwner;
+            });
+            document.getElementById('btnRegenCode').style.display = isOwner ? 'flex' : 'none';
+            document.getElementById('gsCustomCodeRow').style.display = isOwner ? 'flex' : 'none';
+
+            const icn = document.getElementById('gsIconWrap');
+            if (c.config?.icon) {
+                icn.innerHTML = `<img src="${Utils.escapeHTML(c.config.icon)}" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid var(--accent); cursor:${isOwner?'pointer':'default'};" ${isOwner?`onclick="document.getElementById('gsIconUpload').click()"`:''}>`;
+            } else {
+                icn.innerHTML = `<div style="width:100px; height:100px; border-radius:50%; background:var(--pill-bg); border:3px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:2.5rem; color:var(--fg); font-weight:bold; cursor:${isOwner?'pointer':'default'};" ${isOwner?`onclick="document.getElementById('gsIconUpload').click()"`:''}>${(c.name || '?').charAt(0).toUpperCase()}</div>`;
+            }
+
+            document.getElementById('gsRenameInput').value = c.name;
+            document.getElementById('gsCustomCodeInput').value = '';
+            GroupManager.renderRequests();
+            UI.openModal('groupSettingsModal');
+        }
+    }
+};
+
+const Router = {
+    init: function() {
+        window.addEventListener('hashchange', () => this.handleHash());
+    },
+    setHash: function(type, id) {
+        history.replaceState(null, null, `#${type}/${id}`);
+    },
+    clearHash: function() {
+        history.replaceState(null, null, ' ');
+        UI.closeModal('joinOverlay');
+    },
+    parseHash: function() {
+        const h = window.location.hash;
+        if(!h || h.length < 3) return null;
+        const p = h.substring(1).split('/');
+        if(p.length < 2) return null;
+        return { type: p[0], id: decodeURIComponent(p[1]) };
+    },
+    consumeInitialHash: function() {
+        State.pendingRoute = this.parseHash();
+    },
+    resolvePendingRoute: async function() {
+        const r = State.pendingRoute;
+        State.pendingRoute = null;
+        if(!r) return;
+        if(r.type === 'dm' || r.type === 'gc') {
+            if(State.channels[r.id]) { ChatManager.open(r.id); return; }
+            this.clearHash();
+        } else if(r.type === 'join') {
+            await GroupManager.requestJoinById(r.id);
+        }
+    },
+    handleHash: function() {
+        const r = this.parseHash();
+        if(!r) return;
+        if(r.type === 'join') { GroupManager.requestJoinById(r.id); return; }
+        if(State.channels[r.id]) ChatManager.open(r.id);
+    }
+};
+
 const AuthManager = {
     init: async function() {
         UI.setLoad(5, "Verifying local session");
+        Router.consumeInitialHash();
+        
+        try {
+            const prefsStr = localStorage.getItem('bsms_rooms_prefs');
+            if(prefsStr) {
+                const prefs = JSON.parse(prefsStr);
+                if(prefs.mode === 'light' || (prefs.mode === 'system' && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+                    document.body.classList.add('light-mode');
+                }
+            }
+        } catch(e) {}
+
         const sessionStr = localStorage.getItem('bsms_auth_session');
         if (!sessionStr) { AuthManager.reject(); return; }
 
         try {
             const sess = JSON.parse(sessionStr);
-            if (!sess.loggedIn || !sess.uid) { AuthManager.reject(); return; }
+            if (!sess.loggedIn || (!sess.username && !sess.uid)) { AuthManager.reject(); return; }
 
-            State.user = {
-                uid: sess.uid,
-                username: sess.username || sess.uid,
-                displayName: sess.displayName || sess.uid
-            };
+            State.user = { uid: sess.uid || sess.username, username: sess.username, displayName: sess.displayName };
 
             UI.setLoad(40, "Connecting to Backend");
-            
             await ApiClient.call('status', { status: 'online' });
             
             document.getElementById('loginModal').classList.remove('show');
             UI.setLoad(70, "Syncing Channels");
 
             PollingManager.start();
+            SearchManager.init();
+            ScrollManager.init();
+            ContextMenu.init();
+            Router.init();
             
-            setTimeout(() => {
+            setTimeout(async () => {
+                UI.setLoad(95, "Opening conversation");
+                await Router.resolvePendingRoute();
                 UI.setLoad(100, "Ready");
                 if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('hidden');
                 else document.getElementById('sidebar').classList.remove('hidden');
-                SearchManager.init();
-            }, 800);
+            }, 1000);
+
+            const inp = document.getElementById('msgInput');
+            if (inp) {
+                inp.addEventListener('input', () => {
+                    let txt = inp.innerText;
+                    if(txt.length > 100) { inp.innerText = txt.substring(0, 100); Utils.setCaretToEnd(inp); txt = inp.innerText; }
+                    const cc = document.getElementById('charCounter');
+                    cc.innerText = `${txt.length}/100`;
+                    cc.className = txt.length === 100 ? 'danger' : (txt.length >= 80 ? 'warn' : '');
+
+                    if(State.activeChannelId) localStorage.setItem('draft_' + State.activeChannelId, txt);
+
+                    if(State.activeChannelId && State.activeType) {
+                        ApiClient.call('typing', { cid: State.activeChannelId, type: State.activeType, isTyping: true });
+                        clearTimeout(State.typingTimeout);
+                        State.typingTimeout = setTimeout(() => {
+                            if(State.activeChannelId) ApiClient.call('typing', { cid: State.activeChannelId, type: State.activeType, isTyping: false });
+                        }, 3000);
+                    }
+                });
+                inp.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ComposerManager.send(); } });
+            }
 
         } catch (err) {
             console.error("[BSMS Web :: Auth]", err);
@@ -735,73 +1226,6 @@ const AuthManager = {
     reject: function() {
         UI.setLoad(100, "Ready");
         document.getElementById('loginModal').classList.add('show');
-    }
-};
-
-const GroupManager = {
-    showCreateModal: () => {
-        document.getElementById('newGroupName').value = '';
-        UI.openModal('createGroupModal');
-        document.getElementById('plusMenu').classList.remove('show');
-    },
-    showJoinModal: () => {
-        document.getElementById('joinGroupCode').value = '';
-        UI.openModal('joinGroupModal');
-        document.getElementById('plusMenu').classList.remove('show');
-    },
-    create: async () => {
-        const name = document.getElementById('newGroupName').value.trim();
-        if (name.length < 3 || name.length > 30) return UI.showError("Group name must be 3-30 characters.");
-        try {
-            const res = await ApiClient.call('createGroup', { name });
-            UI.closeModal('createGroupModal');
-            if (res && res.cid) ChatManager.open(res.cid);
-            PollingManager.syncGlobal();
-        } catch(e) { UI.showError(e.message || "Failed to create group."); }
-    },
-    join: async () => {
-        const code = document.getElementById('joinGroupCode').value.trim().toUpperCase();
-        if (!code) return UI.showError("Please enter a valid code.");
-        try {
-            const res = await ApiClient.call('joinGroup', { code });
-            UI.closeModal('joinGroupModal');
-            if (res && res.cid) ChatManager.open(res.cid);
-            PollingManager.syncGlobal();
-        } catch(e) { UI.showError(e.message || "Failed to join group."); }
-    },
-    showInfo: () => {
-        if (!State.activeChannelId || State.activeType !== 'gcs') return;
-        const c = State.channels[State.activeChannelId];
-        if (!c) return;
-        
-        document.getElementById('giName').innerText = c.name || "Group";
-        document.getElementById('giMembers').innerText = `Members: ${Object.keys(c.members || {}).length}`;
-        
-        const inviteSec = document.getElementById('giInviteSection');
-        if (c.config && c.config.joinCode) {
-            inviteSec.style.display = 'block';
-            document.getElementById('giCode').innerText = c.config.joinCode;
-        } else {
-            inviteSec.style.display = 'none';
-        }
-        
-        UI.openModal('groupInfoModal');
-    },
-    copyCode: () => {
-        const code = document.getElementById('giCode').innerText;
-        if(code && code !== '------') {
-            navigator.clipboard.writeText(code);
-            UI.toast("Invite code copied!");
-        }
-    },
-    leaveGroup: async () => {
-        if (!confirm("Are you sure you want to leave this group?")) return;
-        try {
-            await ApiClient.call('leaveGroup', { cid: State.activeChannelId });
-            UI.closeModal('groupInfoModal');
-            ChatManager.close();
-            PollingManager.syncGlobal();
-        } catch(e) { UI.showError(e.message || "Failed to leave group."); }
     }
 };
 
@@ -819,14 +1243,10 @@ const SearchManager = {
 
                 State.searchTimeout = setTimeout(() => {
                     let matches = [];
-                    // FIX: Loop through ALL accounts from accountsCache, not just online usersCache
                     for(let uid in State.accountsCache) {
-                        if (uid === State.user.uid) continue;
-                        
+                        if (uid === State.user.uid || uid === BOT_UID) continue;
                         const acc = State.accountsCache[uid];
-                        // Match against both display name and strict username
                         const searchable = `${acc.displayName || ""} @${acc.username || ""}`.toLowerCase();
-                        
                         if (searchable.includes(q)) {
                             matches.push({
                                 uid: uid,
@@ -837,7 +1257,7 @@ const SearchManager = {
                             });
                         }
                     }
-                    SearchManager.renderResults(matches);
+                    this.renderResults(matches);
                 }, 200);
             });
         }
@@ -845,6 +1265,36 @@ const SearchManager = {
         document.addEventListener('click', e => {
             if (!e.target.closest('.search-box') && res) res.classList.remove('show');
         });
+
+        const invInp = document.getElementById('inviteSearchInput');
+        if(invInp) {
+            invInp.addEventListener('input', () => {
+                clearTimeout(State.inviteSearchTimeout);
+                const q = invInp.value.trim().toLowerCase().replace(/^@/, '');
+                const r = document.getElementById('inviteSearchResults');
+                if(q.length < 2) { r.innerHTML = ''; return; }
+                State.inviteSearchTimeout = setTimeout(() => {
+                    const c = State.channels[State.activeChannelId];
+                    let matches = [];
+                    for(let uid in State.accountsCache) {
+                        if(uid === State.user.uid || uid === BOT_UID) continue;
+                        const acc = State.accountsCache[uid];
+                        const searchable = `${acc.displayName || ""} @${acc.username || ""}`.toLowerCase();
+                        if(searchable.includes(q) && (!c.members || !c.members[uid])) {
+                            matches.push({ uid, displayName: acc.displayName || acc.username || uid });
+                        }
+                    }
+                    let html = '';
+                    matches.slice(0,10).forEach(u => {
+                        html += `<div class="member-item" style="cursor:pointer;" onclick="GroupManager.sendInvite('${u.uid}')">
+                            <div class="member-info"><div style="font-weight:bold;color:var(--fg);">${Utils.escapeHTML(u.displayName)}</div></div>
+                            <button class="btn" style="width:auto;padding:4px 10px;font-size:0.9rem;">Invite</button>
+                        </div>`;
+                    });
+                    r.innerHTML = html || `<div style="color:var(--fg2);text-align:center;">No users found</div>`;
+                }, 200);
+            });
+        }
     },
 
     renderResults: function(matches) {
@@ -856,7 +1306,7 @@ const SearchManager = {
             let html = '';
             matches.slice(0,10).forEach(u => {
                 const dot = u.online ? `<div class="status-dot online"></div>` : `<div class="status-dot"></div>`;
-                const avHtml = u.avatar ? `<img src="${Utils.escapeHTML(u.avatar)}">` : (u.displayName || u.username).charAt(0).toUpperCase();
+                const avHtml = u.avatar ? `<img src="${Utils.escapeHTML(u.avatar)}">` : u.displayName.charAt(0).toUpperCase();
                 html += `
                 <div class="search-item" onclick="SearchManager.startDM('${u.uid}')">
                     <div class="c-av" style="width:40px; height:40px; font-size:1.2rem;">
@@ -877,23 +1327,13 @@ const SearchManager = {
     startDM: async function(targetUid) {
         if(document.getElementById('searchInput')) document.getElementById('searchInput').value = "";
         if(document.getElementById('searchResults')) document.getElementById('searchResults').classList.remove('show');
-
-        let existingId = null;
-        for(let id in State.channels) {
-            const c = State.channels[id];
-            if(c._type === 'dms' && c.members && c.members[State.user.uid] && c.members[targetUid]) { 
-                existingId = id; break; 
+        try {
+            const res = await ApiClient.call('startDM', { targetUid });
+            if (res && res.cid) {
+                await PollingManager.syncGlobal();
+                ChatManager.open(res.cid);
             }
-        }
-
-        if (existingId) {
-            ChatManager.open(existingId);
-        } else {
-            try {
-                const res = await ApiClient.call('startDM', { targetUid });
-                if (res && res.cid) ChatManager.open(res.cid);
-            } catch(e) { UI.showError("Failed to start conversation."); }
-        }
+        } catch(e) { UI.showError("Failed to start conversation."); }
     }
 };
 
@@ -906,23 +1346,26 @@ const SidebarManager = {
             const c = State.channels[id];
             let sortTime = c.config?.createdAt || 0;
             let previewText = "New conversation";
+            let unread = false;
 
             if (c.messages) {
-                // FIX: Protect against null array items
-                let msgs = Object.keys(c.messages)
-                    .map(mid => ({mid, ...c.messages[mid]}))
-                    .filter(m => m && m.timestamp); 
-                
+                let msgs = Object.keys(c.messages).map(mid => ({mid, ...c.messages[mid]}));
                 msgs.sort((a,b) => a.timestamp - b.timestamp);
                 if (msgs.length > 0) {
                     const lastM = msgs[msgs.length - 1];
                     sortTime = lastM.timestamp;
+
                     if (lastM.status?.deletedByMod) previewText = "[Deleted by Moderator]";
                     else if (lastM.status?.unsent) previewText = "Message unsent";
+                    else if (lastM.contentType === 'audio') previewText = "Voice message";
+                    else if (lastM.contentType === 'file') previewText = "File attachment";
+                    else if (lastM.contentType === 'poll') previewText = "Poll";
                     else previewText = Utils.escapeHTML(lastM.content);
+
+                    if (lastM.senderUid !== State.user.uid && (!lastM.readReceipts || lastM.readReceipts[State.user.uid] !== true)) unread = true;
                 }
             }
-            return { id, c, sortTime, preview: previewText };
+            return { id, c, sortTime, preview: previewText, unread };
         });
 
         arr.sort((a, b) => b.sortTime - a.sortTime);
@@ -933,58 +1376,98 @@ const SidebarManager = {
             let title = c.name;
             let isOnline = false;
             let avHtml = "?";
+            let isOfficial = false;
 
             if (c._type === 'dms') {
-                const otherUid = Object.keys(c.members || {}).find(u => u !== State.user.uid);
-                if (otherUid) {
+                const otherUid = Object.keys(c.members).find(u => u !== State.user.uid);
+                if (otherUid === BOT_UID) {
+                    title = "BSMS Web";
+                    avHtml = `<img src="${BOT_PFP}">`;
+                    isOfficial = true;
+                } else if (otherUid) {
                     const acc = State.accountsCache[otherUid] || {};
                     title = acc.displayName || acc.username || otherUid;
                     isOnline = State.usersCache[otherUid]?.status === 'online';
                     avHtml = acc.avatar ? `<img src="${Utils.escapeHTML(acc.avatar)}">` : title.charAt(0).toUpperCase();
                 } else {
                     title = "Unknown User";
+                    avHtml = title.charAt(0).toUpperCase();
                 }
             } else {
-                title = c.name || "Group";
-                avHtml = title.charAt(0).toUpperCase();
+                if (c.config?.icon) avHtml = `<img src="${Utils.escapeHTML(c.config.icon)}">`;
+                else avHtml = title ? title.charAt(0).toUpperCase() : "?";
             }
 
             const activeCls = State.activeChannelId === id ? 'active' : '';
-            const dot = (c._type === 'dms') ? `<div class="status-dot ${isOnline ? 'online' : ''}"></div>` : '';
+            const unreadCls = item.unread ? 'unread' : '';
+            const dot = (c._type === 'dms' && !isOfficial) ? `<div class="status-dot ${isOnline ? 'online' : ''}"></div>` : '';
+            const badge = item.unread ? `<div class="unread-badge"></div>` : '';
+            const offCls = isOfficial ? 'official' : '';
 
             html += `
-            <div class="chat-row ${activeCls}" onclick="ChatManager.open('${id}')">
-                <div class="c-av">
+            <div class="chat-row ${activeCls} ${unreadCls}" onclick="ChatManager.open('${id}')">
+                <div class="c-av ${offCls}">
                     <div class="c-av-inner">${avHtml}</div>
                     ${dot}
                 </div>
                 <div class="c-info">
-                    <div class="c-name">${Utils.escapeHTML(title)}</div>
+                    <div class="c-name">${Utils.escapeHTML(title)} ${isOfficial ? '<span class="bot-badge">Official</span>' : ''}</div>
                     <div class="c-prev">${item.preview}</div>
                 </div>
+                ${badge}
             </div>`;
         });
 
         list.innerHTML = html || `<div style="text-align:center; padding:24px; color:var(--fg2);">No conversations yet.</div>`;
     },
+    togglePlusMenu: function() { document.getElementById('plusMenu').classList.toggle('show'); },
     hideMobile: function() {
         document.getElementById('sidebar').classList.add('hidden');
+        document.getElementById('mobSidebarOverlay').style.display = 'none';
     },
     showMobile: function() {
         document.getElementById('sidebar').classList.remove('hidden');
+        document.getElementById('mobSidebarOverlay').style.display = 'block';
     }
 };
 
+document.addEventListener('click', e => {
+    if(!e.target.closest('#plusMenu') && !e.target.closest('.side-title-row .icon-btn')) {
+        const pm = document.getElementById('plusMenu');
+        if(pm) pm.classList.remove('show');
+    }
+});
+
 const ScrollManager = {
+    observer: null,
     init: function() {
         const feed = document.getElementById('chatLog');
         if(feed) {
             feed.addEventListener('scroll', () => {
-                State.isScrolledUp = (feed.scrollHeight - feed.scrollTop) > (feed.clientHeight + 10);
+                State.isScrolledUp = (feed.scrollHeight - feed.scrollTop - feed.clientHeight) > 80;
                 if (!State.isScrolledUp) {
                     document.getElementById('smartScrollPill').classList.remove('show');
                 }
             });
+
+            this.observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const msgId = entry.target.id.replace('msg-', '');
+                        const cid = State.activeChannelId;
+                        if(cid && State.channels[cid] && State.channels[cid].messages && State.channels[cid].messages[msgId]) {
+                            const m = State.channels[cid].messages[msgId];
+                            const type = State.channels[cid]._type;
+                            if (m.senderUid !== State.user.uid && (!m.readReceipts || m.readReceipts[State.user.uid] !== true)) {
+                                ApiClient.call('readReceipt', { cid, type, msgId });
+                                m.readReceipts = m.readReceipts || {};
+                                m.readReceipts[State.user.uid] = true;
+                                ChatManager.updateReadReceipts();
+                            }
+                        }
+                    }
+                });
+            }, { root: feed, threshold: 0.5 });
         }
     },
     scrollToBottom: function(smooth = false) {
@@ -999,20 +1482,21 @@ const ScrollManager = {
     },
     scrollToPin: function() {
         const pb = document.getElementById('pinnedBanner');
-        if(pb && pb.dataset.msgid) {
-            const el = document.getElementById(`msg-${pb.dataset.msgid}`);
-            if (el) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                el.style.animation = 'none'; el.offsetHeight;
-                el.style.animation = 'highlightPin 1.5s ease';
-            }
+        if(pb && pb.dataset.msgid) this.scrollToMessage(pb.dataset.msgid);
+    },
+    scrollToMessage: function(msgId) {
+        const el = document.getElementById(`msg-${msgId}`);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.style.animation = 'none';
+            el.offsetHeight;
+            el.style.animation = 'highlightPin 1.5s ease';
         }
     }
 };
 
 const ChatManager = {
-    open: async function(cid) {
-        // FIX: Wrap inside Try/Catch so a rendering crash doesn't permanently break the UI state
+    open: function(cid) {
         try {
             if (State.activeChannelId === cid) { if(window.innerWidth <= 768) SidebarManager.hideMobile(); return; }
             this.close();
@@ -1026,7 +1510,20 @@ const ChatManager = {
 
             UI.hide('emptyState');
             UI.show('chatHeader');
-            UI.show('composerWrap');
+
+            if(c._type === 'dms') {
+                const otherUid = Object.keys(c.members).find(id => id !== State.user.uid);
+                if(otherUid === BOT_UID) {
+                    UI.hide('composerWrap'); UI.show('sysBotNotice');
+                } else {
+                    UI.show('composerWrap'); UI.hide('sysBotNotice');
+                }
+                UI.hide('btnLeaveGroup');
+                Router.setHash('dm', cid);
+            } else {
+                UI.show('composerWrap'); UI.hide('sysBotNotice'); UI.show('btnLeaveGroup');
+                Router.setHash('gc', cid);
+            }
 
             if (window.innerWidth <= 768) SidebarManager.hideMobile();
 
@@ -1034,16 +1531,17 @@ const ChatManager = {
             document.getElementById('msgInput').innerText = draft;
             const cc = document.getElementById('charCounter');
             cc.innerText = `${draft.length}/100`;
+            cc.className = draft.length === 100 ? 'danger' : (draft.length >= 80 ? 'warn' : '');
 
             this.updateHeader();
             SidebarManager.render();
 
             document.getElementById('chatLog').innerHTML = '';
             State.lastRenderedDate = null;
-            c.messages = {}; // Flush local to force fresh render
+            c.messages = {}; // Flush for fresh render
 
             clearInterval(State.msgInterval);
-            PollingManager.syncMessages(); // Immediate fetch
+            PollingManager.syncMessages();
             State.msgInterval = setInterval(PollingManager.syncMessages, 2500);
         } catch (e) {
             console.error("[BSMS Web] Failed to open chat:", e);
@@ -1053,13 +1551,15 @@ const ChatManager = {
 
     close: function() {
         if (!State.activeChannelId) return;
-        
+
         ApiClient.call('typing', { cid: State.activeChannelId, type: State.activeType, isTyping: false });
         clearInterval(State.msgInterval);
 
         State.activeChannelId = null;
         State.activeType = null;
         ComposerManager.cancelReply();
+        ComposerManager.cancelEdit();
+        AudioManager.cancelRecording();
         ContextMenu.close();
 
         UI.show('emptyState');
@@ -1068,7 +1568,12 @@ const ChatManager = {
         UI.hide('sysBotNotice');
         UI.hide('pinnedBanner');
         document.getElementById('chatLog').innerHTML = '';
+        Router.clearHash();
         SidebarManager.render();
+
+        const mv = document.getElementById('mainView');
+        mv.style.removeProperty('--chat-bg'); mv.style.removeProperty('--chat-fg');
+        mv.style.removeProperty('--chat-accent'); mv.style.removeProperty('--chat-wp'); mv.style.removeProperty('--chat-wp-dim');
     },
 
     updateHeader: function() {
@@ -1076,39 +1581,60 @@ const ChatManager = {
         const c = State.channels[State.activeChannelId];
         const nEl = document.getElementById('activeChatName');
         const sEl = document.getElementById('activeChatStatus');
-        const infoBtn = document.getElementById('btnChatInfo');
+        const mv = document.getElementById('mainView');
+
+        if(c._type === 'gcs' && c.config?.theme) {
+            mv.style.setProperty('--chat-fg', c.config.theme.text || 'var(--fg)');
+            mv.style.setProperty('--chat-accent', c.config.theme.accent || 'var(--accent)');
+            if(c.config.theme.background) {
+                if(c.config.theme.background.startsWith('data:')) {
+                    mv.style.setProperty('--chat-wp', `url(${Utils.escapeHTML(c.config.theme.background)})`);
+                    mv.style.setProperty('--chat-wp-dim', '0.55'); mv.style.setProperty('--chat-bg', 'transparent');
+                } else {
+                    mv.style.setProperty('--chat-bg', c.config.theme.background);
+                    mv.style.removeProperty('--chat-wp'); mv.style.removeProperty('--chat-wp-dim');
+                }
+            }
+        } else {
+            mv.style.removeProperty('--chat-fg'); mv.style.removeProperty('--chat-accent');
+            mv.style.removeProperty('--chat-bg'); mv.style.removeProperty('--chat-wp'); mv.style.removeProperty('--chat-wp-dim');
+        }
 
         if (c._type === 'dms') {
-            const otherUid = Object.keys(c.members || {}).find(id => id !== State.user.uid);
-            const acc = State.accountsCache[otherUid] || { displayName: "Unknown User" };
-            nEl.innerText = acc.displayName;
-            const oStatus = State.usersCache[otherUid]?.status === 'online';
-            sEl.innerText = oStatus ? "Online" : "Offline";
-            sEl.style.color = oStatus ? "#22c55e" : "var(--fg2)";
-            
-            infoBtn.style.display = 'none';
+            const otherUid = Object.keys(c.members).find(id => id !== State.user.uid);
+            if (otherUid === BOT_UID) {
+                nEl.innerHTML = `BSMS Web <span class="bot-badge">Official</span>`;
+                sEl.innerText = "System Account";
+            } else {
+                const acc = State.accountsCache[otherUid] || { displayName: otherUid };
+                nEl.innerText = acc.displayName;
+                const oStatus = State.usersCache[otherUid]?.status === 'online';
+                sEl.innerText = oStatus ? "Online" : "Offline";
+                sEl.style.color = oStatus ? "#22c55e" : "var(--fg2)";
+            }
+            UI.show('btnGroupSettings');
             document.getElementById('activeChatInfo').classList.remove('clickable');
             document.getElementById('activeChatInfo').onclick = null;
         } else {
             nEl.innerText = c.name || "Group";
-            sEl.innerText = `${Object.keys(c.members || {}).length} members`;
+            let onlineCount = 0;
+            for(let mId in c.members) { if(State.usersCache[mId]?.status === 'online') onlineCount++; }
+            sEl.innerText = `${Object.keys(c.members).length} members - ${onlineCount} online`;
             sEl.style.color = "var(--fg2)";
-            
-            infoBtn.style.display = 'flex';
+            UI.show('btnGroupSettings');
             document.getElementById('activeChatInfo').classList.add('clickable');
-            document.getElementById('activeChatInfo').onclick = GroupManager.showInfo;
+            document.getElementById('activeChatInfo').onclick = () => GroupManager.openMembersList();
         }
 
         const pb = document.getElementById('pinnedBanner');
         let pinnedFound = false;
         if(c.messages) {
             for(let mid in c.messages) {
-                const m = c.messages[mid];
-                if (!m) continue; // FIX: Protect against null array iterations
-                if(m.status?.pinned) {
+                if(c.messages[mid].status?.pinned) {
+                    const m = c.messages[mid];
                     pb.style.display = 'flex';
                     pb.dataset.msgid = mid;
-                    document.getElementById('pinnedText').innerText = m.status.deletedByMod ? "Deleted message" : (m.status.unsent ? "Unsent message" : m.content);
+                    document.getElementById('pinnedText').innerText = m.contentType === 'audio' ? "Voice message" : (m.contentType === 'file' ? "Attachment" : (m.status.deletedByMod ? "Deleted message" : (m.status.unsent ? "Unsent message" : (m.contentType === 'poll' ? m.content.pollQuestion : m.content))));
                     pinnedFound = true;
                     if (State.currentRole === 'owner' || State.currentRole === 'moderator') UI.show('btnUnpinBtn');
                     else UI.hide('btnUnpinBtn');
@@ -1117,6 +1643,31 @@ const ChatManager = {
             }
         }
         if(!pinnedFound) pb.style.display = 'none';
+    },
+
+    updateReadReceipts: function() {
+        if (!State.activeChannelId) return;
+        document.querySelectorAll('.msg-status').forEach(el => el.innerText = "");
+        const myEls = document.querySelectorAll('.msg-row.mine');
+        if (myEls.length === 0) return;
+
+        const lastEl = myEls[myEls.length - 1];
+        const mId = lastEl.id.replace('msg-', '');
+
+        const c = State.channels[State.activeChannelId];
+        if (c && c.messages && c.messages[mId]) {
+            const m = c.messages[mId];
+            const stat = document.getElementById(`stat-${mId}`);
+            if (!stat) return;
+
+            const readCount = m.readReceipts ? Object.values(m.readReceipts).filter(v => v === true).length : 1;
+            if (readCount > 1) {
+                if (c._type === 'dms') stat.innerText = "Read";
+                else stat.innerText = `Read by ${readCount - 1} users`;
+            } else {
+                stat.innerText = "Delivered";
+            }
+        }
     },
 
     mergeMessages: function(newMsgs) {
@@ -1129,31 +1680,38 @@ const ChatManager = {
 
         for (let mid in newMsgs) {
             const m = newMsgs[mid];
-            if (!m) continue; // FIX: Protect against null array iterations
+            if (!m) continue;
 
             if (!c.messages[mid]) {
                 c.messages[mid] = m;
                 this.renderMessageNode(mid, m);
                 needsScroll = true;
                 lastSender = m.senderUid;
+                if (m.contentType === 'audio' && !m.status?.unsent && !m.status?.deletedByMod) AudioManager.bindPlayer(mid);
+                if(ScrollManager.observer) ScrollManager.observer.observe(document.getElementById(`msg-${mid}`));
+                if (m.senderUid !== State.user.uid && Date.now() - m.timestamp < 5000) AudioFX.receive();
             } else {
                 const old = c.messages[mid];
-                if (old.content !== m.content || JSON.stringify(old.status) !== JSON.stringify(m.status)) {
+                if (JSON.stringify(old) !== JSON.stringify(m)) {
                     c.messages[mid] = m;
                     const el = document.getElementById(`msg-${mid}`);
-                    if (el) el.outerHTML = this.buildMessageHTML(mid, m);
+                    if (el) {
+                        el.outerHTML = this.buildMessageHTML(mid, m);
+                        if (m.contentType === 'audio' && !m.status?.unsent && !m.status?.deletedByMod) AudioManager.bindPlayer(mid);
+                        if(ScrollManager.observer) ScrollManager.observer.observe(document.getElementById(`msg-${mid}`));
+                    }
                 }
             }
         }
         
         if (needsScroll) ScrollManager.onNewMessage(lastSender === State.user.uid);
+        this.updateReadReceipts();
         this.updateHeader();
     },
 
     renderMessageNode: function(msgId, m) {
         const log = document.getElementById('chatLog');
         const dStr = Utils.formatDateDivider(m.timestamp);
-
         if (dStr !== State.lastRenderedDate) {
             const div = document.createElement('div');
             div.className = 'date-div'; div.innerHTML = `<span>${dStr}</span>`;
@@ -1165,34 +1723,36 @@ const ChatManager = {
 
     buildMessageHTML: function(msgId, m) {
         const isMine = m.senderUid === State.user.uid;
+        const isSysBot = m.senderUid === BOT_UID;
         const c = State.channels[State.activeChannelId];
         const isGroup = c._type === 'gcs';
 
         let cls = isMine ? 'mine' : 'theirs';
+        if (isSysBot) cls += ' system-bot';
         if (m.status?.deletedByMod) cls += ' deleted';
 
         let html = `<div class="msg-row ${cls}" id="msg-${msgId}">`;
 
-        if (isGroup && !isMine) {
-            const acc = State.accountsCache[m.senderUid] || {};
-            const disp = acc.displayName || acc.username || m.senderUid;
-            html += `<div class="msg-author">${Utils.escapeHTML(disp)}</div>`;
+        if (isGroup && !isMine && !isSysBot) {
+            const disp = Utils.displayName(m.senderUid, c);
+            html += `<div class="msg-author" onclick="SearchManager.startDM('${m.senderUid}')">${Utils.escapeHTML(disp)}</div>`;
         }
+        if (isSysBot) html += `<div class="msg-author">BSMS Web <span class="bot-badge">Official</span></div>`;
 
         let content = '';
         if (m.status?.deletedByMod) {
-            content = `<div class="sys-msg" style="color:#ef4444; margin:0;">[Deleted by a moderator]</div>`;
+            content = `<div class="sys-msg" style="color:#ef4444; margin:0;">[This message was deleted by a moderator]</div>`;
             html += `<div class="msg-bubble-wrap">${content}</div>`;
         } else if (m.status?.unsent) {
-            content = `<div class="sys-msg" style="margin:0;">Message unsent</div>`;
+            const disp = Utils.displayName(m.senderUid, c);
+            content = `<div class="sys-msg" style="margin:0;">${Utils.escapeHTML(disp)} unsent a message</div>`;
             html += `<div class="msg-bubble-wrap">${content}</div>`;
         } else {
             if (m.status?.repliedTo && m.status.repliedTo !== false) {
                 const repMsg = c.messages[m.status.repliedTo];
                 if(repMsg) {
-                    const rAcc = State.accountsCache[repMsg.senderUid] || {};
-                    const repDisp = rAcc.displayName || rAcc.username || repMsg.senderUid;
-                    let repSnippet = repMsg.status?.unsent ? "Unsent" : (repMsg.status?.deletedByMod ? "Deleted" : repMsg.content);
+                    const repDisp = Utils.displayName(repMsg.senderUid, c);
+                    let repSnippet = repMsg.status?.unsent ? "Unsent message" : (repMsg.status?.deletedByMod ? "Deleted message" : (repMsg.contentType === 'text' ? repMsg.content : (repMsg.contentType === 'poll' ? repMsg.content.pollQuestion : (repMsg.contentType === 'audio' ? 'Voice message' : 'Attachment'))));
                     content += `<div class="quote-box" onclick="ScrollManager.scrollToMessage('${m.status.repliedTo}')">
                         <strong>${Utils.escapeHTML(repDisp)}</strong>
                         ${Utils.escapeHTML(repSnippet)}
@@ -1200,14 +1760,71 @@ const ChatManager = {
                 }
             }
 
-            content += `<div class="msg-text">${Utils.escapeHTML(m.content)}</div>`;
-            
-            const timeStr = Utils.timeAgo(m.timestamp);
+            if (m.contentType === 'audio') {
+                content += `
+                <div class="audio-player">
+                    <button class="ap-btn" id="ap-btn-${msgId}"><svg class="ic"><use href="#ico-play"></use></svg></button>
+                    <div class="ap-track"><div class="ap-progress" id="ap-prog-${msgId}"></div></div>
+                    <div class="ap-time" id="ap-time-${msgId}">0:00</div>
+                    <audio id="ap-src-${msgId}" src="${Utils.escapeHTML(m.content)}"></audio>
+                </div>`;
+            } else if (m.contentType === 'file') {
+                if(typeof m.content === 'string' && m.content.startsWith('data:image')) {
+                    content += `<img src="${Utils.escapeHTML(m.content)}" style="max-width:100%; border-radius:12px; cursor:pointer;" onclick="window.open('${Utils.escapeHTML(m.content)}')">`;
+                } else {
+                    content += `<div style="display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.2);padding:10px;border-radius:12px;"><svg class="ic"><use href="#ico-file"></use></svg> ${Utils.escapeHTML(m.attachmentName || 'Attachment')}</div>`;
+                }
+            } else if (m.contentType === 'poll') {
+                content += `<div style="font-weight:bold; margin-bottom:10px;">${Utils.escapeHTML(m.content.pollQuestion)}</div>`;
+                let totalVotes = m.content.pollVotes ? Object.keys(m.content.pollVotes).length : 0;
+
+                for(let optKey in m.content.pollOptions) {
+                    let optVotes = 0; let iVoted = false;
+                    if(m.content.pollVotes) {
+                        for(let u in m.content.pollVotes) {
+                            if(m.content.pollVotes[u] === optKey) {
+                                optVotes++;
+                                if(u === State.user.uid) iVoted = true;
+                            }
+                        }
+                    }
+                    const pct = totalVotes > 0 ? Math.round((optVotes / totalVotes) * 100) : 0;
+                    content += `
+                    <div class="poll-opt" style="border-color:${iVoted ? 'var(--chat-accent, var(--accent))' : 'transparent'};" onclick="ComposerManager.vote('${msgId}', '${optKey}')">
+                        <div class="bar" style="width:${pct}%;"></div>
+                        <div class="content"><span>${Utils.escapeHTML(m.content.pollOptions[optKey])}</span><span>${pct}%</span></div>
+                    </div>`;
+                }
+            } else {
+                content += `<div class="msg-text">${Utils.escapeHTML(m.content)}</div>`;
+            }
+
+            const timeStr = Utils.formatTime(m.timestamp);
+            const editStr = m.status?.edited ? `(Edited) ` : '';
+
             html += `<div class="msg-bubble-wrap">
-                <div class="msg-bubble">${content}<div class="msg-meta">${timeStr}</div></div>
-                <div class="msg-ctx-trigger" onclick="ContextMenu.open(event, '${msgId}')"><svg class="ic"><use href="#ico-dots"></use></svg></div>
-            </div>`;
+                <div class="msg-bubble">${content}<div class="msg-meta">${editStr}${timeStr}</div></div>`;
+            if (!isSysBot) html += `<div class="msg-ctx-trigger" onclick="ContextMenu.open(event, '${msgId}')"><svg class="ic"><use href="#ico-dots"></use></svg></div>`;
+
+            if(m.reactions) {
+                let rxCounts = {}; let selfReactions = {};
+                for(let u in m.reactions) {
+                    let e = m.reactions[u];
+                    rxCounts[e] = (rxCounts[e] || 0) + 1;
+                    if(u === State.user.uid) selfReactions[e] = true;
+                }
+                html += `<div class="rx-rack">`;
+                for(let e in rxCounts) {
+                    let rcls = selfReactions[e] ? 'rx-badge self' : 'rx-badge';
+                    html += `<div class="${rcls}" onclick="ContextMenu.react('${e}', '${msgId}')">${e} <span class="rx-count">${rxCounts[e]>1?rxCounts[e]:''}</span></div>`;
+                }
+                html += `</div>`;
+            }
+
+            html += `</div>`;
         }
+
+        if (isMine) html += `<div class="msg-status" id="stat-${msgId}"></div>`;
         html += `</div>`;
         return html;
     },
@@ -1217,87 +1834,269 @@ const ChatManager = {
         if (!members) { ind.innerText = ""; return; }
 
         let active = [];
+        const c = State.channels[State.activeChannelId];
         for (let uid in members) {
             if (uid !== State.user.uid && members[uid].isTyping) {
-                const acc = State.accountsCache[uid] || {};
-                active.push(acc.displayName || acc.username || uid);
+                active.push(Utils.displayName(uid, c));
             }
         }
 
         if (active.length === 0) ind.innerText = "";
         else if (active.length === 1) ind.innerText = `${active[0]} is typing...`;
+        else if (active.length === 2) ind.innerText = `${active[0]} and ${active[1]} are typing...`;
+        else if (active.length === 3) ind.innerText = `${active[0]}, ${active[1]}, and ${active[2]} are typing...`;
         else ind.innerText = "Several people are typing...";
     }
 };
 
 const ComposerManager = {
+    attachFile: function(e) {
+        const f = e.target.files[0];
+        if(!f) return;
+        if(f.size > 25*1024*1024) { UI.showError("File exceeds 25MB maximum limit."); return; }
+
+        const r = new FileReader();
+        r.onload = () => {
+            State.attachmentData = r.result;
+            State.attachmentName = f.name;
+            UI.show('attachmentPreview');
+            document.getElementById('attName').innerText = f.name;
+            if(f.type.startsWith('image/')) {
+                document.getElementById('attThmb').style.backgroundImage = `url(${State.attachmentData})`;
+                document.getElementById('attThmb').innerHTML = '';
+            } else {
+                document.getElementById('attThmb').style.backgroundImage = 'none';
+                document.getElementById('attThmb').innerHTML = `<svg class="ic" style="width:100%;height:100%;fill:#fff;"><use href="#ico-file"></use></svg>`;
+            }
+        };
+        r.readAsDataURL(f);
+    },
+    clearAttachment: function() {
+        State.attachmentData = null; State.attachmentName = null;
+        document.getElementById('fileUploadInput').value = '';
+        UI.hide('attachmentPreview');
+    },
+
     send: async function() {
         if (!State.activeChannelId) return;
         const c = State.channels[State.activeChannelId];
-        
-        const now = Date.now();
-        if (now - State.lastMessageTime < 5000) {
-            UI.toast("Please wait 5 seconds before sending another message.");
-            return;
-        }
+
+        if (c._type === 'dms' && State.isCooldown) { UI.toast("Please wait before sending another message."); return; }
 
         const inp = document.getElementById('msgInput');
         const txt = inp.innerText.trim().substring(0,100);
-        if (!txt) return;
+        if (!txt && !State.attachmentData) return;
 
         const btn = document.getElementById('btnSend');
 
-        State.lastMessageTime = now;
+        if (State.editContext) {
+            try {
+                btn.disabled = true;
+                await ApiClient.call('action', { action: 'edit', cid: c._id, type: c._type, msgId: State.editContext, content: txt });
+                this.cancelEdit();
+                PollingManager.syncMessages();
+            } catch(e) { UI.showError("Failed to edit message."); }
+            finally { btn.disabled = false; inp.focus(); }
+            return;
+        }
+
+        if(c._type === 'dms') {
+            State.isCooldown = true; btn.classList.add('greyed');
+            setTimeout(() => { State.isCooldown = false; btn.classList.remove('greyed'); }, 2000);
+        }
+
         btn.disabled = true;
-        btn.classList.add('greyed');
-        inp.contentEditable = false;
-        
-        setTimeout(() => { 
-            btn.disabled = false; 
-            btn.classList.remove('greyed'); 
-            inp.contentEditable = true;
-        }, 5000);
+        try {
+            await ApiClient.call('sendMessage', {
+                cid: c._id, type: c._type,
+                content: State.attachmentData || txt,
+                contentType: State.attachmentData ? 'file' : 'text',
+                attachmentName: State.attachmentName,
+                repliedTo: State.replyContext || false
+            });
+            AudioFX.send();
+            inp.innerText = "";
+            this.cancelReply();
+            this.clearAttachment();
+            document.getElementById('charCounter').innerText = "0/100";
+            document.getElementById('charCounter').className = "";
+            localStorage.removeItem('draft_' + c._id);
+            ApiClient.call('typing', { cid: c._id, type: c._type, isTyping: false });
+            PollingManager.syncMessages();
+        } catch(e) { UI.showError(e.message || "Failed to send message."); }
+        btn.disabled = false; inp.focus();
+    },
+
+    addPollOption: function() {
+        document.getElementById('pollOptionsContainer').insertAdjacentHTML('beforeend', `<input type="text" class="input-field" placeholder="Option" style="margin:0;" maxlength="60">`);
+    },
+
+    sendPoll: async function() {
+        if(!State.activeChannelId) return;
+        const q = document.getElementById('pollQuestion').value.trim();
+        const opts = Array.from(document.querySelectorAll('#pollOptionsContainer input')).map(i=>i.value.trim()).filter(v=>v);
+        if(!q || opts.length < 2) { UI.showError("Poll requires a question and at least 2 options."); return; }
+
+        const c = State.channels[State.activeChannelId];
+        let pollOpts = {};
+        opts.forEach((o, i) => pollOpts['option' + (i+1)] = o);
 
         try {
             await ApiClient.call('sendMessage', {
                 cid: c._id, type: c._type,
-                content: txt, repliedTo: State.replyContext || false
+                contentType: 'poll',
+                content: { pollQuestion: q, pollOptions: pollOpts, pollVotes: {} }
             });
-            inp.innerText = "";
-            this.cancelReply();
-            document.getElementById('charCounter').innerText = "0/100";
-            localStorage.removeItem('draft_' + c._id);
-            ApiClient.call('typing', { cid: c._id, type: c._type, isTyping: false });
-            
+            AudioFX.send();
+            UI.closeModal('pollModal');
+            document.getElementById('pollQuestion').value = '';
+            document.getElementById('pollOptionsContainer').innerHTML = `<input type="text" class="input-field" placeholder="Option 1" style="margin:0;" maxlength="60"><input type="text" class="input-field" placeholder="Option 2" style="margin:0;" maxlength="60">`;
             PollingManager.syncMessages();
-        } catch(e) { 
-            UI.showError(e.message || "Failed to send message."); 
-            State.lastMessageTime = 0; 
+        } catch(e) { UI.showError(e.message || "Failed to send poll."); }
+    },
+
+    vote: async function(msgId, optKey) {
+        const c = State.channels[State.activeChannelId];
+        try {
+            await ApiClient.call('action', { action: 'votePoll', cid: c._id, type: c._type, msgId: msgId, optKey: optKey });
+            AudioFX.react();
+            PollingManager.syncMessages();
+        } catch(e) {}
+    },
+
+    cancelReply: function() { State.replyContext = null; UI.hide('activeReplyBar'); },
+    cancelEdit: function() {
+        State.editContext = null;
+        document.getElementById('msgInput').innerText = localStorage.getItem('draft_' + State.activeChannelId) || "";
+    }
+};
+
+const AudioManager = {
+    recorder: null, chunks: [], activeAudio: null, timer: null, st: 0,
+    startRecording: function() {
+        if (!State.activeChannelId) return;
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+            this.chunks = [];
+            this.recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+
+            UI.hide('msgInput'); UI.hide('btnMic'); UI.hide('btnSend'); UI.hide('btnPoll');
+            UI.show('recUI');
+            AudioFX.startRec();
+
+            this.st = Date.now();
+            this.timer = setInterval(() => {
+                let el = Math.floor((Date.now() - this.st) / 1000);
+                if (el >= 60) this.finishRecording();
+                else document.getElementById('recTimer').innerText = Utils.formatDuration(el);
+            }, 1000);
+
+            this.recorder.ondataavailable = e => this.chunks.push(e.data);
+            this.recorder.start();
+        }).catch(e => { UI.toast("Microphone access denied."); });
+    },
+
+    finishRecording: function() {
+        if (this.recorder && this.recorder.state === 'recording') {
+            this.recorder.onstop = () => {
+                this.recorder.stream.getTracks().forEach(t => t.stop());
+                clearInterval(this.timer);
+
+                const blob = new Blob(this.chunks, { type: 'audio/webm' });
+                this.chunks = [];
+
+                if (blob.size > 0) {
+                    AudioFX.stopRec();
+                    UI.hide('recUI'); UI.show('previewUI');
+                    const url = URL.createObjectURL(blob);
+                    document.getElementById('prev-audio').src = url;
+                    document.getElementById('prev-audio').ontimeupdate = (e) => {
+                        const prog = document.querySelector('#previewUI .ap-progress');
+                        const a = e.target;
+                        if(a.duration) prog.style.width = (a.currentTime / a.duration) * 100 + "%";
+                    };
+                    document.getElementById('prev-audio').onended = () => {
+                        document.getElementById('prev-play-btn').innerHTML = `<svg class="ic"><use href="#ico-play"></use></svg>`;
+                        document.querySelector('#previewUI .ap-progress').style.width = "0%";
+                    };
+                } else { this.cancelRecording(); }
+            };
+            this.recorder.stop();
         }
     },
 
-    cancelReply: function() {
-        State.replyContext = null;
-        UI.hide('activeReplyBar');
+    togglePreviewPlay: function() {
+        const a = document.getElementById('prev-audio');
+        const btn = document.getElementById('prev-play-btn');
+        if(a.paused) { a.play(); btn.innerHTML = `<svg class="ic"><use href="#ico-pause"></use></svg>`; } 
+        else { a.pause(); btn.innerHTML = `<svg class="ic"><use href="#ico-play"></use></svg>`; }
+    },
+
+    sendPreview: function() {
+        const a = document.getElementById('prev-audio');
+        fetch(a.src).then(r => r.blob()).then(blob => {
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = async () => {
+                const c = State.channels[State.activeChannelId];
+                try {
+                    await ApiClient.call('sendMessage', {
+                        cid: c._id, type: c._type, contentType: 'audio', content: reader.result, repliedTo: State.replyContext || false
+                    });
+                    AudioFX.send(); this.cancelRecording(); ComposerManager.cancelReply();
+                    PollingManager.syncMessages();
+                } catch(e) { UI.showError("Failed to send voice message."); }
+            };
+        });
+    },
+
+    cancelRecording: function() {
+        if (this.recorder && this.recorder.state === 'recording') {
+            this.recorder.onstop = () => this.recorder.stream.getTracks().forEach(t => t.stop());
+            this.recorder.stop();
+        }
+        clearInterval(this.timer);
+        this.recorder = null; this.chunks = [];
+        const a = document.getElementById('prev-audio');
+        if(a) { a.pause(); a.src = ""; }
+
+        UI.show('msgInput'); UI.show('btnMic'); UI.show('btnSend'); UI.show('btnPoll');
+        UI.hide('recUI'); UI.hide('previewUI');
+    },
+
+    bindPlayer: function(msgId) {
+        const btn = document.getElementById(`ap-btn-${msgId}`);
+        const aud = document.getElementById(`ap-src-${msgId}`);
+        const prog = document.getElementById(`ap-prog-${msgId}`);
+        const timeEl = document.getElementById(`ap-time-${msgId}`);
+
+        if (!btn || !aud) return;
+
+        btn.onclick = () => {
+            if (this.activeAudio && this.activeAudio !== aud) {
+                this.activeAudio.pause(); this.activeAudio.currentTime = 0;
+                const prevId = this.activeAudio.id.replace('ap-src-', '');
+                const prevBtn = document.getElementById(`ap-btn-${prevId}`);
+                if(prevBtn) prevBtn.innerHTML = `<svg class="ic"><use href="#ico-play"></use></svg>`;
+            }
+            if (aud.paused) { aud.play(); btn.innerHTML = `<svg class="ic"><use href="#ico-pause"></use></svg>`; this.activeAudio = aud; } 
+            else { aud.pause(); btn.innerHTML = `<svg class="ic"><use href="#ico-play"></use></svg>`; }
+        };
+
+        aud.ontimeupdate = () => {
+            let dur = aud.duration && aud.duration !== Infinity ? aud.duration : 1;
+            prog.style.width = (aud.currentTime / dur) * 100 + "%";
+            if(timeEl) timeEl.innerText = Utils.formatDuration(aud.currentTime);
+        };
+        aud.onended = () => { btn.innerHTML = `<svg class="ic"><use href="#ico-play"></use></svg>`; prog.style.width = "0%"; if(timeEl) timeEl.innerText = "0:00"; };
     }
 };
 
 const ContextMenu = {
     targetId: null,
     init: function() {
-        document.addEventListener('click', e => {
-            if (!e.target.closest('#ctxMenu') && !e.target.closest('.msg-ctx-trigger')) {
-                this.close();
-            }
-            if (!e.target.closest('#plusMenu') && !e.target.closest('#btnPlus')) {
-                document.getElementById('plusMenu').classList.remove('show');
-            }
-        });
+        document.addEventListener('click', e => { if (!e.target.closest('#ctxMenu') && !e.target.closest('.msg-ctx-trigger')) this.close(); });
     },
     open: function(e, msgId) {
-        if (!e || !e.currentTarget) return;
-        e.stopPropagation();
-
         this.targetId = msgId;
         const menu = document.getElementById('ctxMenu');
         const c = State.channels[State.activeChannelId];
@@ -1305,7 +2104,9 @@ const ContextMenu = {
         const isMine = m.senderUid === State.user.uid;
         const isMod = c._type === 'gcs' && (State.currentRole === 'owner' || State.currentRole === 'moderator');
 
+        document.getElementById('ctxBtnEdit').style.display = (isMine && m.contentType === 'text') ? 'flex' : 'none';
         document.getElementById('ctxBtnUnsend').style.display = isMine ? 'flex' : 'none';
+        document.getElementById('ctxBtnCopy').style.display = m.contentType === 'text' ? 'flex' : 'none';
         document.getElementById('ctxBtnMod').style.display = (isMod && !isMine) ? 'flex' : 'none';
         document.getElementById('ctxBtnPin').style.display = isMod ? 'flex' : 'none';
         document.getElementById('ctxPinText').innerText = c.messages[msgId]?.status?.pinned ? 'Unpin' : 'Pin';
@@ -1314,42 +2115,57 @@ const ContextMenu = {
         else document.getElementById('ctxDivDanger').style.display = 'none';
 
         menu.classList.add('show');
-        
-        const rect = e.currentTarget.getBoundingClientRect();
-        let y = rect.top;
-        let x = rect.left;
+        menu.style.top = '-9999px'; menu.style.left = '-9999px';
 
-        if (isMine) x -= (menu.offsetWidth + 10);
-        else x += rect.width + 10;
+        requestAnimationFrame(() => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            let y = rect.top - (menu.offsetHeight / 2) + (rect.height / 2);
+            let x = rect.left;
 
-        if (y + menu.offsetHeight > window.innerHeight) y = window.innerHeight - menu.offsetHeight - 10;
-        if (x < 10) x = 10;
+            if (isMine) x -= (menu.offsetWidth + 10);
+            else x += rect.width + 10;
 
-        menu.style.top = y + 'px';
-        menu.style.left = x + 'px';
+            if (y < 10) y = 10;
+            if (y + menu.offsetHeight > window.innerHeight) y = window.innerHeight - menu.offsetHeight - 10;
+            if (x < 10) x = 10;
+            if (x + menu.offsetWidth > window.innerWidth) x = window.innerWidth - menu.offsetWidth - 10;
+
+            menu.style.top = y + 'px'; menu.style.left = x + 'px';
+        });
     },
-    close: function() {
-        document.getElementById('ctxMenu').classList.remove('show');
-        this.targetId = null;
+    close: function() { document.getElementById('ctxMenu').classList.remove('show'); this.targetId = null; },
+    react: async function(emoji, explicitTarget = null) {
+        const mId = explicitTarget || this.targetId;
+        if (!mId || !State.activeChannelId) return;
+        const c = State.channels[State.activeChannelId];
+        try {
+            await ApiClient.call('action', { action: 'react', cid: c._id, type: c._type, msgId: mId, emoji: emoji });
+            AudioFX.react(); PollingManager.syncMessages();
+        } catch(e) {}
+        this.close();
     },
     reply: function() {
         if (!this.targetId || !State.activeChannelId) return;
         const c = State.channels[State.activeChannelId];
         const m = c.messages[this.targetId];
         State.replyContext = this.targetId;
-
-        const acc = State.accountsCache[m.senderUid] || {};
-        const disp = acc.displayName || acc.username || m.senderUid;
-        document.getElementById('rplName').innerText = disp;
-        document.getElementById('rplText').innerText = m.content;
-        UI.show('activeReplyBar');
+        document.getElementById('rplName').innerText = Utils.displayName(m.senderUid, c);
+        document.getElementById('rplText').innerText = m.contentType === 'audio' ? 'Voice message' : (m.contentType === 'file' ? 'Attachment' : (m.contentType === 'poll' ? 'Poll' : m.content));
+        UI.show('activeReplyBar'); document.getElementById('msgInput').focus();
+        this.close();
+    },
+    edit: function() {
+        if (!this.targetId || !State.activeChannelId) return;
+        State.editContext = this.targetId;
+        const c = State.channels[State.activeChannelId];
+        document.getElementById('msgInput').innerText = c.messages[this.targetId].content;
+        Utils.setCaretToEnd(document.getElementById('msgInput'));
         document.getElementById('msgInput').focus();
         this.close();
     },
     unsend: async function() {
         if (!this.targetId || !State.activeChannelId) return;
-        const id = this.targetId;
-        const c = State.channels[State.activeChannelId];
+        const id = this.targetId; const c = State.channels[State.activeChannelId];
         try {
             await ApiClient.call('action', { action: 'unsend', cid: c._id, type: c._type, msgId: id });
             PollingManager.syncMessages();
@@ -1358,8 +2174,8 @@ const ContextMenu = {
     },
     moderate: async function() {
         if (!this.targetId || !State.activeChannelId) return;
-        const id = this.targetId;
-        const c = State.channels[State.activeChannelId];
+        const id = this.targetId; const c = State.channels[State.activeChannelId];
+        if(c._type !== 'gcs') return;
         try {
             await ApiClient.call('action', { action: 'moderate', cid: c._id, type: c._type, msgId: id });
             PollingManager.syncMessages();
@@ -1370,10 +2186,7 @@ const ContextMenu = {
         if (!this.targetId || !State.activeChannelId) return;
         const c = State.channels[State.activeChannelId];
         const m = c.messages[this.targetId];
-        if(m.content) {
-            navigator.clipboard.writeText(m.content);
-            UI.toast("Message copied!");
-        }
+        if(m.contentType === 'text' && m.content) { navigator.clipboard.writeText(m.content); UI.toast("Message copied!"); }
         this.close();
     },
     pin: async function() {
@@ -1384,30 +2197,304 @@ const ContextMenu = {
             PollingManager.syncMessages();
         } catch(e) { UI.showError("Failed to pin."); }
         this.close();
+    },
+    unpin: async function(e) {
+        e.stopPropagation();
+        const pb = document.getElementById('pinnedBanner');
+        if(pb.dataset.msgid && State.activeChannelId) {
+            const c = State.channels[State.activeChannelId];
+            try {
+                await ApiClient.call('action', { action: 'pin', cid: c._id, type: c._type, msgId: pb.dataset.msgid });
+                PollingManager.syncMessages();
+            } catch(e) {}
+        }
     }
 };
 
-// Initialization Bindings
-document.getElementById('msgInput').addEventListener('input', (e) => {
-    let txt = e.target.innerText;
-    if(txt.length > 100) { e.target.innerText = txt.substring(0, 100); Utils.setCaretToEnd(e.target); txt = e.target.innerText; }
-    document.getElementById('charCounter').innerText = `${txt.length}/100`;
-    
-    if(State.activeChannelId && State.activeType) {
-        ApiClient.call('typing', { cid: State.activeChannelId, type: State.activeType, isTyping: true });
-        clearTimeout(State.typingTimeout);
-        State.typingTimeout = setTimeout(() => {
-            if(State.activeChannelId) ApiClient.call('typing', { cid: State.activeChannelId, type: State.activeType, isTyping: false });
-        }, 3000);
-    }
-});
-document.getElementById('msgInput').addEventListener('keydown', e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ComposerManager.send(); } });
+const GroupManager = {
+    create: async function() {
+        const name = document.getElementById('ngName').value.trim();
+        const jc = document.getElementById('ngCustomCode').value.trim();
+        if (!name) { UI.showError("Group name is required."); return; }
+        const btn = document.getElementById('btnCreateGroup'); btn.disabled = true;
 
-window.onload = () => {
-    ScrollManager.init();
-    ContextMenu.init();
-    AuthManager.init();
+        const file = document.getElementById('ngIcon').files[0];
+        const reqApp = document.getElementById('ngRequireApproval').checked;
+
+        const finalize = async (iconBase64) => {
+            try {
+                const res = await ApiClient.call('createGroup', { name, joinCode: jc, requireApproval: reqApp, icon: iconBase64 });
+                UI.closeModal('newGroupModal');
+                document.getElementById('ngName').value = ""; document.getElementById('ngIcon').value = ""; document.getElementById('ngCustomCode').value = "";
+                document.getElementById('gcCodeDisplay').innerText = res.joinCode || jc; 
+                UI.openModal('groupCreatedModal');
+                await PollingManager.syncGlobal(); ChatManager.open(res.cid);
+            } catch (e) { UI.showError(e.message || "Failed to create group."); }
+            finally { btn.disabled = false; }
+        };
+
+        if (file) {
+            if(file.size > 25*1024*1024) { UI.showError("File exceeds 25MB."); btn.disabled=false; return; }
+            const reader = new FileReader(); reader.readAsDataURL(file);
+            reader.onloadend = () => finalize(reader.result);
+        } else finalize(null);
+    },
+
+    joinWithCode: async function() {
+        const code = document.getElementById('jcInput').value.trim();
+        if(code.length < 3) { UI.showError("Invalid code."); return; }
+        try {
+            const res = await ApiClient.call('joinGroup', { code });
+            UI.closeModal('joinCodeModal');
+            if (res.requested) UI.toast("Request sent. Pending admin approval.");
+            else if (res.cid) { await PollingManager.syncGlobal(); ChatManager.open(res.cid); }
+        } catch(e) { UI.showError(e.message || "Failed to join group."); }
+    },
+
+    requestJoinById: async function(gcId) {
+        try {
+            const gc = await ApiClient.call('getGroupInfo', { cid: gcId });
+            if(gc.isMember) { UI.closeModal('joinOverlay'); ChatManager.open(gcId); return; }
+
+            document.getElementById('joinTitle').innerText = gc.name;
+            document.getElementById('joinDesc').innerText = "You have been invited to join this group.";
+            const av = document.getElementById('joinAvatar');
+            if(gc.icon) av.innerHTML = `<img src="${Utils.escapeHTML(gc.icon)}">`;
+            else av.innerText = (gc.name || '?').charAt(0).toUpperCase();
+
+            document.getElementById('btnJoinConfirm').onclick = () => this.confirmJoin(gcId, gc.requireApproval);
+            UI.openModal('joinOverlay');
+        } catch(e) { UI.showError(e.message || "Failed to load group."); Router.clearHash(); }
+    },
+
+    confirmJoin: async function(gcId, requireApproval) {
+        try {
+            await ApiClient.call('groupAction', { gAction: requireApproval ? 'requestJoin' : 'directJoin', cid: gcId });
+            UI.closeModal('joinOverlay'); Router.clearHash();
+            if(requireApproval) UI.toast("Request sent. Pending admin approval.");
+            else { await PollingManager.syncGlobal(); ChatManager.open(gcId); }
+        } catch(e) { UI.showError(e.message || "Failed to join group."); }
+    },
+
+    sendInvite: async function(targetUid) {
+        UI.toast("Invite sent!");
+        document.getElementById('inviteSearchResults').innerHTML = ''; document.getElementById('inviteSearchInput').value = '';
+        const c = State.channels[State.activeChannelId];
+        if(!c) return;
+        try {
+            const res = await ApiClient.call('startDM', { targetUid });
+            if (res.cid) {
+                await ApiClient.call('sendMessage', { cid: res.cid, type: 'dms', content: `You've been invited to join "${c.name}". Join code: ${c.config?.joinCode || '------'}`, contentType: 'text' });
+                await PollingManager.syncGlobal();
+            }
+        } catch(e) {}
+    },
+
+    openMembersList: function() {
+        if (!State.activeChannelId) return;
+        const c = State.channels[State.activeChannelId];
+        if (c._type !== 'gcs') return;
+        const list = document.getElementById('mlList'); let html = '';
+
+        if(c.config?.allowCustomNicknames !== false) {
+            UI.show('myNicknameSection'); document.getElementById('myNicknameInput').value = c.members[State.user.uid]?.nickname || '';
+        } else UI.hide('myNicknameSection');
+
+        for (let mId in c.members) {
+            let u = State.accountsCache[mId] || { displayName: mId };
+            let role = c.members[mId].role || 'member';
+            let nick = c.members[mId].nickname;
+            let disp = nick ? `${nick} (@${mId})` : `${u.displayName} (@${mId})`;
+
+            let act = '';
+            if (State.currentRole === 'owner' && mId !== State.user.uid) {
+                act = `
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <select onchange="GroupManager.setRole('${mId}', this.value)" style="background:var(--input-bg); border:1px solid var(--border); padding:4px; border-radius:8px; font-size:0.9rem;">
+                        <option value="member" ${role==='member'?'selected':''}>Member</option>
+                        <option value="moderator" ${role==='moderator'?'selected':''}>Moderator</option>
+                        <option value="transfer">Transfer Owner</option>
+                    </select>
+                    <button class="btn warn" style="width:auto; padding:4px 8px; font-size:0.9rem;" onclick="GroupManager.kick('${mId}')">Kick</button>
+                </div>`;
+            } else if (State.currentRole === 'moderator' && role === 'member') {
+                act = `
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="role-badge">${role}</span>
+                    <button class="btn warn" style="width:auto; padding:4px 8px; font-size:0.9rem;" onclick="GroupManager.kick('${mId}')">Kick</button>
+                </div>`;
+            } else { act = `<span class="role-badge">${role}</span>`; }
+
+            html += `
+            <div class="member-item">
+                <div class="member-info">
+                    <div class="c-av" style="width:40px; height:40px; font-size:1.1rem; cursor:default;">
+                        <div class="c-av-inner">${u.avatar ? `<img src="${Utils.escapeHTML(u.avatar)}">` : mId.charAt(0).toUpperCase()}</div>
+                    </div>
+                    <div style="line-height:1.2;">
+                        <div style="font-weight:bold; color:var(--fg);">${Utils.escapeHTML(disp)}</div>
+                    </div>
+                </div>
+                ${act}
+            </div>`;
+        }
+        list.innerHTML = html;
+        if(State.currentRole === 'owner' || State.currentRole === 'moderator') UI.show('btnInviteMembers'); else UI.hide('btnInviteMembers');
+        UI.openModal('membersListModal');
+    },
+
+    setRole: function(uid, role) {
+        if(role === 'transfer') {
+            UI.showConfirm(`Are you sure you want to transfer ownership to ${uid}?`, [{ text: "Cancel", sec: true }, { text: "Transfer", danger: true, cb: async () => {
+                await ApiClient.call('groupAction', { gAction: 'setRole', cid: State.activeChannelId, targetUid: uid, value: 'transfer' });
+                UI.closeModal('membersListModal'); PollingManager.syncGlobal();
+            }}]);
+        } else {
+            ApiClient.call('groupAction', { gAction: 'setRole', cid: State.activeChannelId, targetUid: uid, value: role }).then(()=>PollingManager.syncGlobal());
+        }
+    },
+
+    saveNickname: async function() {
+        const v = document.getElementById('myNicknameInput').value.trim();
+        try {
+            await ApiClient.call('groupAction', { gAction: 'saveNickname', cid: State.activeChannelId, value: v });
+            UI.toast("Nickname saved"); PollingManager.syncGlobal();
+        } catch(e) { UI.showError(e.message || "Failed to save nickname."); }
+    },
+
+    updateConfig: async function(key, val) {
+        if(State.activeChannelId && State.currentRole === 'owner') {
+            try { await ApiClient.call('groupAction', { gAction: 'updateConfig', cid: State.activeChannelId, configKey: key, value: val }); PollingManager.syncGlobal(); } catch(e) {}
+        }
+    },
+
+    updateIcon: function(e) {
+        if (!State.activeChannelId || State.currentRole !== 'owner') return;
+        const file = e.target.files[0]; if(!file) return;
+        if(file.size > 25*1024*1024) { UI.showError("File exceeds 25MB."); return; }
+        const r = new FileReader(); r.readAsDataURL(file);
+        r.onloadend = async () => {
+            try {
+                await ApiClient.call('groupAction', { gAction: 'updateIcon', cid: State.activeChannelId, value: r.result });
+                UI.toast("Group picture updated"); await PollingManager.syncGlobal(); UI.openSettings();
+            } catch(err) { UI.showError(err.message || "Failed to upload image."); }
+        };
+    },
+
+    regenerateCode: async function() {
+        if(State.currentRole !== 'owner') return;
+        let nCode = Utils.generateNumericId(6);
+        try {
+            await ApiClient.call('groupAction', { gAction: 'updateCode', cid: State.activeChannelId, value: nCode });
+            document.getElementById('gsCodeDisplayText').innerText = nCode; UI.toast("Code regenerated"); PollingManager.syncGlobal();
+        } catch(e) { UI.showError(e.message || "Failed to regenerate."); }
+    },
+
+    setCustomCode: async function() {
+        if(State.currentRole !== 'owner') return;
+        const v = document.getElementById('gsCustomCodeInput').value.trim();
+        if(!v) { UI.showError("Enter a join code first."); return; }
+        try {
+            await ApiClient.call('groupAction', { gAction: 'updateCode', cid: State.activeChannelId, value: v });
+            document.getElementById('gsCodeDisplayText').innerText = v; document.getElementById('gsCustomCodeInput').value = '';
+            UI.toast("Join code updated"); PollingManager.syncGlobal();
+        } catch(e) { UI.showError(e.message || "Failed to update code."); }
+    },
+
+    setThemeMode: function(mode) {
+        document.getElementById('themeModeColorBtn').classList.toggle('active', mode === 'color');
+        document.getElementById('themeModeImageBtn').classList.toggle('active', mode === 'image');
+        document.getElementById('themeColorWrap').style.display = mode === 'color' ? 'flex' : 'none';
+        document.getElementById('themeImageWrap').style.display = mode === 'image' ? 'block' : 'none';
+        document.getElementById('gsIconWrap').dataset.themeMode = mode;
+    },
+
+    saveTheme: function() {
+        if (!State.activeChannelId || State.currentRole !== 'owner') return;
+        const fg = document.getElementById('gsThemeFg').value; const ac = document.getElementById('gsThemeAccent').value;
+        const bgC = document.getElementById('gsThemeBgColor').value; const file = document.getElementById('gsThemeWpFile').files[0];
+        const mode = document.getElementById('gsIconWrap').dataset.themeMode || 'color';
+
+        const apply = async (bg) => {
+            try {
+                await ApiClient.call('groupAction', { gAction: 'saveTheme', cid: State.activeChannelId, value: { text: fg, accent: ac, background: bg } });
+                UI.toast("Theme saved."); PollingManager.syncGlobal();
+            } catch(e) { UI.showError(e.message || "Failed to apply theme."); }
+        };
+        if(mode === 'image' && file) {
+            if(file.size > 25*1024*1024) { UI.showError("File exceeds 25MB limit."); return; }
+            const r = new FileReader(); r.onload = () => apply(r.result); r.readAsDataURL(file);
+        } else if(mode === 'image') {
+            const c = State.channels[State.activeChannelId];
+            apply(c.config?.theme?.background && c.config.theme.background.startsWith('data:') ? c.config.theme.background : null);
+        } else apply(bgC);
+    },
+
+    renderRequests: function() {
+        const reqList = document.getElementById('gsRequestsList'); const c = State.channels[State.activeChannelId];
+        if(!c || !c.joinRequests || State.currentRole !== 'owner') { UI.hide('gsRequestsSection'); return; }
+
+        let html = '';
+        for(let uId in c.joinRequests) {
+            let u = c.joinRequests[uId];
+            html += `
+            <div class="member-item" style="border-color:var(--accent);">
+                <div class="member-info"><div style="font-weight:bold; color:var(--fg);">@${Utils.escapeHTML(u.username)}</div></div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn sec" style="width:auto; padding:4px 8px; font-size:0.9rem;" onclick="GroupManager.approveJoin('${uId}', false)">Deny</button>
+                    <button class="btn" style="width:auto; padding:4px 8px; font-size:0.9rem;" onclick="GroupManager.approveJoin('${uId}', true)">Approve</button>
+                </div>
+            </div>`;
+        }
+        if(html) { reqList.innerHTML = html; UI.show('gsRequestsSection'); } else { UI.hide('gsRequestsSection'); }
+    },
+
+    approveJoin: async function(targetUid, isApproved) {
+        if (!State.activeChannelId) return;
+        try {
+            await ApiClient.call('groupAction', { gAction: 'approveJoin', cid: State.activeChannelId, targetUid: targetUid, value: isApproved });
+            await PollingManager.syncGlobal(); if (State.currentRole === 'owner') UI.openSettings();
+        } catch(e) { UI.showError("Failed to process request."); }
+    },
+
+    rename: async function() {
+        const v = document.getElementById('gsRenameInput').value.trim();
+        if (v && State.activeChannelId) {
+            try { await ApiClient.call('groupAction', { gAction: 'rename', cid: State.activeChannelId, value: v }); UI.toast("Group renamed"); PollingManager.syncGlobal(); }
+            catch(e) { UI.showError(e.message || "Failed to rename group."); }
+        }
+    },
+
+    kick: function(id) {
+        UI.showConfirm("Remove this user from the group?", [{ text: "Cancel", sec: true }, { text: "Kick", danger: true, cb: async () => {
+            try {
+                await ApiClient.call('groupAction', { gAction: 'kick', cid: State.activeChannelId, targetUid: id });
+                await PollingManager.syncGlobal();
+                if(document.getElementById('membersListModal').classList.contains('show')) this.openMembersList();
+            } catch(e) { UI.showError(e.message || "Failed to kick."); }
+        }}]);
+    },
+
+    leaveGroup: function() {
+        if(State.currentRole === 'owner') {
+            UI.showConfirm("You are the owner. If you leave, the group will be permanently deleted unless you transfer ownership first.", [
+                { text: "Cancel", sec: true }, { text: "Transfer Owner", cb: () => GroupManager.openMembersList() },
+                { text: "Leave & Delete Group", danger: true, cb: async () => {
+                    try { await ApiClient.call('leaveGroup', { cid: State.activeChannelId }); await PollingManager.syncGlobal(); ChatManager.close(); } catch(e) { UI.showError("Failed to delete group."); }
+                }}
+            ], "Leave Group");
+        } else {
+            UI.showConfirm("Are you sure you want to leave this group?", [
+                { text: "Cancel", sec: true },
+                { text: "Leave Group", danger: true, cb: async () => {
+                    try { await ApiClient.call('leaveGroup', { cid: State.activeChannelId }); await PollingManager.syncGlobal(); ChatManager.close(); } catch(e) { UI.showError("Failed to leave group."); }
+                }}
+            ]);
+        }
+    }
 };
+
+window.onload = () => AuthManager.init();
 </script>
 
 <script>
