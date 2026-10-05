@@ -5,6 +5,7 @@
  */
 
 import admin from 'firebase-admin';
+import crypto from 'crypto';
 
 // Safe Firebase Initialization
 if (!admin.apps.length) {
@@ -38,6 +39,30 @@ async function getUserBySession(sessionId) {
         }
     }
     return null;
+}
+
+// Extracted Profanity Checker
+async function checkProfanity(text) {
+    if (!text) return false;
+    let strippedText = text
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove accents
+        .replace(/[\u200B-\u200D\uFEFF]/g, "") // Remove invisible characters
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") // Remove punctuation
+        .replace(/\s+/g, "") // Remove spaces to catch spaced-out words
+        .replace(/@/g, "a").replace(/\$/g, "s").replace(/0/g, "o")
+        .replace(/1/g, "i").replace(/3/g, "e").replace(/4/g, "a")
+        .replace(/5/g, "s").replace(/7/g, "t")
+        .toLowerCase();
+
+    try {
+        const glinModule = await import('glin-profanity');
+        const profanityCheck = glinModule.default || glinModule; 
+        return profanityCheck(text) || profanityCheck(strippedText);
+    } catch (err) {
+        console.error("[BSMS Web :: API] Glin Profanity Failed to Load:", err);
+        const blockList = ['fuck', 'shit', 'bitch', 'asshole', 'cunt', 'nigger', 'nigga', 'faggot'];
+        return blockList.some(word => strippedText.includes(word));
+    }
 }
 
 export default async function handler(req, res) {
@@ -133,44 +158,13 @@ export default async function handler(req, res) {
                     return res.status(403).json({ error: "Not a member." });
                 }
 
-                // 1. Validate basic characters
                 const validTextRegex = /^[\x20-\x7E\p{Emoji}\s]*$/u;
                 if (!validTextRegex.test(content)) {
                     return res.status(400).json({ error: 'Invalid characters or formatting detected.' });
                 }
 
-                // 2. Aggressive Normalization to catch bypass attempts
-                let strippedText = content
-                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove accents
-                    .replace(/[\u200B-\u200D\uFEFF]/g, "") // Remove invisible characters
-                    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") // Remove punctuation
-                    .replace(/\s+/g, "") // Remove spaces to catch spaced-out words
-                    .replace(/@/g, "a")
-                    .replace(/\$/g, "s")
-                    .replace(/0/g, "o")
-                    .replace(/1/g, "i")
-                    .replace(/3/g, "e")
-                    .replace(/4/g, "a")
-                    .replace(/5/g, "s")
-                    .replace(/7/g, "t")
-                    .toLowerCase();
-
-                // 3. Dynamic Import to bypass Vercel ESM crash
-                try {
-                    const glinModule = await import('glin-profanity');
-                    const profanityCheck = glinModule.default || glinModule; 
-                    
-                    // Run Glin on both the raw content and the aggressively stripped version
-                    if (profanityCheck(content) || profanityCheck(strippedText)) {
-                        return res.status(400).json({ error: 'Profanity detected.' });
-                    }
-                } catch (err) {
-                    console.error("[BSMS Web :: API] Glin Profanity Failed to Load:", err);
-                    // Fallback blocklist just in case the module fails
-                    const blockList = ['fuck', 'shit', 'bitch', 'asshole', 'cunt', 'nigger', 'nigga', 'faggot'];
-                    if (blockList.some(word => strippedText.includes(word))) {
-                        return res.status(400).json({ error: 'Profanity detected.' });
-                    }
+                if (await checkProfanity(content)) {
+                    return res.status(400).json({ error: 'Profanity detected.' });
                 }
 
                 const lastMsgSnap = await db.ref(`/chat/users/${uid}/lastMessageTimestamp`).once('value');
@@ -178,7 +172,6 @@ export default async function handler(req, res) {
                 const now = Date.now();
                 if (now - lastTs < 5000) return res.status(429).json({ error: "Please wait 5 seconds before sending another message." });
 
-                // Transaction fix for high concurrency
                 const msgIdRef = db.ref(`/chat/conversations/${type}/${cid}/config/lastMessageId`);
                 const transactionResult = await msgIdRef.transaction((current) => {
                     return (current || 99999) + 1;
@@ -260,7 +253,6 @@ export default async function handler(req, res) {
                     }
                 }
 
-                // ID Collision fix: Use Firebase built-in push key
                 const newCid = db.ref('/chat/conversations/dms').push().key;
                 await db.ref(`/chat/conversations/dms/${newCid}`).set({
                     config: { createdAt: Date.now(), lastMessageId: 99999 },
@@ -271,6 +263,74 @@ export default async function handler(req, res) {
                 });
 
                 return res.status(200).json({ cid: newCid });
+            }
+
+            // === RESTORED GROUP CHAT ENDPOINTS ===
+
+            case 'createGroup': {
+                const { name } = payload;
+                if (!name || name.length < 3 || name.length > 30) return res.status(400).json({ error: "Group name must be 3-30 characters." });
+                if (await checkProfanity(name)) return res.status(400).json({ error: "Profanity detected in group name." });
+
+                const joinCode = crypto.randomBytes(3).toString('hex').toUpperCase();
+                const newCid = db.ref('/chat/conversations/gcs').push().key;
+
+                await db.ref(`/chat/conversations/gcs/${newCid}`).set({
+                    name: name,
+                    config: { createdAt: Date.now(), lastMessageId: 99999, joinCode: joinCode, ownerUid: uid },
+                    members: {
+                        [uid]: { role: 'owner', isTyping: false }
+                    }
+                });
+                return res.status(200).json({ success: true, cid: newCid });
+            }
+
+            case 'joinGroup': {
+                const { code } = payload;
+                if (!code) return res.status(400).json({ error: "Missing invite code." });
+                
+                const gcsSnap = await db.ref('/chat/conversations/gcs').once('value');
+                const gcs = gcsSnap.val() || {};
+                
+                let targetCid = null;
+                for (const [id, c] of Object.entries(gcs)) {
+                    if (c.config && c.config.joinCode === code.toUpperCase()) {
+                        targetCid = id;
+                        break;
+                    }
+                }
+                
+                if (!targetCid) return res.status(404).json({ error: "Invalid invite code." });
+                
+                await db.ref(`/chat/conversations/gcs/${targetCid}/members/${uid}`).set({
+                    role: 'member',
+                    isTyping: false
+                });
+                return res.status(200).json({ success: true, cid: targetCid });
+            }
+
+            case 'leaveGroup': {
+                const { cid } = payload;
+                if (!cid) return res.status(400).json({ error: "Missing channel id." });
+                
+                const gcsSnap = await db.ref(`/chat/conversations/gcs/${cid}`).once('value');
+                const group = gcsSnap.val();
+                
+                if (!group || !group.members || !group.members[uid]) {
+                    return res.status(404).json({ error: "Group not found or you are not a member." });
+                }
+                
+                // Remove member
+                await db.ref(`/chat/conversations/gcs/${cid}/members/${uid}`).remove();
+                
+                // Clean up group if empty
+                const updatedMembers = { ...group.members };
+                delete updatedMembers[uid];
+                if (Object.keys(updatedMembers).length === 0) {
+                    await db.ref(`/chat/conversations/gcs/${cid}`).remove();
+                }
+                
+                return res.status(200).json({ success: true });
             }
 
             default:
