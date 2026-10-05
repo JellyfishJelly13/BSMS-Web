@@ -86,6 +86,7 @@ button, input, textarea, select { font-family: var(--font); font-size: inherit; 
 svg.ic { width: 24px; height: 24px; min-width: 24px; fill: currentColor; display: block; flex-shrink: 0; }
 a { color: var(--accent); text-decoration: none; }
 
+/* Offline Banner */
 #offlineBanner {
     position: fixed; top: 0; left: 0; width: 100%; background: #ef4444; color: #fff;
     text-align: center; padding: 10px; font-family: var(--font); font-size: 18px;
@@ -1148,98 +1149,6 @@ const Router = {
     }
 };
 
-const AuthManager = {
-    init: async function() {
-        UI.setLoad(5, "Verifying local session");
-        Router.consumeInitialHash();
-        
-        try {
-            const prefsStr = localStorage.getItem('bsms_rooms_prefs');
-            if(prefsStr) {
-                const prefs = JSON.parse(prefsStr);
-                if(prefs.mode === 'light' || (prefs.mode === 'system' && window.matchMedia('(prefers-color-scheme: light)').matches)) {
-                    document.body.classList.add('light-mode');
-                }
-            }
-        } catch(e) {}
-
-        const sessionStr = localStorage.getItem('bsms_auth_session');
-        if (!sessionStr) { AuthManager.reject(); return; }
-
-        try {
-            const sess = JSON.parse(sessionStr);
-            if (!sess.loggedIn || (!sess.username && !sess.uid)) { AuthManager.reject(); return; }
-
-            State.user = { uid: sess.uid || sess.username, username: sess.username, displayName: sess.displayName };
-
-            UI.setLoad(40, "Connecting to Backend");
-            await ApiClient.call('status', { status: 'online' });
-            
-            document.getElementById('loginModal').classList.remove('show');
-            UI.setLoad(70, "Syncing Channels");
-
-            PollingManager.start();
-            SearchManager.init();
-            ScrollManager.init();
-            ContextMenu.init();
-            Router.init();
-            
-            setTimeout(async () => {
-                UI.setLoad(95, "Opening conversation");
-                await Router.resolvePendingRoute();
-                UI.setLoad(100, "Ready");
-                if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('hidden');
-                else document.getElementById('sidebar').classList.remove('hidden');
-            }, 1000);
-
-            const inp = document.getElementById('msgInput');
-            if (inp) {
-                inp.addEventListener('input', () => {
-                    let txt = inp.innerText;
-                    if(txt.length > 100) { inp.innerText = txt.substring(0, 100); Utils.setCaretToEnd(inp); txt = inp.innerText; }
-                    const cc = document.getElementById('charCounter');
-                    cc.innerText = `${txt.length}/100`;
-                    cc.className = txt.length === 100 ? 'danger' : (txt.length >= 80 ? 'warn' : '');
-
-                    if(State.activeChannelId) localStorage.setItem('draft_' + State.activeChannelId, txt);
-
-                    if(State.activeChannelId && State.activeType) {
-                        clearTimeout(State.typingTimeout);
-                        if (!State.isTypingEmitted) {
-                            ApiClient.call('typing', { cid: State.activeChannelId, type: State.activeType, isTyping: true });
-                            State.isTypingEmitted = true;
-                        }
-                        State.typingTimeout = setTimeout(() => {
-                            if(State.activeChannelId) ApiClient.call('typing', { cid: State.activeChannelId, type: State.activeType, isTyping: false });
-                            State.isTypingEmitted = false;
-                        }, 2000);
-                    }
-                });
-                inp.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ComposerManager.send(); } });
-            }
-
-            // Pseudo-onDisconnect keepalive typing clear
-            window.addEventListener('beforeunload', () => {
-                if (State.activeChannelId) {
-                    fetch(`/api/chat?action=typing`, {
-                        method: 'POST', keepalive: true,
-                        headers: { 'Content-Type': 'application/json', 'X-Session-ID': localStorage.getItem('session_id') || "" },
-                        body: JSON.stringify({ cid: State.activeChannelId, type: State.activeType, isTyping: false })
-                    });
-                }
-            });
-
-        } catch (err) {
-            console.error("[BSMS Web :: Auth]", err);
-            AuthManager.reject();
-        }
-    },
-    reject: function() {
-        UI.setLoad(100, "Ready");
-        document.getElementById('loginModal').classList.add('show');
-    }
-};
-
 const SearchManager = {
     init: function() {
         const inp = document.getElementById('searchInput');
@@ -1449,6 +1358,63 @@ document.addEventListener('click', e => {
     }
 });
 
+const ScrollManager = {
+    observer: null,
+    init: function() {
+        const feed = document.getElementById('chatLog');
+        if(feed) {
+            feed.addEventListener('scroll', () => {
+                State.isScrolledUp = (feed.scrollHeight - feed.scrollTop - feed.clientHeight) > 80;
+                if (!State.isScrolledUp) {
+                    document.getElementById('smartScrollPill').classList.remove('show');
+                }
+            });
+
+            this.observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const msgId = entry.target.id.replace('msg-', '');
+                        const cid = State.activeChannelId;
+                        if(cid && State.channels[cid] && State.channels[cid].messages && State.channels[cid].messages[msgId]) {
+                            const m = State.channels[cid].messages[msgId];
+                            const type = State.channels[cid]._type;
+                            if (m.senderUid !== State.user.uid && (!m.readReceipts || m.readReceipts[State.user.uid] !== true)) {
+                                ApiClient.call('readReceipt', { cid, type, msgId });
+                                m.readReceipts = m.readReceipts || {};
+                                m.readReceipts[State.user.uid] = true;
+                                ChatManager.updateReadReceipts();
+                            }
+                        }
+                    }
+                });
+            }, { root: feed, threshold: 0.5 });
+        }
+    },
+    scrollToBottom: function(smooth = false) {
+        const feed = document.getElementById('chatLog');
+        if(feed) feed.scrollTo({ top: feed.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+        State.isScrolledUp = false;
+        document.getElementById('smartScrollPill').classList.remove('show');
+    },
+    onNewMessage: function(isMine) {
+        if (isMine || !State.isScrolledUp) this.scrollToBottom();
+        else document.getElementById('smartScrollPill').classList.add('show');
+    },
+    scrollToPin: function() {
+        const pb = document.getElementById('pinnedBanner');
+        if(pb && pb.dataset.msgid) this.scrollToMessage(pb.dataset.msgid);
+    },
+    scrollToMessage: function(msgId) {
+        const el = document.getElementById(`msg-${msgId}`);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.style.animation = 'none';
+            el.offsetHeight;
+            el.style.animation = 'highlightPin 1.5s ease';
+        }
+    }
+};
+
 const ChatManager = {
     open: function(cid) {
         try {
@@ -1641,13 +1607,33 @@ const ChatManager = {
             if (!m) continue;
 
             if (!c.messages[mid]) {
-                c.messages[mid] = m;
-                this.renderMessageNode(mid, m);
-                needsScroll = true;
-                lastSender = m.senderUid;
-                if (m.contentType === 'audio' && !m.status?.unsent && !m.status?.deletedByMod) AudioManager.bindPlayer(mid);
-                if(ScrollManager.observer) ScrollManager.observer.observe(document.getElementById(`msg-${mid}`));
-                if (m.senderUid !== State.user.uid && Date.now() - m.timestamp < 5000) AudioFX.receive();
+                // Check if this matches a local optimistic message
+                let foundTemp = null;
+                for (let tempKey in c.messages) {
+                    if (tempKey.startsWith('temp-') && c.messages[tempKey].content === m.content && c.messages[tempKey].senderUid === m.senderUid) {
+                        foundTemp = tempKey;
+                        break;
+                    }
+                }
+
+                if (foundTemp) {
+                    c.messages[mid] = m;
+                    delete c.messages[foundTemp];
+                    const el = document.getElementById(`msg-${foundTemp}`);
+                    if (el) {
+                        el.id = `msg-${mid}`;
+                        el.classList.remove('sending');
+                        el.outerHTML = this.buildMessageHTML(mid, m);
+                    }
+                } else {
+                    c.messages[mid] = m;
+                    this.renderMessageNode(mid, m);
+                    needsScroll = true;
+                    lastSender = m.senderUid;
+                    if (m.contentType === 'audio' && !m.status?.unsent && !m.status?.deletedByMod) AudioManager.bindPlayer(mid);
+                    if(ScrollManager.observer) ScrollManager.observer.observe(document.getElementById(`msg-${mid}`));
+                    if (m.senderUid !== State.user.uid && Date.now() - m.timestamp < 5000) AudioFX.receive();
+                }
             } else {
                 const old = c.messages[mid];
                 if (JSON.stringify(old) !== JSON.stringify(m)) {
@@ -1805,6 +1791,98 @@ const ChatManager = {
         else if (active.length === 2) ind.innerText = `${active[0]} and ${active[1]} are typing...`;
         else if (active.length === 3) ind.innerText = `${active[0]}, ${active[1]}, and ${active[2]} are typing...`;
         else ind.innerText = "Several people are typing...";
+    }
+};
+
+const AuthManager = {
+    init: async function() {
+        UI.setLoad(5, "Verifying local session");
+        Router.consumeInitialHash();
+        
+        try {
+            const prefsStr = localStorage.getItem('bsms_rooms_prefs');
+            if(prefsStr) {
+                const prefs = JSON.parse(prefsStr);
+                if(prefs.mode === 'light' || (prefs.mode === 'system' && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+                    document.body.classList.add('light-mode');
+                }
+            }
+        } catch(e) {}
+
+        const sessionStr = localStorage.getItem('bsms_auth_session');
+        if (!sessionStr) { AuthManager.reject(); return; }
+
+        try {
+            const sess = JSON.parse(sessionStr);
+            if (!sess.loggedIn || (!sess.username && !sess.uid)) { AuthManager.reject(); return; }
+
+            State.user = { uid: sess.uid || sess.username, username: sess.username, displayName: sess.displayName };
+
+            UI.setLoad(40, "Connecting to Backend");
+            await ApiClient.call('status', { status: 'online' });
+            
+            document.getElementById('loginModal').classList.remove('show');
+            UI.setLoad(70, "Syncing Channels");
+
+            PollingManager.start();
+            SearchManager.init();
+            ScrollManager.init();
+            ContextMenu.init();
+            Router.init();
+            
+            setTimeout(async () => {
+                UI.setLoad(95, "Opening conversation");
+                await Router.resolvePendingRoute();
+                UI.setLoad(100, "Ready");
+                if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('hidden');
+                else document.getElementById('sidebar').classList.remove('hidden');
+            }, 1000);
+
+            const inp = document.getElementById('msgInput');
+            if (inp) {
+                inp.addEventListener('input', () => {
+                    let txt = inp.innerText;
+                    if(txt.length > 100) { inp.innerText = txt.substring(0, 100); Utils.setCaretToEnd(inp); txt = inp.innerText; }
+                    const cc = document.getElementById('charCounter');
+                    cc.innerText = `${txt.length}/100`;
+                    cc.className = txt.length === 100 ? 'danger' : (txt.length >= 80 ? 'warn' : '');
+
+                    if(State.activeChannelId) localStorage.setItem('draft_' + State.activeChannelId, txt);
+
+                    if(State.activeChannelId && State.activeType) {
+                        clearTimeout(State.typingTimeout);
+                        if (!State.isTypingEmitted) {
+                            ApiClient.call('typing', { cid: State.activeChannelId, type: State.activeType, isTyping: true });
+                            State.isTypingEmitted = true;
+                        }
+                        State.typingTimeout = setTimeout(() => {
+                            if(State.activeChannelId) ApiClient.call('typing', { cid: State.activeChannelId, type: State.activeType, isTyping: false });
+                            State.isTypingEmitted = false;
+                        }, 2000);
+                    }
+                });
+                inp.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ComposerManager.send(); } });
+            }
+
+            // Pseudo-onDisconnect keepalive typing clear
+            window.addEventListener('beforeunload', () => {
+                if (State.activeChannelId) {
+                    fetch(`/api/chat?action=typing`, {
+                        method: 'POST', keepalive: true,
+                        headers: { 'Content-Type': 'application/json', 'X-Session-ID': localStorage.getItem('session_id') || "" },
+                        body: JSON.stringify({ cid: State.activeChannelId, type: State.activeType, isTyping: false })
+                    });
+                }
+            });
+
+        } catch (err) {
+            console.error("[BSMS Web :: Auth]", err);
+            AuthManager.reject();
+        }
+    },
+    reject: function() {
+        UI.setLoad(100, "Ready");
+        document.getElementById('loginModal').classList.add('show');
     }
 };
 
