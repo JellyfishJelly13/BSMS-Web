@@ -113,7 +113,7 @@ export default async function handler(req, res) {
                                 }
                                 let chData = { ...channel, _type: type, _id: cid, messages: strippedMessages };
                                 if (channel.members[uid].role !== 'owner' && chData.joinRequests) {
-                                    delete chData.joinRequests; // Sanitize privacy data
+                                    delete chData.joinRequests;
                                 }
                                 myChannels[cid] = chData;
                             }
@@ -143,18 +143,19 @@ export default async function handler(req, res) {
                 const channel = chSnap.val();
                 if (!channel || !channel.members || !channel.members[uid]) return res.status(403).json({ error: "Not a member." });
 
-                // Formatting and validation checks per type
                 if (contentType === 'text') {
                     const validTextRegex = /^[\x20-\x7E\p{Emoji}\s]*$/u;
                     if (!validTextRegex.test(content)) return res.status(400).json({ error: 'Invalid characters or formatting detected.' });
-                    if (await checkProfanity(content)) return res.status(400).json({ error: 'Profanity detected.' });
+                    if (await checkProfanity(content)) return res.status(400).json({ error: 'Content flagged by profanity filter.' });
                 } else if (contentType === 'poll') {
-                    if (await checkProfanity(content.pollQuestion)) return res.status(400).json({ error: 'Profanity detected in poll question.' });
+                    if (await checkProfanity(content.pollQuestion)) return res.status(400).json({ error: 'Content flagged by profanity filter.' });
                 }
 
                 const lastMsgSnap = await db.ref(`/chat/users/${uid}/lastMessageTimestamp`).once('value');
                 const now = Date.now();
-                if (now - (lastMsgSnap.val() || 0) < 5000 && type === 'dms') return res.status(429).json({ error: "Please wait 5 seconds before sending another message." });
+                if (type === 'dms' && (now - (lastMsgSnap.val() || 0) < 5000)) {
+                    return res.status(429).json({ error: "Please wait 5 seconds before sending another message." });
+                }
 
                 const msgIdRef = db.ref(`/chat/conversations/${type}/${cid}/config/lastMessageId`);
                 const transactionResult = await msgIdRef.transaction((current) => (current || 99999) + 1);
@@ -176,13 +177,10 @@ export default async function handler(req, res) {
                 await db.ref(`/chat/conversations/${type}/${cid}/messages/${newId}`).set(msgObj);
                 await db.ref(`/chat/users/${uid}/lastMessageTimestamp`).set(now);
 
-                // Optional NTFY Notification Delivery Utilizing Vercel Variables 
                 if (process.env.NTFY_CHAT_TOPIC) {
                     try { 
                         fetch(`https://ntfy.sh/${process.env.NTFY_CHAT_TOPIC}`, { 
-                            method: 'POST', 
-                            body: `New message delivered in ${type}`, 
-                            headers: { 'Title': 'BSMS Chat System Notification' }
+                            method: 'POST', body: `New message delivered in ${type}`, headers: { 'Title': 'BSMS Chat System Notification' }
                         }); 
                     } catch(e) { }
                 }
@@ -212,7 +210,7 @@ export default async function handler(req, res) {
                 } else if (msgAction === 'pin' && isMod) {
                     await msgRef.update({ 'status/pinned': !(msg.status?.pinned || false) });
                 } else if (msgAction === 'edit' && isMine && msg.contentType === 'text') {
-                    if (await checkProfanity(content)) return res.status(400).json({ error: "Profanity detected in edited message" });
+                    if (await checkProfanity(content)) return res.status(400).json({ error: "Content flagged by profanity filter." });
                     await msgRef.update({ content: content, 'status/edited': true });
                 } else if (msgAction === 'react' && emoji) {
                     const rxRef = db.ref(`/chat/conversations/${type}/${cid}/messages/${msgId}/reactions/${uid}`);
@@ -258,7 +256,14 @@ export default async function handler(req, res) {
                     if (c.members && c.members[uid] && c.members[targetUid]) return res.status(200).json({ cid: id }); 
                 }
 
-                const newCid = db.ref('/chat/conversations/dms').push().key;
+                // Generates random 6-digit ID for DMs
+                let newCid;
+                while (true) {
+                    newCid = Math.floor(100000 + Math.random() * 900000).toString();
+                    const check = await db.ref(`/chat/conversations/dms/${newCid}`).once('value');
+                    if (!check.exists()) break;
+                }
+
                 await db.ref(`/chat/conversations/dms/${newCid}`).set({
                     config: { createdAt: Date.now(), lastMessageId: 99999 },
                     members: { [uid]: { role: 'member', isTyping: false }, [targetUid]: { role: 'member', isTyping: false } }
@@ -270,10 +275,14 @@ export default async function handler(req, res) {
             case 'createGroup': {
                 const { name, joinCode, requireApproval, icon } = payload;
                 if (!name || name.length < 3 || name.length > 30) return res.status(400).json({ error: "Group name must be 3-30 characters." });
-                if (await checkProfanity(name)) return res.status(400).json({ error: "Profanity detected in group name." });
+                if (await checkProfanity(name)) return res.status(400).json({ error: "Content flagged by profanity filter." });
 
                 const finalCode = joinCode || crypto.randomBytes(3).toString('hex').toUpperCase();
-                const newCid = db.ref('/chat/conversations/gcs').push().key;
+                
+                // Group ID logic: URI Encoded Name ensures vanity URLs 
+                const newCid = encodeURIComponent(name);
+                const check = await db.ref(`/chat/conversations/gcs/${newCid}`).once('value');
+                if (check.exists()) return res.status(400).json({ error: "A group with this name already exists." });
 
                 await db.ref(`/chat/conversations/gcs/${newCid}`).set({
                     name: name,
@@ -358,7 +367,7 @@ export default async function handler(req, res) {
                 switch (gAction) {
                     case 'rename':
                         if (!isOwner) return res.status(403).json({ error: "Unauthorized" });
-                        if (await checkProfanity(value)) return res.status(400).json({ error: "Profanity detected" });
+                        if (await checkProfanity(value)) return res.status(400).json({ error: "Content flagged by profanity filter." });
                         await db.ref(`/chat/conversations/gcs/${cid}/name`).set(value);
                         break;
                     case 'updateConfig':
@@ -371,10 +380,11 @@ export default async function handler(req, res) {
                         break;
                     case 'updateCode':
                         if (!isOwner) return res.status(403).json({ error: "Unauthorized" });
-                        const check = await db.ref(`/chat/conversations/gcs`).orderByChild('config/joinCode').equalTo(value).once('value');
+                        let newCode = value || crypto.randomBytes(3).toString('hex').toUpperCase();
+                        const check = await db.ref(`/chat/conversations/gcs`).orderByChild('config/joinCode').equalTo(newCode).once('value');
                         if (check.exists()) return res.status(400).json({ error: "Code already in use" });
-                        await db.ref(`/chat/conversations/gcs/${cid}/config/joinCode`).set(value);
-                        break;
+                        await db.ref(`/chat/conversations/gcs/${cid}/config/joinCode`).set(newCode);
+                        return res.status(200).json({ success: true, newCode: newCode });
                     case 'saveTheme':
                         if (!isOwner) return res.status(403).json({ error: "Unauthorized" });
                         await db.ref(`/chat/conversations/gcs/${cid}/config/theme`).set(value);
@@ -395,7 +405,7 @@ export default async function handler(req, res) {
                         break;
                     case 'saveNickname':
                         if (group.config?.allowCustomNicknames === false) return res.status(400).json({ error: "Nicknames disabled" });
-                        if (value && await checkProfanity(value)) return res.status(400).json({ error: "Profanity detected" });
+                        if (value && await checkProfanity(value)) return res.status(400).json({ error: "Content flagged by profanity filter." });
                         await db.ref(`/chat/conversations/gcs/${cid}/members/${uid}/nickname`).set(value || null);
                         break;
                     case 'requestJoin':
