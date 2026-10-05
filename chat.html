@@ -86,7 +86,6 @@ button, input, textarea, select { font-family: var(--font); font-size: inherit; 
 svg.ic { width: 24px; height: 24px; min-width: 24px; fill: currentColor; display: block; flex-shrink: 0; }
 a { color: var(--accent); text-decoration: none; }
 
-/* Offline Banner */
 #offlineBanner {
     position: fixed; top: 0; left: 0; width: 100%; background: #ef4444; color: #fff;
     text-align: center; padding: 10px; font-family: var(--font); font-size: 18px;
@@ -160,14 +159,19 @@ a { color: var(--accent); text-decoration: none; }
 .modal-card h2 { font-size: 1.6rem; margin: 0 0 12px; color: var(--fg); line-height: 1.2; }
 .modal-card p { font-size: 1.1rem; color: var(--fg2); margin: 0 0 20px; line-height: 1.5; }
 
+/* Refined Toast Notifications */
 #toastContainer {
-    position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
-    background: var(--accent); color: #fff; padding: 12px 24px; border-radius: 16px;
+    position: fixed; top: 20px; right: 20px; 
+    background: var(--accent); color: #fff; padding: 12px 24px; border-radius: 12px;
     box-shadow: var(--shadow); display: flex; align-items: center; gap: 12px;
-    font-size: 1.1rem; z-index: 9500; transition: transform 0.4s cubic-bezier(0.2,1,0.2,1);
+    font-size: 1.1rem; z-index: 9500; 
+    transform: translateX(150%); opacity: 0; 
+    transition: transform 0.4s cubic-bezier(0.2,1,0.2,1), opacity 0.4s, background 0.3s;
     cursor: pointer; pointer-events: none; max-width: 90vw;
 }
-#toastContainer.show { transform: translateX(-50%) translateY(0); pointer-events: auto; }
+#toastContainer.show { transform: translateX(0); opacity: 1; pointer-events: auto; }
+#toastContainer.error { background: #ef4444; border: 1px solid #dc2626; }
+#toastContainer.success { background: #22c55e; border: 1px solid #16a34a; }
 
 #appShell { display: flex; width: 100%; height: 100%; overflow: hidden; position: relative; }
 
@@ -314,7 +318,10 @@ a { color: var(--accent); text-decoration: none; }
 
 .msg-text { white-space: pre-wrap; }
 .msg-meta { display: inline-block; font-size: 0.8rem; opacity: 0.7; margin-left: 12px; float: right; margin-top: 8px; }
-.msg-status { font-size: 0.8rem; color: var(--fg2); margin-top: 4px; text-align: right; min-height: 16px; margin-right: 4px;}
+
+/* Subtly styled optimistic status indicators */
+.msg-status { font-size: 0.75rem; color: var(--fg2); margin-top: 4px; text-align: right; min-height: 16px; margin-right: 4px; font-style: italic; opacity: 0.8;}
+
 .sys-msg { align-self: center; background: var(--section-bg); border: 1px solid var(--border); padding: 6px 16px; border-radius: 12px; font-size: 0.95rem; color: var(--fg2); font-style: italic; text-align: center; margin-bottom: 8px; backdrop-filter: blur(5px);}
 
 .poll-opt { position: relative; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 6px; cursor: pointer; overflow: hidden; border: 1px solid transparent; transition: 0.2s; }
@@ -450,34 +457,35 @@ a { color: var(--accent); text-decoration: none; }
 
 <div id="offlineBanner">You are currently offline</div>
 
+<!-- Fixed SVG Definitions with viewBox for perfect scaling -->
 <svg style="position:absolute; width:0; height:0; overflow:hidden;" aria-hidden="true">
     <defs>
-        <g id="ico-search"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></g>
-        <g id="ico-plus"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></g>
-        <g id="ico-back"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></g>
-        <g id="ico-settings"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.06.94L2.83 14.52c-.19.15-.24.42-.12.64l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.49-.12-.64l-2.03-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></g>
-        <g id="ico-pin"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></g>
-        <g id="ico-unpin"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></g>
-        <g id="ico-send"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></g>
-        <g id="ico-mic"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></g>
-        <g id="ico-close"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></g>
-        <g id="ico-dots"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></g>
-        <g id="ico-reply"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></g>
-        <g id="ico-edit"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></g>
-        <g id="ico-trash"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></g>
-        <g id="ico-play"><path d="M8 5v14l11-7z"/></g>
-        <g id="ico-pause"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></g>
-        <g id="ico-down"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></g>
-        <g id="ico-chat"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></g>
-        <g id="ico-check"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></g>
-        <g id="ico-poll"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-5h2v5zm4 0h-2V7h2v10zm4 0h-2v-3h2v3z"/></g>
-        <g id="ico-file"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></g>
-        <g id="ico-leave"><path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H9c-1.11 0-2 .9-2 2v4h2V5h10v14H9v-4H7v4c0 1.1.89 2 2 2h10c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></g>
-        <g id="ico-refresh"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></g>
-        <g id="ico-shield"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></g>
-        <g id="ico-copy"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></g>
-        <g id="ico-upload"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></g>
-        <g id="ico-crown"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></g>
+        <symbol id="ico-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+        <symbol id="ico-plus" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></symbol>
+        <symbol id="ico-back" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></symbol>
+        <symbol id="ico-settings" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.06.94L2.83 14.52c-.19.15-.24.42-.12.64l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.49-.12-.64l-2.03-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></symbol>
+        <symbol id="ico-pin" viewBox="0 0 24 24"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></symbol>
+        <symbol id="ico-unpin" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
+        <symbol id="ico-send" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></symbol>
+        <symbol id="ico-mic" viewBox="0 0 24 24"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></symbol>
+        <symbol id="ico-close" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
+        <symbol id="ico-dots" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></symbol>
+        <symbol id="ico-reply" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></symbol>
+        <symbol id="ico-edit" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></symbol>
+        <symbol id="ico-trash" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
+        <symbol id="ico-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
+        <symbol id="ico-pause" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></symbol>
+        <symbol id="ico-down" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></symbol>
+        <symbol id="ico-chat" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></symbol>
+        <symbol id="ico-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></symbol>
+        <symbol id="ico-poll" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-5h2v5zm4 0h-2V7h2v10zm4 0h-2v-3h2v3z"/></symbol>
+        <symbol id="ico-file" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></symbol>
+        <symbol id="ico-leave" viewBox="0 0 24 24"><path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H9c-1.11 0-2 .9-2 2v4h2V5h10v14H9v-4H7v4c0 1.1.89 2 2 2h10c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></symbol>
+        <symbol id="ico-refresh" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></symbol>
+        <symbol id="ico-shield" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></symbol>
+        <symbol id="ico-copy" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></symbol>
+        <symbol id="ico-upload" viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></symbol>
+        <symbol id="ico-crown" viewBox="0 0 24 24"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></symbol>
     </defs>
 </svg>
 
@@ -514,13 +522,6 @@ a { color: var(--accent); text-decoration: none; }
     </div>
 </div>
 
-<div id="alertModal" class="overlay layer-top" onclick="if(event.target===this) UI.closeModal('alertModal')">
-    <div class="modal-card">
-        <h2 id="alertTitle">Notice</h2>
-        <p id="alertMsg"></p>
-        <button class="btn" onclick="UI.closeModal('alertModal')" data-ga="chat_alert_ok">OK</button>
-    </div>
-</div>
 <div id="confirmModal" class="overlay layer-top">
     <div class="modal-card">
         <h2 id="confirmTitle">Confirm</h2>
@@ -828,7 +829,6 @@ a { color: var(--accent); text-decoration: none; }
  * SPDX-License-Identifier: MIT
  */
 
-// Offline handlers
 window.addEventListener('offline', () => document.getElementById('offlineBanner').classList.add('show'));
 window.addEventListener('online', () => document.getElementById('offlineBanner').classList.remove('show'));
 if (!navigator.onLine) document.getElementById('offlineBanner').classList.add('show');
@@ -853,6 +853,7 @@ const State = {
     toastTimeout: null,
 
     isCooldown: false,
+    isTypingEmitted: false,
     editContext: null,
     replyContext: null,
     attachmentData: null,
@@ -945,7 +946,7 @@ const ApiClient = {
                     inp.style.borderColor = '#ef4444'; inp.style.animation = 'none'; void inp.offsetWidth;
                     inp.style.animation = 'pulseRecord 0.5s'; setTimeout(() => inp.style.borderColor = '', 1000);
                 }
-                throw new Error("Content flagged by profanity filter.");
+                throw new Error(data.error);
             }
             if (!res.ok) throw new Error(data.error || "API Error");
             return data;
@@ -988,7 +989,7 @@ const PollingManager = {
             if (State.activeChannelId) {
                 if (!State.channels[State.activeChannelId]) {
                     ChatManager.close();
-                    UI.showError("You are no longer in this conversation.");
+                    UI.showToast("You are no longer in this conversation.", 'error');
                 } else {
                     ChatManager.updateHeader();
                     ChatManager.updateReadReceipts();
@@ -1025,11 +1026,16 @@ const UI = {
         }
     },
 
-    showError: (msg, title = "Error") => {
-        document.getElementById('alertTitle').innerText = title;
-        document.getElementById('alertMsg').innerText = msg;
-        UI.openModal('alertModal');
+    showToast: (msg, type = 'info') => {
+        const t = document.getElementById('toastContainer');
+        t.className = type === 'error' ? 'error' : (type === 'success' ? 'success' : '');
+        document.getElementById('toastText').innerText = msg;
+        t.classList.add('show');
+        clearTimeout(State.toastTimeout);
+        State.toastTimeout = setTimeout(() => t.classList.remove('show'), 4000);
     },
+    
+    hideToast: () => document.getElementById('toastContainer').classList.remove('show'),
 
     showConfirm: (msg, actions, title = "Confirm") => {
         document.getElementById('confirmTitle').innerText = title;
@@ -1045,16 +1051,6 @@ const UI = {
         });
         UI.openModal('confirmModal');
     },
-
-    toast: (msg) => {
-        const t = document.getElementById('toastContainer');
-        document.getElementById('toastText').innerText = msg;
-        t.classList.add('show');
-        clearTimeout(State.toastTimeout);
-        State.toastTimeout = setTimeout(() => t.classList.remove('show'), 3000);
-    },
-
-    hideToast: () => document.getElementById('toastContainer').classList.remove('show'),
 
     openSettings: () => {
         if(!State.activeChannelId) return;
@@ -1208,15 +1204,30 @@ const AuthManager = {
                     if(State.activeChannelId) localStorage.setItem('draft_' + State.activeChannelId, txt);
 
                     if(State.activeChannelId && State.activeType) {
-                        ApiClient.call('typing', { cid: State.activeChannelId, type: State.activeType, isTyping: true });
                         clearTimeout(State.typingTimeout);
+                        if (!State.isTypingEmitted) {
+                            ApiClient.call('typing', { cid: State.activeChannelId, type: State.activeType, isTyping: true });
+                            State.isTypingEmitted = true;
+                        }
                         State.typingTimeout = setTimeout(() => {
                             if(State.activeChannelId) ApiClient.call('typing', { cid: State.activeChannelId, type: State.activeType, isTyping: false });
-                        }, 3000);
+                            State.isTypingEmitted = false;
+                        }, 2000);
                     }
                 });
                 inp.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ComposerManager.send(); } });
             }
+
+            // Pseudo-onDisconnect keepalive typing clear
+            window.addEventListener('beforeunload', () => {
+                if (State.activeChannelId) {
+                    fetch(`/api/chat?action=typing`, {
+                        method: 'POST', keepalive: true,
+                        headers: { 'Content-Type': 'application/json', 'X-Session-ID': localStorage.getItem('session_id') || "" },
+                        body: JSON.stringify({ cid: State.activeChannelId, type: State.activeType, isTyping: false })
+                    });
+                }
+            });
 
         } catch (err) {
             console.error("[BSMS Web :: Auth]", err);
@@ -1333,7 +1344,7 @@ const SearchManager = {
                 await PollingManager.syncGlobal();
                 ChatManager.open(res.cid);
             }
-        } catch(e) { UI.showError("Failed to start conversation."); }
+        } catch(e) { UI.showToast("Failed to start conversation.", 'error'); }
     }
 };
 
@@ -1438,63 +1449,6 @@ document.addEventListener('click', e => {
     }
 });
 
-const ScrollManager = {
-    observer: null,
-    init: function() {
-        const feed = document.getElementById('chatLog');
-        if(feed) {
-            feed.addEventListener('scroll', () => {
-                State.isScrolledUp = (feed.scrollHeight - feed.scrollTop - feed.clientHeight) > 80;
-                if (!State.isScrolledUp) {
-                    document.getElementById('smartScrollPill').classList.remove('show');
-                }
-            });
-
-            this.observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const msgId = entry.target.id.replace('msg-', '');
-                        const cid = State.activeChannelId;
-                        if(cid && State.channels[cid] && State.channels[cid].messages && State.channels[cid].messages[msgId]) {
-                            const m = State.channels[cid].messages[msgId];
-                            const type = State.channels[cid]._type;
-                            if (m.senderUid !== State.user.uid && (!m.readReceipts || m.readReceipts[State.user.uid] !== true)) {
-                                ApiClient.call('readReceipt', { cid, type, msgId });
-                                m.readReceipts = m.readReceipts || {};
-                                m.readReceipts[State.user.uid] = true;
-                                ChatManager.updateReadReceipts();
-                            }
-                        }
-                    }
-                });
-            }, { root: feed, threshold: 0.5 });
-        }
-    },
-    scrollToBottom: function(smooth = false) {
-        const feed = document.getElementById('chatLog');
-        if(feed) feed.scrollTo({ top: feed.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
-        State.isScrolledUp = false;
-        document.getElementById('smartScrollPill').classList.remove('show');
-    },
-    onNewMessage: function(isMine) {
-        if (isMine || !State.isScrolledUp) this.scrollToBottom();
-        else document.getElementById('smartScrollPill').classList.add('show');
-    },
-    scrollToPin: function() {
-        const pb = document.getElementById('pinnedBanner');
-        if(pb && pb.dataset.msgid) this.scrollToMessage(pb.dataset.msgid);
-    },
-    scrollToMessage: function(msgId) {
-        const el = document.getElementById(`msg-${msgId}`);
-        if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            el.style.animation = 'none';
-            el.offsetHeight;
-            el.style.animation = 'highlightPin 1.5s ease';
-        }
-    }
-};
-
 const ChatManager = {
     open: function(cid) {
         try {
@@ -1545,7 +1499,7 @@ const ChatManager = {
             State.msgInterval = setInterval(PollingManager.syncMessages, 2500);
         } catch (e) {
             console.error("[BSMS Web] Failed to open chat:", e);
-            UI.showError("Failed to open chat due to a data error.");
+            UI.showToast("Failed to open chat due to a data error.", 'error');
         }
     },
 
@@ -1647,7 +1601,9 @@ const ChatManager = {
 
     updateReadReceipts: function() {
         if (!State.activeChannelId) return;
-        document.querySelectorAll('.msg-status').forEach(el => el.innerText = "");
+        document.querySelectorAll('.msg-status').forEach(el => {
+            if (el.innerText !== 'Sending...') el.innerText = "";
+        });
         const myEls = document.querySelectorAll('.msg-row.mine');
         if (myEls.length === 0) return;
 
@@ -1657,6 +1613,8 @@ const ChatManager = {
         const c = State.channels[State.activeChannelId];
         if (c && c.messages && c.messages[mId]) {
             const m = c.messages[mId];
+            if (m.status?.temp) return; // Prevent overwriting "Sending..."
+            
             const stat = document.getElementById(`stat-${mId}`);
             if (!stat) return;
 
@@ -1730,6 +1688,7 @@ const ChatManager = {
         let cls = isMine ? 'mine' : 'theirs';
         if (isSysBot) cls += ' system-bot';
         if (m.status?.deletedByMod) cls += ' deleted';
+        if (m.status?.temp) cls += ' sending';
 
         let html = `<div class="msg-row ${cls}" id="msg-${msgId}">`;
 
@@ -1853,7 +1812,7 @@ const ComposerManager = {
     attachFile: function(e) {
         const f = e.target.files[0];
         if(!f) return;
-        if(f.size > 25*1024*1024) { UI.showError("File exceeds 25MB maximum limit."); return; }
+        if(f.size > 25*1024*1024) { UI.showToast("File exceeds 25MB maximum limit.", 'error'); return; }
 
         const r = new FileReader();
         r.onload = () => {
@@ -1881,7 +1840,7 @@ const ComposerManager = {
         if (!State.activeChannelId) return;
         const c = State.channels[State.activeChannelId];
 
-        if (c._type === 'dms' && State.isCooldown) { UI.toast("Please wait before sending another message."); return; }
+        if (c._type === 'dms' && State.isCooldown) { UI.showToast("Please wait before sending another message.", 'error'); return; }
 
         const inp = document.getElementById('msgInput');
         const txt = inp.innerText.trim().substring(0,100);
@@ -1895,35 +1854,74 @@ const ComposerManager = {
                 await ApiClient.call('action', { action: 'edit', cid: c._id, type: c._type, msgId: State.editContext, content: txt });
                 this.cancelEdit();
                 PollingManager.syncMessages();
-            } catch(e) { UI.showError("Failed to edit message."); }
+            } catch(e) { UI.showToast(e.message || "Failed to edit message.", 'error'); }
             finally { btn.disabled = false; inp.focus(); }
             return;
         }
 
         if(c._type === 'dms') {
             State.isCooldown = true; btn.classList.add('greyed');
-            setTimeout(() => { State.isCooldown = false; btn.classList.remove('greyed'); }, 2000);
+            setTimeout(() => { State.isCooldown = false; btn.classList.remove('greyed'); }, 5000);
         }
+
+        // Optimistic UI Render
+        const tempId = 'temp-' + Date.now();
+        const tempMsg = {
+            senderUid: State.user.uid,
+            timestamp: Date.now(),
+            content: State.attachmentData || txt,
+            contentType: State.attachmentData ? 'file' : 'text',
+            attachmentName: State.attachmentName,
+            status: { temp: true, repliedTo: State.replyContext || false }
+        };
+
+        c.messages[tempId] = tempMsg;
+        ChatManager.renderMessageNode(tempId, tempMsg);
+        document.getElementById(`stat-${tempId}`).innerText = "Sending...";
+        ScrollManager.scrollToBottom(true);
+        AudioFX.send();
+        
+        inp.innerText = "";
+        const rplCtx = State.replyContext;
+        this.cancelReply();
+        this.clearAttachment();
+        document.getElementById('charCounter').innerText = "0/100";
+        document.getElementById('charCounter').className = "";
+        localStorage.removeItem('draft_' + c._id);
+        ApiClient.call('typing', { cid: c._id, type: c._type, isTyping: false });
 
         btn.disabled = true;
         try {
-            await ApiClient.call('sendMessage', {
+            const res = await ApiClient.call('sendMessage', {
                 cid: c._id, type: c._type,
-                content: State.attachmentData || txt,
-                contentType: State.attachmentData ? 'file' : 'text',
-                attachmentName: State.attachmentName,
-                repliedTo: State.replyContext || false
+                content: tempMsg.content,
+                contentType: tempMsg.contentType,
+                attachmentName: tempMsg.attachmentName,
+                repliedTo: rplCtx
             });
-            AudioFX.send();
-            inp.innerText = "";
-            this.cancelReply();
-            this.clearAttachment();
-            document.getElementById('charCounter').innerText = "0/100";
-            document.getElementById('charCounter').className = "";
-            localStorage.removeItem('draft_' + c._id);
-            ApiClient.call('typing', { cid: c._id, type: c._type, isTyping: false });
-            PollingManager.syncMessages();
-        } catch(e) { UI.showError(e.message || "Failed to send message."); }
+            
+            const realId = res.messageId;
+            delete tempMsg.status.temp;
+            c.messages[realId] = tempMsg;
+            delete c.messages[tempId];
+
+            const el = document.getElementById(`msg-${tempId}`);
+            if (el) {
+                el.id = `msg-${realId}`;
+                el.classList.remove('sending');
+                const statEl = document.getElementById(`stat-${tempId}`);
+                if (statEl) {
+                    statEl.id = `stat-${realId}`;
+                    statEl.innerText = "Sent";
+                }
+            }
+        } catch(e) { 
+            UI.showToast(e.message || "Failed to send message.", 'error'); 
+            const el = document.getElementById(`msg-${tempId}`);
+            if(el) el.remove();
+            delete c.messages[tempId];
+            if(c._type === 'dms') { State.isCooldown = false; btn.classList.remove('greyed'); }
+        }
         btn.disabled = false; inp.focus();
     },
 
@@ -1935,7 +1933,7 @@ const ComposerManager = {
         if(!State.activeChannelId) return;
         const q = document.getElementById('pollQuestion').value.trim();
         const opts = Array.from(document.querySelectorAll('#pollOptionsContainer input')).map(i=>i.value.trim()).filter(v=>v);
-        if(!q || opts.length < 2) { UI.showError("Poll requires a question and at least 2 options."); return; }
+        if(!q || opts.length < 2) { UI.showToast("Poll requires a question and at least 2 options.", 'error'); return; }
 
         const c = State.channels[State.activeChannelId];
         let pollOpts = {};
@@ -1952,10 +1950,11 @@ const ComposerManager = {
             document.getElementById('pollQuestion').value = '';
             document.getElementById('pollOptionsContainer').innerHTML = `<input type="text" class="input-field" placeholder="Option 1" style="margin:0;" maxlength="60"><input type="text" class="input-field" placeholder="Option 2" style="margin:0;" maxlength="60">`;
             PollingManager.syncMessages();
-        } catch(e) { UI.showError(e.message || "Failed to send poll."); }
+        } catch(e) { UI.showToast(e.message || "Failed to send poll.", 'error'); }
     },
 
     vote: async function(msgId, optKey) {
+        if (msgId.startsWith('temp-')) return;
         const c = State.channels[State.activeChannelId];
         try {
             await ApiClient.call('action', { action: 'votePoll', cid: c._id, type: c._type, msgId: msgId, optKey: optKey });
@@ -1992,7 +1991,7 @@ const AudioManager = {
 
             this.recorder.ondataavailable = e => this.chunks.push(e.data);
             this.recorder.start();
-        }).catch(e => { UI.toast("Microphone access denied."); });
+        }).catch(e => { UI.showToast("Microphone access denied.", 'error'); });
     },
 
     finishRecording: function() {
@@ -2044,7 +2043,7 @@ const AudioManager = {
                     });
                     AudioFX.send(); this.cancelRecording(); ComposerManager.cancelReply();
                     PollingManager.syncMessages();
-                } catch(e) { UI.showError("Failed to send voice message."); }
+                } catch(e) { UI.showToast(e.message || "Failed to send voice message.", 'error'); }
             };
         });
     },
@@ -2097,10 +2096,14 @@ const ContextMenu = {
         document.addEventListener('click', e => { if (!e.target.closest('#ctxMenu') && !e.target.closest('.msg-ctx-trigger')) this.close(); });
     },
     open: function(e, msgId) {
+        if (msgId.startsWith('temp-')) return; // Block context menu on optimistic messages
+
         this.targetId = msgId;
         const menu = document.getElementById('ctxMenu');
         const c = State.channels[State.activeChannelId];
         const m = c.messages[msgId];
+        if (!m) return;
+        
         const isMine = m.senderUid === State.user.uid;
         const isMod = c._type === 'gcs' && (State.currentRole === 'owner' || State.currentRole === 'moderator');
 
@@ -2136,7 +2139,7 @@ const ContextMenu = {
     close: function() { document.getElementById('ctxMenu').classList.remove('show'); this.targetId = null; },
     react: async function(emoji, explicitTarget = null) {
         const mId = explicitTarget || this.targetId;
-        if (!mId || !State.activeChannelId) return;
+        if (!mId || !State.activeChannelId || mId.startsWith('temp-')) return;
         const c = State.channels[State.activeChannelId];
         try {
             await ApiClient.call('action', { action: 'react', cid: c._id, type: c._type, msgId: mId, emoji: emoji });
@@ -2169,7 +2172,7 @@ const ContextMenu = {
         try {
             await ApiClient.call('action', { action: 'unsend', cid: c._id, type: c._type, msgId: id });
             PollingManager.syncMessages();
-        } catch(e) { UI.showError("Failed to unsend."); }
+        } catch(e) { UI.showToast(e.message || "Failed to unsend.", 'error'); }
         this.close();
     },
     moderate: async function() {
@@ -2179,14 +2182,14 @@ const ContextMenu = {
         try {
             await ApiClient.call('action', { action: 'moderate', cid: c._id, type: c._type, msgId: id });
             PollingManager.syncMessages();
-        } catch(e) { UI.showError("Failed to delete."); }
+        } catch(e) { UI.showToast(e.message || "Failed to delete.", 'error'); }
         this.close();
     },
     copy: function() {
         if (!this.targetId || !State.activeChannelId) return;
         const c = State.channels[State.activeChannelId];
         const m = c.messages[this.targetId];
-        if(m.contentType === 'text' && m.content) { navigator.clipboard.writeText(m.content); UI.toast("Message copied!"); }
+        if(m.contentType === 'text' && m.content) { navigator.clipboard.writeText(m.content); UI.showToast("Message copied!", 'success'); }
         this.close();
     },
     pin: async function() {
@@ -2195,7 +2198,7 @@ const ContextMenu = {
         try {
             await ApiClient.call('action', { action: 'pin', cid: c._id, type: c._type, msgId: this.targetId });
             PollingManager.syncMessages();
-        } catch(e) { UI.showError("Failed to pin."); }
+        } catch(e) { UI.showToast(e.message || "Failed to pin.", 'error'); }
         this.close();
     },
     unpin: async function(e) {
@@ -2215,7 +2218,7 @@ const GroupManager = {
     create: async function() {
         const name = document.getElementById('ngName').value.trim();
         const jc = document.getElementById('ngCustomCode').value.trim();
-        if (!name) { UI.showError("Group name is required."); return; }
+        if (!name) { UI.showToast("Group name is required.", 'error'); return; }
         const btn = document.getElementById('btnCreateGroup'); btn.disabled = true;
 
         const file = document.getElementById('ngIcon').files[0];
@@ -2229,12 +2232,12 @@ const GroupManager = {
                 document.getElementById('gcCodeDisplay').innerText = res.joinCode || jc; 
                 UI.openModal('groupCreatedModal');
                 await PollingManager.syncGlobal(); ChatManager.open(res.cid);
-            } catch (e) { UI.showError(e.message || "Failed to create group."); }
+            } catch (e) { UI.showToast(e.message || "Failed to create group.", 'error'); }
             finally { btn.disabled = false; }
         };
 
         if (file) {
-            if(file.size > 25*1024*1024) { UI.showError("File exceeds 25MB."); btn.disabled=false; return; }
+            if(file.size > 25*1024*1024) { UI.showToast("File exceeds 25MB.", 'error'); btn.disabled=false; return; }
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onloadend = () => finalize(reader.result);
         } else finalize(null);
@@ -2242,13 +2245,13 @@ const GroupManager = {
 
     joinWithCode: async function() {
         const code = document.getElementById('jcInput').value.trim();
-        if(code.length < 3) { UI.showError("Invalid code."); return; }
+        if(code.length < 3) { UI.showToast("Invalid code.", 'error'); return; }
         try {
             const res = await ApiClient.call('joinGroup', { code });
             UI.closeModal('joinCodeModal');
-            if (res.requested) UI.toast("Request sent. Pending admin approval.");
+            if (res.requested) UI.showToast("Request sent. Pending admin approval.", 'success');
             else if (res.cid) { await PollingManager.syncGlobal(); ChatManager.open(res.cid); }
-        } catch(e) { UI.showError(e.message || "Failed to join group."); }
+        } catch(e) { UI.showToast(e.message || "Failed to join group.", 'error'); }
     },
 
     requestJoinById: async function(gcId) {
@@ -2264,20 +2267,20 @@ const GroupManager = {
 
             document.getElementById('btnJoinConfirm').onclick = () => this.confirmJoin(gcId, gc.requireApproval);
             UI.openModal('joinOverlay');
-        } catch(e) { UI.showError(e.message || "Failed to load group."); Router.clearHash(); }
+        } catch(e) { UI.showToast(e.message || "Failed to load group.", 'error'); Router.clearHash(); }
     },
 
     confirmJoin: async function(gcId, requireApproval) {
         try {
             await ApiClient.call('groupAction', { gAction: requireApproval ? 'requestJoin' : 'directJoin', cid: gcId });
             UI.closeModal('joinOverlay'); Router.clearHash();
-            if(requireApproval) UI.toast("Request sent. Pending admin approval.");
+            if(requireApproval) UI.showToast("Request sent. Pending admin approval.", 'success');
             else { await PollingManager.syncGlobal(); ChatManager.open(gcId); }
-        } catch(e) { UI.showError(e.message || "Failed to join group."); }
+        } catch(e) { UI.showToast(e.message || "Failed to join group.", 'error'); }
     },
 
     sendInvite: async function(targetUid) {
-        UI.toast("Invite sent!");
+        UI.showToast("Invite sent!", 'success');
         document.getElementById('inviteSearchResults').innerHTML = ''; document.getElementById('inviteSearchInput').value = '';
         const c = State.channels[State.activeChannelId];
         if(!c) return;
@@ -2358,8 +2361,8 @@ const GroupManager = {
         const v = document.getElementById('myNicknameInput').value.trim();
         try {
             await ApiClient.call('groupAction', { gAction: 'saveNickname', cid: State.activeChannelId, value: v });
-            UI.toast("Nickname saved"); PollingManager.syncGlobal();
-        } catch(e) { UI.showError(e.message || "Failed to save nickname."); }
+            UI.showToast("Nickname saved", 'success'); PollingManager.syncGlobal();
+        } catch(e) { UI.showToast(e.message || "Failed to save nickname.", 'error'); }
     },
 
     updateConfig: async function(key, val) {
@@ -2371,34 +2374,33 @@ const GroupManager = {
     updateIcon: function(e) {
         if (!State.activeChannelId || State.currentRole !== 'owner') return;
         const file = e.target.files[0]; if(!file) return;
-        if(file.size > 25*1024*1024) { UI.showError("File exceeds 25MB."); return; }
+        if(file.size > 25*1024*1024) { UI.showToast("File exceeds 25MB.", 'error'); return; }
         const r = new FileReader(); r.readAsDataURL(file);
         r.onloadend = async () => {
             try {
                 await ApiClient.call('groupAction', { gAction: 'updateIcon', cid: State.activeChannelId, value: r.result });
-                UI.toast("Group picture updated"); await PollingManager.syncGlobal(); UI.openSettings();
-            } catch(err) { UI.showError(err.message || "Failed to upload image."); }
+                UI.showToast("Group picture updated", 'success'); await PollingManager.syncGlobal(); UI.openSettings();
+            } catch(err) { UI.showToast(err.message || "Failed to upload image.", 'error'); }
         };
     },
 
     regenerateCode: async function() {
         if(State.currentRole !== 'owner') return;
-        let nCode = Utils.generateNumericId(6);
         try {
-            await ApiClient.call('groupAction', { gAction: 'updateCode', cid: State.activeChannelId, value: nCode });
-            document.getElementById('gsCodeDisplayText').innerText = nCode; UI.toast("Code regenerated"); PollingManager.syncGlobal();
-        } catch(e) { UI.showError(e.message || "Failed to regenerate."); }
+            const res = await ApiClient.call('groupAction', { gAction: 'updateCode', cid: State.activeChannelId, value: null });
+            document.getElementById('gsCodeDisplayText').innerText = res.newCode; UI.showToast("Code regenerated", 'success'); PollingManager.syncGlobal();
+        } catch(e) { UI.showToast(e.message || "Failed to regenerate.", 'error'); }
     },
 
     setCustomCode: async function() {
         if(State.currentRole !== 'owner') return;
         const v = document.getElementById('gsCustomCodeInput').value.trim();
-        if(!v) { UI.showError("Enter a join code first."); return; }
+        if(!v) { UI.showToast("Enter a join code first.", 'error'); return; }
         try {
             await ApiClient.call('groupAction', { gAction: 'updateCode', cid: State.activeChannelId, value: v });
             document.getElementById('gsCodeDisplayText').innerText = v; document.getElementById('gsCustomCodeInput').value = '';
-            UI.toast("Join code updated"); PollingManager.syncGlobal();
-        } catch(e) { UI.showError(e.message || "Failed to update code."); }
+            UI.showToast("Join code updated", 'success'); PollingManager.syncGlobal();
+        } catch(e) { UI.showToast(e.message || "Failed to update code.", 'error'); }
     },
 
     setThemeMode: function(mode) {
@@ -2418,11 +2420,11 @@ const GroupManager = {
         const apply = async (bg) => {
             try {
                 await ApiClient.call('groupAction', { gAction: 'saveTheme', cid: State.activeChannelId, value: { text: fg, accent: ac, background: bg } });
-                UI.toast("Theme saved."); PollingManager.syncGlobal();
-            } catch(e) { UI.showError(e.message || "Failed to apply theme."); }
+                UI.showToast("Theme saved.", 'success'); PollingManager.syncGlobal();
+            } catch(e) { UI.showToast(e.message || "Failed to apply theme.", 'error'); }
         };
         if(mode === 'image' && file) {
-            if(file.size > 25*1024*1024) { UI.showError("File exceeds 25MB limit."); return; }
+            if(file.size > 25*1024*1024) { UI.showToast("File exceeds 25MB limit.", 'error'); return; }
             const r = new FileReader(); r.onload = () => apply(r.result); r.readAsDataURL(file);
         } else if(mode === 'image') {
             const c = State.channels[State.activeChannelId];
@@ -2454,14 +2456,14 @@ const GroupManager = {
         try {
             await ApiClient.call('groupAction', { gAction: 'approveJoin', cid: State.activeChannelId, targetUid: targetUid, value: isApproved });
             await PollingManager.syncGlobal(); if (State.currentRole === 'owner') UI.openSettings();
-        } catch(e) { UI.showError("Failed to process request."); }
+        } catch(e) { UI.showToast("Failed to process request.", 'error'); }
     },
 
     rename: async function() {
         const v = document.getElementById('gsRenameInput').value.trim();
         if (v && State.activeChannelId) {
-            try { await ApiClient.call('groupAction', { gAction: 'rename', cid: State.activeChannelId, value: v }); UI.toast("Group renamed"); PollingManager.syncGlobal(); }
-            catch(e) { UI.showError(e.message || "Failed to rename group."); }
+            try { await ApiClient.call('groupAction', { gAction: 'rename', cid: State.activeChannelId, value: v }); UI.showToast("Group renamed", 'success'); PollingManager.syncGlobal(); }
+            catch(e) { UI.showToast(e.message || "Failed to rename group.", 'error'); }
         }
     },
 
@@ -2471,7 +2473,7 @@ const GroupManager = {
                 await ApiClient.call('groupAction', { gAction: 'kick', cid: State.activeChannelId, targetUid: id });
                 await PollingManager.syncGlobal();
                 if(document.getElementById('membersListModal').classList.contains('show')) this.openMembersList();
-            } catch(e) { UI.showError(e.message || "Failed to kick."); }
+            } catch(e) { UI.showToast(e.message || "Failed to kick.", 'error'); }
         }}]);
     },
 
@@ -2480,14 +2482,14 @@ const GroupManager = {
             UI.showConfirm("You are the owner. If you leave, the group will be permanently deleted unless you transfer ownership first.", [
                 { text: "Cancel", sec: true }, { text: "Transfer Owner", cb: () => GroupManager.openMembersList() },
                 { text: "Leave & Delete Group", danger: true, cb: async () => {
-                    try { await ApiClient.call('leaveGroup', { cid: State.activeChannelId }); await PollingManager.syncGlobal(); ChatManager.close(); } catch(e) { UI.showError("Failed to delete group."); }
+                    try { await ApiClient.call('leaveGroup', { cid: State.activeChannelId }); await PollingManager.syncGlobal(); ChatManager.close(); } catch(e) { UI.showToast("Failed to delete group.", 'error'); }
                 }}
             ], "Leave Group");
         } else {
             UI.showConfirm("Are you sure you want to leave this group?", [
                 { text: "Cancel", sec: true },
                 { text: "Leave Group", danger: true, cb: async () => {
-                    try { await ApiClient.call('leaveGroup', { cid: State.activeChannelId }); await PollingManager.syncGlobal(); ChatManager.close(); } catch(e) { UI.showError("Failed to leave group."); }
+                    try { await ApiClient.call('leaveGroup', { cid: State.activeChannelId }); await PollingManager.syncGlobal(); ChatManager.close(); } catch(e) { UI.showToast("Failed to leave group.", 'error'); }
                 }}
             ]);
         }
@@ -2501,7 +2503,6 @@ window.onload = () => AuthManager.init();
     window.BSMS_WEB_PAGE_VERSION = "5.0";
     window.BSMS_WEB_PAGE_NAME = "chat";
 </script>
-
 <script src="/js/version-check.js"></script>
 
 </body>
