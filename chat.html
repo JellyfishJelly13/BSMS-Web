@@ -8,9 +8,9 @@ SPDX-License-Identifier: MIT
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<meta name="description" content="BSMS Chat - Permanent messaging system for BSMS Web"/>
+<meta name="description" content="Real-time messaging platform for Boiling Springs Middle School."/>
 <meta property="og:title" content="BSMS Chat">
-<meta property="og:description" content="BSMS Chat - Real-time messaging platform.">
+<meta property="og:description" content="Real-time messaging platform for Boiling Springs Middle School.">
 <meta property="og:url" content="https://bsms-web.vercel.app/chat">
 <meta property="og:image" content="/img/app-icon.png">
 <meta property="og:type" content="website">
@@ -392,6 +392,42 @@ a { color: var(--accent); text-decoration: none; }
     </div>
 </div>
 
+<!-- Restored Group Creation Modal -->
+<div id="createGroupModal" class="overlay layer-top" onclick="if(event.target===this) UI.closeModal('createGroupModal')">
+    <div class="modal-card">
+        <h2>Create Group Chat</h2>
+        <p>Start a new community space.</p>
+        <input type="text" id="newGroupName" class="input-field" placeholder="Group Name (3-30 chars)" maxlength="30">
+        <button class="btn" onclick="GroupManager.create()">Create Group</button>
+        <button class="btn sec" onclick="UI.closeModal('createGroupModal')" style="margin-top: 8px;">Cancel</button>
+    </div>
+</div>
+
+<!-- Restored Group Join Modal -->
+<div id="joinGroupModal" class="overlay layer-top" onclick="if(event.target===this) UI.closeModal('joinGroupModal')">
+    <div class="modal-card">
+        <h2>Join Group Chat</h2>
+        <p>Enter an invite code to join an existing group.</p>
+        <input type="text" id="joinGroupCode" class="input-field" placeholder="Enter Invite Code (e.g. ABCDEF)" style="text-transform: uppercase;">
+        <button class="btn" onclick="GroupManager.join()">Join Group</button>
+        <button class="btn sec" onclick="UI.closeModal('joinGroupModal')" style="margin-top: 8px;">Cancel</button>
+    </div>
+</div>
+
+<!-- Restored Group Info Modal -->
+<div id="groupInfoModal" class="overlay layer-top" onclick="if(event.target===this) UI.closeModal('groupInfoModal')">
+    <div class="modal-card">
+        <h2 id="giName">Group Info</h2>
+        <p id="giMembers" style="margin-bottom: 12px; font-weight: bold;">Members: 1</p>
+        <div id="giInviteSection">
+            <p style="margin-bottom: 8px; font-size: 0.95rem; color: var(--fg2);">Invite Code:</p>
+            <div class="join-code-box" id="giCode">------</div>
+            <button class="btn sec" onclick="GroupManager.copyCode()" style="margin-bottom: 20px;"><svg class="ic"><use href="#ico-copy"></use></svg> Copy Code</button>
+        </div>
+        <button class="btn warn" onclick="GroupManager.leaveGroup()"><svg class="ic"><use href="#ico-leave"></use></svg> Leave Group</button>
+    </div>
+</div>
+
 <div id="ctxMenu">
     <button class="ctx-item" id="ctxBtnCopy" onclick="ContextMenu.copy()" data-ga="ctx_copy"><svg class="ic"><use href="#ico-copy"></use></svg> Copy</button>
     <button class="ctx-item" id="ctxBtnReply" onclick="ContextMenu.reply()" data-ga="ctx_reply"><svg class="ic"><use href="#ico-reply"></use></svg> Reply</button>
@@ -406,6 +442,12 @@ a { color: var(--accent); text-decoration: none; }
         <div id="sideHeader">
             <div class="side-title-row">
                 <h1>Chats</h1>
+                <!-- Restored Plus Button and Menu -->
+                <button class="icon-btn" id="btnPlus" onclick="UI.togglePlusMenu(event)"><svg class="ic"><use href="#ico-plus"></use></svg></button>
+                <div id="plusMenu">
+                    <button class="plus-item" onclick="GroupManager.showCreateModal()"><svg class="ic" style="display:inline-block; vertical-align:middle; width:18px; margin-right:8px;"><use href="#ico-chat"></use></svg> Create Group</button>
+                    <button class="plus-item" onclick="GroupManager.showJoinModal()"><svg class="ic" style="display:inline-block; vertical-align:middle; width:18px; margin-right:8px;"><use href="#ico-plus"></use></svg> Join with Code</button>
+                </div>
             </div>
             <div class="search-box">
                 <svg class="ic"><use href="#ico-search"></use></svg>
@@ -429,6 +471,8 @@ a { color: var(--accent); text-decoration: none; }
                 <h3 id="activeChatName">---</h3>
                 <span id="activeChatStatus">---</span>
             </div>
+            <!-- Restored Chat Info/Settings Button -->
+            <button id="btnChatInfo" class="icon-btn" onclick="GroupManager.showInfo()" style="display:none;"><svg class="ic"><use href="#ico-settings"></use></svg></button>
         </div>
 
         <div id="pinnedBanner" onclick="ScrollManager.scrollToPin()">
@@ -542,6 +586,10 @@ const UI = {
     hide: id => { const e = document.getElementById(id); if(e) e.style.display = 'none'; },
     openModal: id => document.getElementById(id).classList.add('show'),
     closeModal: id => document.getElementById(id).classList.remove('show'),
+    togglePlusMenu: (e) => {
+        e.stopPropagation();
+        document.getElementById('plusMenu').classList.toggle('show');
+    },
     setLoad: (pct, label) => {
         const lb = document.getElementById('loadBar');
         const lp = document.getElementById('loadPct');
@@ -575,7 +623,6 @@ const ApiClient = {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    // CRITICAL FIX: Fetch dynamically from localStorage in case it changes
                     'X-Session-ID': localStorage.getItem('session_id') || ""
                 },
                 body: JSON.stringify(params)
@@ -662,7 +709,6 @@ const AuthManager = {
 
             PollingManager.start();
             
-            // Wait briefly for first sync
             setTimeout(() => {
                 UI.setLoad(100, "Ready");
                 if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('hidden');
@@ -678,6 +724,71 @@ const AuthManager = {
     reject: function() {
         UI.setLoad(100, "Ready");
         document.getElementById('loginModal').classList.add('show');
+    }
+};
+
+const GroupManager = {
+    showCreateModal: () => {
+        document.getElementById('newGroupName').value = '';
+        UI.openModal('createGroupModal');
+        document.getElementById('plusMenu').classList.remove('show');
+    },
+    showJoinModal: () => {
+        document.getElementById('joinGroupCode').value = '';
+        UI.openModal('joinGroupModal');
+        document.getElementById('plusMenu').classList.remove('show');
+    },
+    create: async () => {
+        const name = document.getElementById('newGroupName').value.trim();
+        if (name.length < 3 || name.length > 30) return UI.showError("Group name must be 3-30 characters.");
+        try {
+            const res = await ApiClient.call('createGroup', { name });
+            UI.closeModal('createGroupModal');
+            if (res && res.cid) ChatManager.open(res.cid);
+            PollingManager.syncGlobal();
+        } catch(e) { UI.showError(e.message || "Failed to create group."); }
+    },
+    join: async () => {
+        const code = document.getElementById('joinGroupCode').value.trim().toUpperCase();
+        if (!code) return UI.showError("Please enter a valid code.");
+        try {
+            const res = await ApiClient.call('joinGroup', { code });
+            UI.closeModal('joinGroupModal');
+            if (res && res.cid) ChatManager.open(res.cid);
+            PollingManager.syncGlobal();
+        } catch(e) { UI.showError(e.message || "Failed to join group."); }
+    },
+    showInfo: () => {
+        if (!State.activeChannelId || State.activeType !== 'gcs') return;
+        const c = State.channels[State.activeChannelId];
+        document.getElementById('giName').innerText = c.name;
+        document.getElementById('giMembers').innerText = `Members: ${Object.keys(c.members).length}`;
+        
+        const inviteSec = document.getElementById('giInviteSection');
+        if (c.config && c.config.joinCode) {
+            inviteSec.style.display = 'block';
+            document.getElementById('giCode').innerText = c.config.joinCode;
+        } else {
+            inviteSec.style.display = 'none';
+        }
+        
+        UI.openModal('groupInfoModal');
+    },
+    copyCode: () => {
+        const code = document.getElementById('giCode').innerText;
+        if(code && code !== '------') {
+            navigator.clipboard.writeText(code);
+            UI.toast("Invite code copied!");
+        }
+    },
+    leaveGroup: async () => {
+        if (!confirm("Are you sure you want to leave this group?")) return;
+        try {
+            await ApiClient.call('leaveGroup', { cid: State.activeChannelId });
+            UI.closeModal('groupInfoModal');
+            ChatManager.close();
+            PollingManager.syncGlobal();
+        } catch(e) { UI.showError(e.message || "Failed to leave group."); }
     }
 };
 
@@ -840,7 +951,6 @@ const ScrollManager = {
         const feed = document.getElementById('chatLog');
         if(feed) {
             feed.addEventListener('scroll', () => {
-                // Strict definition of scrolled up
                 State.isScrolledUp = (feed.scrollHeight - feed.scrollTop) > (feed.clientHeight + 10);
                 if (!State.isScrolledUp) {
                     document.getElementById('smartScrollPill').classList.remove('show');
@@ -932,7 +1042,9 @@ const ChatManager = {
         const c = State.channels[State.activeChannelId];
         const nEl = document.getElementById('activeChatName');
         const sEl = document.getElementById('activeChatStatus');
+        const infoBtn = document.getElementById('btnChatInfo');
 
+        // Logic for Group Chat Info Button
         if (c._type === 'dms') {
             const otherUid = Object.keys(c.members).find(id => id !== State.user.uid);
             const acc = State.accountsCache[otherUid] || { displayName: otherUid };
@@ -940,10 +1052,18 @@ const ChatManager = {
             const oStatus = State.usersCache[otherUid]?.status === 'online';
             sEl.innerText = oStatus ? "Online" : "Offline";
             sEl.style.color = oStatus ? "#22c55e" : "var(--fg2)";
+            
+            infoBtn.style.display = 'none';
+            document.getElementById('activeChatInfo').classList.remove('clickable');
+            document.getElementById('activeChatInfo').onclick = null;
         } else {
             nEl.innerText = c.name;
             sEl.innerText = `${Object.keys(c.members).length} members`;
             sEl.style.color = "var(--fg2)";
+            
+            infoBtn.style.display = 'flex';
+            document.getElementById('activeChatInfo').classList.add('clickable');
+            document.getElementById('activeChatInfo').onclick = GroupManager.showInfo;
         }
 
         const pb = document.getElementById('pinnedBanner');
@@ -1135,10 +1255,13 @@ const ContextMenu = {
             if (!e.target.closest('#ctxMenu') && !e.target.closest('.msg-ctx-trigger')) {
                 this.close();
             }
+            // Auto close plus menu if clicking away
+            if (!e.target.closest('#plusMenu') && !e.target.closest('#btnPlus')) {
+                document.getElementById('plusMenu').classList.remove('show');
+            }
         });
     },
     open: function(e, msgId) {
-        // Fix for bounding client rect error: ensure event and currentTarget exist
         if (!e || !e.currentTarget) return;
         e.stopPropagation();
 
