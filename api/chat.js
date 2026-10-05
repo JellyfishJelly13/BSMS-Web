@@ -7,12 +7,10 @@
 import admin from 'firebase-admin';
 import crypto from 'crypto';
 
-// Safe Firebase Initialization
+// Safe Firebase Initialization with Vercel Environment Variables
 if (!admin.apps.length) {
     try {
-        if (!process.env.FIREBASE_PRIVATE_KEY) {
-            throw new Error("FIREBASE_PRIVATE_KEY is missing from environment variables.");
-        }
+        if (!process.env.FIREBASE_PRIVATE_KEY) throw new Error("FIREBASE_PRIVATE_KEY is missing from environment variables.");
         
         admin.initializeApp({
             credential: admin.credential.cert({
@@ -22,8 +20,8 @@ if (!admin.apps.length) {
             }),
             databaseURL: process.env.FIREBASE_DATABASE_URL
         });
-    } catch (err) {
-        console.error("[BSMS Web :: API] Firebase Init Error:", err.message);
+    } catch (err) { 
+        console.error("[BSMS Web :: API] Firebase Init Error:", err.message); 
     }
 }
 const db = admin.apps.length ? admin.database() : null;
@@ -41,7 +39,7 @@ async function getUserBySession(sessionId) {
     return null;
 }
 
-// Extracted Profanity Checker
+// Extracted Glin Profanity Checker
 async function checkProfanity(text) {
     if (!text) return false;
     let strippedText = text
@@ -94,7 +92,6 @@ export default async function handler(req, res) {
                 
                 for (const [id, acc] of Object.entries(allAccounts)) {
                     if (acc.account_status !== 'deleted') {
-                        // FIX: Expose username alongside displayName for accurate searching
                         accountsCache[id] = { displayName: acc.displayName, username: acc.username, avatar: acc.avatar };
                     }
                 }
@@ -108,25 +105,22 @@ export default async function handler(req, res) {
                             if (channel.members && channel.members[uid]) {
                                 let strippedMessages = {};
                                 if (channel.messages) {
-                                    // FIX: Protect against Firebase turning integer keys into arrays full of nulls
                                     let mKeys = Object.keys(channel.messages).filter(k => channel.messages[k] !== null);
                                     if (mKeys.length > 0) {
                                         const lastKey = mKeys[mKeys.length - 1];
                                         strippedMessages[lastKey] = channel.messages[lastKey];
                                     }
                                 }
-                                myChannels[cid] = {
-                                    ...channel,
-                                    _type: type,
-                                    _id: cid,
-                                    messages: strippedMessages
-                                };
+                                let chData = { ...channel, _type: type, _id: cid, messages: strippedMessages };
+                                if (channel.members[uid].role !== 'owner' && chData.joinRequests) {
+                                    delete chData.joinRequests; // Sanitize privacy data
+                                }
+                                myChannels[cid] = chData;
                             }
                         }
                     }
                 }
                 
-                // FIX: Force return myUid so the frontend can auto-correct poisoned local storage
                 return res.status(200).json({ myUid: uid, users: usersCache, accounts: accountsCache, channels: myChannels });
             }
 
@@ -142,43 +136,62 @@ export default async function handler(req, res) {
             }
 
             case 'sendMessage': {
-                const { cid, type, content, repliedTo } = payload;
+                const { cid, type, content, contentType = 'text', attachmentName, repliedTo } = payload;
                 if (!cid || !type || !content) return res.status(400).json({ error: "Missing payload data" });
 
                 const chSnap = await db.ref(`/chat/conversations/${type}/${cid}`).once('value');
                 const channel = chSnap.val();
                 if (!channel || !channel.members || !channel.members[uid]) return res.status(403).json({ error: "Not a member." });
 
-                const validTextRegex = /^[\x20-\x7E\p{Emoji}\s]*$/u;
-                if (!validTextRegex.test(content)) return res.status(400).json({ error: 'Invalid characters or formatting detected.' });
-                if (await checkProfanity(content)) return res.status(400).json({ error: 'Profanity detected.' });
+                // Formatting and validation checks per type
+                if (contentType === 'text') {
+                    const validTextRegex = /^[\x20-\x7E\p{Emoji}\s]*$/u;
+                    if (!validTextRegex.test(content)) return res.status(400).json({ error: 'Invalid characters or formatting detected.' });
+                    if (await checkProfanity(content)) return res.status(400).json({ error: 'Profanity detected.' });
+                } else if (contentType === 'poll') {
+                    if (await checkProfanity(content.pollQuestion)) return res.status(400).json({ error: 'Profanity detected in poll question.' });
+                }
 
                 const lastMsgSnap = await db.ref(`/chat/users/${uid}/lastMessageTimestamp`).once('value');
-                const lastTs = lastMsgSnap.val() || 0;
                 const now = Date.now();
-                if (now - lastTs < 5000) return res.status(429).json({ error: "Please wait 5 seconds before sending another message." });
+                if (now - (lastMsgSnap.val() || 0) < 5000 && type === 'dms') return res.status(429).json({ error: "Please wait 5 seconds before sending another message." });
 
                 const msgIdRef = db.ref(`/chat/conversations/${type}/${cid}/config/lastMessageId`);
-                const transactionResult = await msgIdRef.transaction((current) => {
-                    return (current || 99999) + 1;
-                });
+                const transactionResult = await msgIdRef.transaction((current) => (current || 99999) + 1);
                 const newId = transactionResult.snapshot.val();
+
+                const rr = {};
+                for (let mUid in channel.members) rr[mUid] = (mUid === uid);
 
                 const msgObj = {
                     senderUid: uid,
                     timestamp: admin.database.ServerValue.TIMESTAMP,
                     content: content,
-                    contentType: 'text',
+                    contentType: contentType,
+                    readReceipts: rr,
                     status: { unsent: false, deletedByMod: false, pinned: false, repliedTo: repliedTo || false }
                 };
+                if (attachmentName) msgObj.attachmentName = attachmentName;
 
                 await db.ref(`/chat/conversations/${type}/${cid}/messages/${newId}`).set(msgObj);
                 await db.ref(`/chat/users/${uid}/lastMessageTimestamp`).set(now);
+
+                // Optional NTFY Notification Delivery Utilizing Vercel Variables 
+                if (process.env.NTFY_CHAT_TOPIC) {
+                    try { 
+                        fetch(`https://ntfy.sh/${process.env.NTFY_CHAT_TOPIC}`, { 
+                            method: 'POST', 
+                            body: `New message delivered in ${type}`, 
+                            headers: { 'Title': 'BSMS Chat System Notification' }
+                        }); 
+                    } catch(e) { }
+                }
+
                 return res.status(200).json({ success: true, messageId: newId });
             }
 
             case 'action': {
-                const { action: msgAction, cid, type, msgId } = payload;
+                const { action: msgAction, cid, type, msgId, emoji, optKey, content } = payload;
                 if (!cid || !type || !msgId) return res.status(400).json({ error: "Missing data" });
 
                 const msgRef = db.ref(`/chat/conversations/${type}/${cid}/messages/${msgId}`);
@@ -198,6 +211,17 @@ export default async function handler(req, res) {
                     await msgRef.update({ 'status/deletedByMod': true, content: null });
                 } else if (msgAction === 'pin' && isMod) {
                     await msgRef.update({ 'status/pinned': !(msg.status?.pinned || false) });
+                } else if (msgAction === 'edit' && isMine && msg.contentType === 'text') {
+                    if (await checkProfanity(content)) return res.status(400).json({ error: "Profanity detected in edited message" });
+                    await msgRef.update({ content: content, 'status/edited': true });
+                } else if (msgAction === 'react' && emoji) {
+                    const rxRef = db.ref(`/chat/conversations/${type}/${cid}/messages/${msgId}/reactions/${uid}`);
+                    const rx = (await rxRef.once('value')).val();
+                    if (rx === emoji) await rxRef.remove(); else await rxRef.set(emoji);
+                } else if (msgAction === 'votePoll' && optKey && msg.contentType === 'poll') {
+                    const voteRef = db.ref(`/chat/conversations/${type}/${cid}/messages/${msgId}/content/pollVotes/${uid}`);
+                    const vote = (await voteRef.once('value')).val();
+                    if (vote === optKey) await voteRef.remove(); else await voteRef.set(optKey);
                 } else {
                     return res.status(403).json({ error: "Unauthorized message action." });
                 }
@@ -207,8 +231,7 @@ export default async function handler(req, res) {
 
             case 'typing': {
                 const { cid, type, isTyping } = payload;
-                if (!cid || !type) return res.status(400).json({ error: "Missing data" });
-                await db.ref(`/chat/conversations/${type}/${cid}/members/${uid}/isTyping`).set(Boolean(isTyping));
+                if (cid && type) await db.ref(`/chat/conversations/${type}/${cid}/members/${uid}/isTyping`).set(Boolean(isTyping));
                 return res.status(200).json({ success: true });
             }
 
@@ -245,46 +268,51 @@ export default async function handler(req, res) {
             }
 
             case 'createGroup': {
-                const { name } = payload;
+                const { name, joinCode, requireApproval, icon } = payload;
                 if (!name || name.length < 3 || name.length > 30) return res.status(400).json({ error: "Group name must be 3-30 characters." });
                 if (await checkProfanity(name)) return res.status(400).json({ error: "Profanity detected in group name." });
 
-                const joinCode = crypto.randomBytes(3).toString('hex').toUpperCase();
+                const finalCode = joinCode || crypto.randomBytes(3).toString('hex').toUpperCase();
                 const newCid = db.ref('/chat/conversations/gcs').push().key;
 
                 await db.ref(`/chat/conversations/gcs/${newCid}`).set({
                     name: name,
-                    config: { createdAt: Date.now(), lastMessageId: 99999, joinCode: joinCode, ownerUid: uid },
+                    config: { 
+                        createdAt: Date.now(), 
+                        lastMessageId: 99999, 
+                        joinCode: finalCode, 
+                        ownerUid: uid, 
+                        requireJoinApproval: !!requireApproval, 
+                        allowCustomNicknames: true, 
+                        icon: icon || null 
+                    },
                     members: { [uid]: { role: 'owner', isTyping: false } }
                 });
-                return res.status(200).json({ success: true, cid: newCid });
+                return res.status(200).json({ success: true, cid: newCid, joinCode: finalCode });
             }
 
             case 'joinGroup': {
                 const { code } = payload;
                 if (!code) return res.status(400).json({ error: "Missing invite code." });
                 
-                const gcsSnap = await db.ref('/chat/conversations/gcs').once('value');
+                const gcsSnap = await db.ref('/chat/conversations/gcs').orderByChild('config/joinCode').equalTo(code.toUpperCase()).once('value');
                 const gcs = gcsSnap.val() || {};
                 
-                let targetCid = null;
-                for (const [id, c] of Object.entries(gcs)) {
-                    if (c.config && c.config.joinCode === code.toUpperCase()) {
-                        targetCid = id;
-                        break;
-                    }
-                }
-                
+                const targetCid = Object.keys(gcs)[0];
                 if (!targetCid) return res.status(404).json({ error: "Invalid invite code." });
                 
-                await db.ref(`/chat/conversations/gcs/${targetCid}/members/${uid}`).set({ role: 'member', isTyping: false });
-                return res.status(200).json({ success: true, cid: targetCid });
+                const group = gcs[targetCid];
+                if (group.config?.requireJoinApproval) {
+                    await db.ref(`/chat/conversations/gcs/${targetCid}/joinRequests/${uid}`).set({ username: account.username, displayName: account.displayName, timestamp: Date.now() });
+                    return res.status(200).json({ success: true, requested: true });
+                } else {
+                    await db.ref(`/chat/conversations/gcs/${targetCid}/members/${uid}`).set({ role: 'member', isTyping: false });
+                    return res.status(200).json({ success: true, cid: targetCid });
+                }
             }
 
             case 'leaveGroup': {
                 const { cid } = payload;
-                if (!cid) return res.status(400).json({ error: "Missing channel id." });
-                
                 const gcsSnap = await db.ref(`/chat/conversations/gcs/${cid}`).once('value');
                 const group = gcsSnap.val();
                 
@@ -296,6 +324,102 @@ export default async function handler(req, res) {
                 delete updatedMembers[uid];
                 if (Object.keys(updatedMembers).length === 0) await db.ref(`/chat/conversations/gcs/${cid}`).remove();
                 
+                return res.status(200).json({ success: true });
+            }
+
+            case 'getGroupInfo': {
+                const { cid } = payload;
+                if (!cid) return res.status(400).json({ error: "Missing group CID" });
+                const snap = await db.ref(`/chat/conversations/gcs/${cid}`).once('value');
+                const group = snap.val();
+                if (!group) return res.status(404).json({ error: "Group not found" });
+                
+                return res.status(200).json({ 
+                    name: group.name, 
+                    icon: group.config?.icon, 
+                    requireApproval: group.config?.requireJoinApproval, 
+                    isMember: !!(group.members && group.members[uid]) 
+                });
+            }
+
+            case 'groupAction': {
+                const { cid, gAction, targetUid, value, configKey } = payload;
+                if (!cid) return res.status(400).json({ error: "Missing CID" });
+
+                const chSnap = await db.ref(`/chat/conversations/gcs/${cid}`).once('value');
+                const group = chSnap.val();
+                if (!group) return res.status(404).json({ error: "Group not found" });
+                
+                const myRole = group.members[uid]?.role || 'none';
+                if (myRole === 'none' && gAction !== 'requestJoin' && gAction !== 'directJoin') return res.status(403).json({ error: "Not a member" });
+                const isOwner = myRole === 'owner';
+                const isMod = isOwner || myRole === 'moderator';
+
+                switch (gAction) {
+                    case 'rename':
+                        if (!isOwner) return res.status(403).json({ error: "Unauthorized" });
+                        if (await checkProfanity(value)) return res.status(400).json({ error: "Profanity detected" });
+                        await db.ref(`/chat/conversations/gcs/${cid}/name`).set(value);
+                        break;
+                    case 'updateConfig':
+                        if (!isOwner) return res.status(403).json({ error: "Unauthorized" });
+                        await db.ref(`/chat/conversations/gcs/${cid}/config/${configKey}`).set(value);
+                        break;
+                    case 'updateIcon':
+                        if (!isOwner) return res.status(403).json({ error: "Unauthorized" });
+                        await db.ref(`/chat/conversations/gcs/${cid}/config/icon`).set(value);
+                        break;
+                    case 'updateCode':
+                        if (!isOwner) return res.status(403).json({ error: "Unauthorized" });
+                        const check = await db.ref(`/chat/conversations/gcs`).orderByChild('config/joinCode').equalTo(value).once('value');
+                        if (check.exists()) return res.status(400).json({ error: "Code already in use" });
+                        await db.ref(`/chat/conversations/gcs/${cid}/config/joinCode`).set(value);
+                        break;
+                    case 'saveTheme':
+                        if (!isOwner) return res.status(403).json({ error: "Unauthorized" });
+                        await db.ref(`/chat/conversations/gcs/${cid}/config/theme`).set(value);
+                        break;
+                    case 'kick':
+                        if (!isMod) return res.status(403).json({ error: "Unauthorized" });
+                        if (group.members[targetUid]?.role === 'owner') return res.status(403).json({ error: "Cannot kick owner" });
+                        await db.ref(`/chat/conversations/gcs/${cid}/members/${targetUid}`).remove();
+                        break;
+                    case 'setRole':
+                        if (!isOwner) return res.status(403).json({ error: "Unauthorized" });
+                        if (value === 'transfer') {
+                            await db.ref(`/chat/conversations/gcs/${cid}/members/${targetUid}/role`).set('owner');
+                            await db.ref(`/chat/conversations/gcs/${cid}/members/${uid}/role`).set('moderator');
+                        } else {
+                            await db.ref(`/chat/conversations/gcs/${cid}/members/${targetUid}/role`).set(value);
+                        }
+                        break;
+                    case 'saveNickname':
+                        if (group.config?.allowCustomNicknames === false) return res.status(400).json({ error: "Nicknames disabled" });
+                        if (value && await checkProfanity(value)) return res.status(400).json({ error: "Profanity detected" });
+                        await db.ref(`/chat/conversations/gcs/${cid}/members/${uid}/nickname`).set(value || null);
+                        break;
+                    case 'requestJoin':
+                        await db.ref(`/chat/conversations/gcs/${cid}/joinRequests/${uid}`).set({ username: account.username, displayName: account.displayName, timestamp: Date.now() });
+                        break;
+                    case 'directJoin':
+                        await db.ref(`/chat/conversations/gcs/${cid}/members/${uid}`).set({ role: 'member', isTyping: false });
+                        break;
+                    case 'approveJoin':
+                        if (!isOwner) return res.status(403).json({ error: "Unauthorized" });
+                        if (value) await db.ref(`/chat/conversations/gcs/${cid}/members/${targetUid}`).set({ role: 'member', isTyping: false });
+                        await db.ref(`/chat/conversations/gcs/${cid}/joinRequests/${targetUid}`).remove();
+                        break;
+                    default:
+                        return res.status(400).json({ error: "Invalid group action" });
+                }
+                return res.status(200).json({ success: true });
+            }
+
+            case 'readReceipt': {
+                const { cid, type, msgId } = payload;
+                if (cid && type && msgId) {
+                    await db.ref(`/chat/conversations/${type}/${cid}/messages/${msgId}/readReceipts/${uid}`).set(true);
+                }
                 return res.status(200).json({ success: true });
             }
 
