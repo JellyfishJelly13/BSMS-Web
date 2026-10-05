@@ -82,6 +82,10 @@ export default async function handler(req, res) {
 
         switch (action) {
             case 'sync': {
+                // Heartbeat to keep user online
+                await db.ref(`/chat/users/${uid}/status`).set('online');
+                await db.ref(`/chat/users/${uid}/lastSeen`).set(admin.database.ServerValue.TIMESTAMP);
+
                 const usersSnap = await db.ref('/chat/users').once('value');
                 const acctSnap = await db.ref('/accounts').once('value');
                 const convosSnap = await db.ref('/chat/conversations').once('value');
@@ -235,8 +239,8 @@ export default async function handler(req, res) {
 
             case 'status': {
                 const { status } = payload;
-                if (status === 'online') {
-                    await db.ref(`/chat/users/${uid}/status`).set('online');
+                if (status === 'online' || status === 'offline') {
+                    await db.ref(`/chat/users/${uid}/status`).set(status);
                     await db.ref(`/chat/users/${uid}/lastSeen`).set(admin.database.ServerValue.TIMESTAMP);
                 }
                 return res.status(200).json({ success: true });
