@@ -16,28 +16,6 @@ The application relies on a decoupled architecture, ensuring client-side code re
 * **Database:** [Firebase Realtime Database](https://firebase.google.com). Operations are executed securely via the `firebase-admin` SDK on the backend, preventing client-side exposure of database URLs and credentials.
 * **Analytics:** Integrated [Google Analytics 4](https://analytics.google.com) (GA4) with custom event tracking.
 
-## Core Pages and Navigation
-
-The user interface is broken down into modular, purpose-built HTML pages:
-
-* **index.html:** The central landing page and dashboard routing users to active modules based on their session status.
-* **accounts.html:** The authentication and profile management hub. Handles user registration, login, avatar uploading with client-side canvas compression, active session management, and data export.
-* **chat.html:** The real-time messaging interface. Features smart autoscroll, dynamic timestamping, a strict 5-second message cooldown, and integration with the backend profanity filter.
-* **g.html:** An embedded iframe game hub designed with optimized touch targets for mobile accessibility.
-* **countdown.html:** A utility tool featuring fixed-height settings tabs using CSS Flexbox for consistent cross-device rendering.
-* **device-banned.html:** A strict blockade page for users flagged by the moderation system.
-* **401.html & 404.html:** Standardized HTTP error pages with fallback navigation.
-* **privacy.html:** The platform's privacy policy outlining data collection and session handling.
-
-## Backend APIs and Serverless Functions
-
-All direct database reads, writes, and validations are offloaded to Vercel Serverless Functions.
-
-* **api/chat.js:** Manages message payload delivery, enforces rate limits, and validates session integrity before writing to the database.
-* **api/profanity-filter.js:** A robust moderation pipeline that intercepts text, strips zero-width joiners and diacritics, normalizes basic leetspeak, blocks non-standard Unicode/Zalgo text, and flags prohibited words.
-* **api/export-data.js:** Compiles a user's entire profile and chat history into a downloadable format upon request.
-* **api/version-check.js:** Polled by the client every 30 seconds to ensure the frontend is running the most current build, prompting a refresh if a version mismatch occurs.
-
 ## Integrated Libraries
 
 * **[JSZip](https://stuk.github.io/jszip/):** Utilized client-side on the accounts page to bundle the JSON data fetched from `api/export-data.js` into a downloadable `.zip` archive.
