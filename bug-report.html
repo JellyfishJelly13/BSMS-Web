@@ -1,0 +1,1558 @@
+<!--
+BSMS Web
+Copyright © 2026 Jellyfish Jelly
+SPDX-License-Identifier: MIT
+-->
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<meta name="description" content="Report a bug or problem with BSMS Web."/>
+<meta name="category" content="Education"/>
+<meta name="author" content="BSMS Web"/>
+<meta name="theme-color" content="#BB001E">
+<meta name="color-scheme" content="#BB001E">
+<meta name="application-name" content="BSMS Web">
+<meta name="application-version" content="v5.0.0">
+
+<meta property="og:title" content="Report a Bug — BSMS Web">
+<meta property="og:description" content="Report a bug or problem with BSMS Web.">
+<meta property="og:category" content="Education">
+<meta property="og:url" content="https://bsms-web.vercel.app/bug-report">
+<meta property="og:type" content="website">
+
+<title>Report a Bug — BSMS Web</title>
+
+<link rel="icon" href="/img/icon.png">
+<link rel="apple-touch-icon" href="/img/app-icon.png">
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2TKPQV995W"></script>
+
+<script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag(){
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+    gtag('config', 'G-2TKPQV995W');
+</script>
+
+<script src="/js/analytics.js"></script>
+
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
+
+*,*::before,*::after {
+  box-sizing:border-box;
+}
+
+:root {
+  --theme-rgb: 187,0,30;
+  --red: rgb(var(--theme-rgb));
+  --red-h: #d10022;
+  --red-glow: rgba(var(--theme-rgb), 0.35);
+
+  --bg: #000;
+  --fg: #fff;
+  --fg2: rgba(255,255,255,0.6);
+
+  --border: rgba(255,255,255,0.13);
+  --msg-bg: rgba(255,255,255,0.06);
+  --input-bg: rgba(255,255,255,0.08);
+
+  --font: 'Patrick Hand', cursive;
+}
+
+body.light-mode {
+  --bg: #f0f2f5;
+  --fg: #1c1e21;
+  --fg2: rgba(0,0,0,0.6);
+  --border: rgba(0,0,0,0.15);
+  --msg-bg: #fff;
+  --input-bg: #fff;
+}
+
+html,
+body {
+  margin:0;
+  padding:0;
+  min-height:100%;
+  width:100%;
+
+  font-family:var(--font);
+
+  background:var(--bg);
+  color:var(--fg);
+
+  overflow-x:hidden;
+
+  transition:
+    background 0.3s,
+    color 0.3s;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity:0;
+  }
+
+  to {
+    opacity:1;
+  }
+}
+
+@keyframes popIn {
+  from {
+    opacity:0;
+    transform:scale(.92) translateY(10px);
+  }
+
+  to {
+    opacity:1;
+    transform:scale(1) translateY(0);
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity:0;
+    transform:translateY(20px);
+  }
+
+  to {
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+/* ================================
+   OFFLINE
+================================ */
+
+#offlineBanner {
+  position:fixed;
+
+  top:0;
+  left:0;
+
+  width:100%;
+
+  background:#ef4444;
+  color:#fff;
+
+  text-align:center;
+
+  padding:10px;
+
+  font-family:var(--font);
+  font-size:18px;
+
+  z-index:10000;
+
+  transform:translateY(-100%);
+
+  transition:
+    transform 0.3s ease;
+}
+
+#offlineBanner.show {
+  transform:translateY(0);
+}
+
+/* ================================
+   GLOBAL USER BUTTON
+================================ */
+
+#globalUserBtn {
+  position:fixed;
+
+  top:20px;
+  right:24px;
+
+  width:50px;
+  height:50px;
+
+  border-radius:50%;
+
+  border:2px solid var(--border);
+
+  background:var(--input-bg);
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  cursor:pointer;
+
+  transition:all 0.2s;
+
+  z-index:2000;
+
+  overflow:hidden;
+
+  color:var(--fg);
+
+  font-weight:bold;
+  font-size:22px;
+
+  box-shadow:
+    0 4px 14px rgba(0,0,0,0.3);
+}
+
+#globalUserBtn:hover {
+  border-color:var(--red);
+
+  box-shadow:
+    0 8px 24px rgba(0,0,0,0.4);
+
+  transform:scale(1.05);
+}
+
+#globalUserBtn svg {
+  width:24px;
+  height:24px;
+
+  fill:var(--fg);
+
+  transition:fill 0.2s;
+}
+
+#globalUserBtn img {
+  width:100%;
+  height:100%;
+
+  object-fit:cover;
+}
+
+/* ================================
+   BUTTONS
+================================ */
+
+.btn {
+  display:inline-block;
+
+  font-family:var(--font);
+  font-size:19px;
+
+  padding:10px 18px;
+
+  border-radius:12px;
+
+  border:2px solid var(--red);
+
+  background:var(--red);
+
+  color:#fff;
+
+  cursor:pointer;
+
+  transition:
+    transform .15s,
+    background .15s,
+    box-shadow .15s,
+    border-color .15s;
+
+  text-decoration:none;
+
+  text-align:center;
+
+  line-height:1.2;
+
+  width:100%;
+}
+
+.btn:hover {
+  background:var(--red-h);
+
+  transform:scale(1.03);
+
+  box-shadow:
+    0 4px 18px var(--red-glow);
+}
+
+.btn:active {
+  transform:scale(.97);
+}
+
+.btn.sec {
+  background:transparent;
+
+  border-color:var(--border);
+
+  color:var(--fg);
+}
+
+.btn.sec:hover {
+  background:var(--msg-bg);
+
+  border-color:var(--fg2);
+
+  box-shadow:none;
+}
+
+/* ================================
+   HERO
+================================ */
+
+.hero {
+  text-align:center;
+
+  padding:
+    100px 20px 45px;
+
+  animation:
+    fadeUp 0.6s ease forwards;
+}
+
+.hero-logo {
+  width:90px;
+  height:90px;
+
+  border-radius:18px;
+
+  box-shadow:
+    0 8px 24px
+    rgba(var(--theme-rgb),0.3);
+
+  margin-bottom:24px;
+}
+
+.hero h1 {
+  font-size:64px;
+
+  margin:
+    0 0 12px;
+
+  line-height:1.1;
+
+  color:var(--fg);
+}
+
+.hero h1 span {
+  color:var(--red);
+}
+
+.hero p {
+  font-size:22px;
+
+  color:var(--fg2);
+
+  max-width:620px;
+
+  margin:
+    0 auto;
+
+  line-height:1.5;
+}
+
+/* ================================
+   FORM CONTAINER
+================================ */
+
+.form-container {
+  width:min(700px, calc(100% - 40px));
+
+  margin:
+    0 auto 60px;
+
+  padding:
+    20px;
+}
+
+/* ================================
+   FORM CARD
+================================ */
+
+.form-card {
+  background:var(--msg-bg);
+
+  border:
+    2px solid var(--border);
+
+  border-radius:20px;
+
+  padding:
+    30px 26px;
+
+  animation:
+    popIn 0.5s ease forwards;
+
+  box-shadow:
+    0 12px 30px rgba(0,0,0,0.2);
+}
+
+/* ================================
+   FIELDS
+================================ */
+
+.form-group {
+  margin-bottom:24px;
+}
+
+.form-group:last-of-type {
+  margin-bottom:28px;
+}
+
+.form-label {
+  display:block;
+
+  font-size:22px;
+
+  color:var(--fg);
+
+  margin-bottom:9px;
+}
+
+.optional {
+  color:var(--fg2);
+
+  font-size:17px;
+
+  margin-left:5px;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  width:100%;
+
+  font-family:var(--font);
+
+  font-size:19px;
+
+  color:var(--fg);
+
+  background:var(--input-bg);
+
+  border:
+    2px solid var(--border);
+
+  border-radius:12px;
+
+  outline:none;
+
+  transition:
+    border-color .15s,
+    box-shadow .15s,
+    background .15s;
+}
+
+.form-input,
+.form-select {
+  height:52px;
+
+  padding:
+    8px 14px;
+}
+
+.form-textarea {
+  min-height:150px;
+
+  padding:
+    12px 14px;
+
+  resize:vertical;
+
+  line-height:1.4;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color:var(--fg2);
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  border-color:var(--red);
+
+  box-shadow:
+    0 0 0 3px
+    rgba(var(--theme-rgb),0.12);
+}
+
+.form-select {
+  appearance:none;
+  -webkit-appearance:none;
+
+  cursor:pointer;
+
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--fg2) 50%),
+    linear-gradient(135deg, var(--fg2) 50%, transparent 50%);
+
+  background-position:
+    calc(100% - 19px) 22px,
+    calc(100% - 13px) 22px;
+
+  background-size:
+    6px 6px,
+    6px 6px;
+
+  background-repeat:no-repeat;
+
+  padding-right:40px;
+}
+
+.form-select option {
+  background:#111;
+  color:#fff;
+}
+
+.form-hint {
+  margin-top:7px;
+
+  color:var(--fg2);
+
+  font-size:16px;
+
+  line-height:1.35;
+}
+
+/* ================================
+   SUBMIT
+================================ */
+
+.submit-btn {
+  width:100%;
+
+  font-family:var(--font);
+  font-size:21px;
+
+  padding:11px 18px;
+
+  border-radius:12px;
+
+  border:
+    2px solid var(--red);
+
+  background:var(--red);
+
+  color:#fff;
+
+  cursor:pointer;
+
+  transition:
+    transform .15s,
+    background .15s,
+    box-shadow .15s,
+    opacity .15s;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background:var(--red-h);
+
+  transform:scale(1.02);
+
+  box-shadow:
+    0 4px 18px var(--red-glow);
+}
+
+.submit-btn:active:not(:disabled) {
+  transform:scale(.97);
+}
+
+.submit-btn:disabled {
+  opacity:.6;
+
+  cursor:not-allowed;
+}
+
+/* ================================
+   STATUS
+================================ */
+
+#statusMessage {
+  display:none;
+
+  margin-top:18px;
+
+  padding:13px 15px;
+
+  border-radius:12px;
+
+  font-size:18px;
+
+  line-height:1.4;
+
+  border:
+    2px solid var(--border);
+
+  animation:
+    popIn .2s ease;
+}
+
+#statusMessage.show {
+  display:block;
+}
+
+#statusMessage.success {
+  border-color:#22c55e;
+
+  background:
+    rgba(34,197,94,0.1);
+
+  color:#86efac;
+}
+
+#statusMessage.error {
+  border-color:#ef4444;
+
+  background:
+    rgba(239,68,68,0.1);
+
+  color:#fca5a5;
+}
+
+/* ================================
+   BACK
+================================ */
+
+.back-section {
+  text-align:center;
+
+  max-width:700px;
+
+  margin:
+    0 auto 40px;
+
+  padding:
+    0 20px;
+
+  animation:
+    fadeUp .6s ease forwards;
+}
+
+.back-section a {
+  width:auto;
+
+  min-width:200px;
+}
+
+/* ================================
+   FOOTER
+================================ */
+
+.footer {
+  text-align:center;
+
+  padding:
+    30px 20px;
+
+  color:var(--fg2);
+
+  font-size:16px;
+}
+
+.footer a {
+  color:var(--red);
+
+  text-decoration:none;
+
+  transition:opacity .2s;
+}
+
+.footer a:hover {
+  opacity:.8;
+}
+
+/* ================================
+   MOBILE
+================================ */
+
+@media (max-width:600px) {
+
+  .hero {
+    padding-top:80px;
+  }
+
+  .hero h1 {
+    font-size:48px;
+  }
+
+  .hero p {
+    font-size:19px;
+  }
+
+  #globalUserBtn {
+    top:16px;
+    right:16px;
+
+    width:44px;
+    height:44px;
+  }
+
+  .form-container {
+    width:
+      calc(100% - 24px);
+
+    padding:12px;
+  }
+
+  .form-card {
+    padding:
+      24px 18px;
+  }
+
+  .form-label {
+    font-size:20px;
+  }
+
+  .form-input,
+  .form-select,
+  .form-textarea {
+    font-size:18px;
+  }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="offlineBanner">
+  You are currently offline
+</div>
+
+<div
+  id="globalUserBtn"
+  onclick="handleUserIconClick()"
+  data-ga="global_user_btn">
+</div>
+
+<!-- ================================
+     ACCOUNT POPUP
+================================ -->
+
+<div
+  id="accountPopup"
+  class="overlay"
+  style="
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.85);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:3000;
+    padding:20px;
+    backdrop-filter:blur(4px);
+  "
+  onclick="if(event.target===this) closePopup('accountPopup')"
+>
+
+  <div
+    style="
+      background:var(--bg);
+      border:2px solid var(--red);
+      border-radius:20px;
+      padding:30px 24px 24px;
+      width:min(400px,100%);
+      text-align:center;
+      box-shadow:0 10px 40px rgba(0,0,0,0.5);
+      animation:popIn .22s ease;
+    "
+  >
+
+    <div
+      id="accPopupAvatar"
+      style="
+        width:86px;
+        height:86px;
+        border-radius:50%;
+        border:3px solid var(--red);
+        margin:0 auto 12px;
+        overflow:hidden;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:36px;
+        background:var(--msg-bg);
+        font-weight:bold;
+        color:var(--fg);
+      "
+    ></div>
+
+    <h2
+      id="accPopupName"
+      style="
+        margin:0 0 2px;
+        font-size:28px;
+      "
+    >
+      ---
+    </h2>
+
+    <p
+      style="
+        font-size:16px;
+        margin:0 0 22px;
+        color:var(--fg2);
+      "
+    >
+      @<span id="accPopupUser">---</span>
+    </p>
+
+    <a
+      href="/accounts"
+      class="btn"
+      data-ga="manage_account_popup"
+    >
+      Manage Account
+    </a>
+
+    <button
+      class="btn sec"
+      onclick="closePopup('accountPopup')"
+      style="
+        border:none;
+        margin-top:6px;
+      "
+    >
+      Close
+    </button>
+
+  </div>
+
+</div>
+
+<!-- ================================
+     HERO
+================================ -->
+
+<div class="hero">
+
+  <img
+    src="/img/icon.png"
+    alt="BSMS Web"
+    class="hero-logo"
+  >
+
+  <h1>
+    <span>Report a Bug</span>
+  </h1>
+
+  <p>
+    Found something that isn't working correctly?
+    Tell us what happened so we can make BSMS Web better.
+  </p>
+
+</div>
+
+<!-- ================================
+     FORM
+================================ -->
+
+<div class="form-container">
+
+  <div class="form-card">
+
+    <form id="bugReportForm">
+
+      <div class="form-group">
+
+        <label
+          class="form-label"
+          for="name"
+        >
+          Your Name
+          <span class="optional">(optional)</span>
+        </label>
+
+        <input
+          id="name"
+          name="name"
+          class="form-input"
+          type="text"
+          maxlength="100"
+          autocomplete="name"
+          placeholder="Your name"
+        >
+
+      </div>
+
+      <div class="form-group">
+
+        <label
+          class="form-label"
+          for="area"
+        >
+          Where are you having the problem?
+        </label>
+
+        <select
+          id="area"
+          name="area"
+          class="form-select"
+          required
+        >
+
+          <option
+            value=""
+            disabled
+            selected
+          >
+            Select an area
+          </option>
+
+          <option value="Chat">
+            Chat
+          </option>
+
+          <option value="Countdown">
+            Countdown
+          </option>
+
+          <option value="Accounts">
+            Accounts
+          </option>
+
+          <option value="Games">
+            Games
+          </option>
+
+          <option value="Other">
+            Other
+          </option>
+
+        </select>
+
+      </div>
+
+      <div class="form-group">
+
+        <label
+          class="form-label"
+          for="summary"
+        >
+          Briefly describe the bug
+        </label>
+
+        <input
+          id="summary"
+          name="summary"
+          class="form-input"
+          type="text"
+          maxlength="300"
+          required
+          placeholder="What went wrong?"
+        >
+
+        <div class="form-hint">
+          Give us a short description of the problem.
+        </div>
+
+      </div>
+
+      <div class="form-group">
+
+        <label
+          class="form-label"
+          for="details"
+        >
+          More information
+          <span class="optional">(optional)</span>
+        </label>
+
+        <textarea
+          id="details"
+          name="details"
+          class="form-textarea"
+          maxlength="3000"
+          placeholder="Tell us anything else that could help, such as what you clicked, what happened, or how to reproduce the problem."
+        ></textarea>
+
+        <div class="form-hint">
+          You can explain how the problem happened or provide steps to reproduce it.
+        </div>
+
+      </div>
+
+      <button
+        id="submitButton"
+        class="submit-btn"
+        type="submit"
+        data-ga="submit_bug_report"
+      >
+        Submit Bug Report
+      </button>
+
+      <div
+        id="statusMessage"
+        role="status"
+        aria-live="polite"
+      ></div>
+
+    </form>
+
+  </div>
+
+</div>
+
+<!-- ================================
+     BACK BUTTON
+================================ -->
+
+<div class="back-section">
+
+  <a
+    href="/"
+    class="btn sec"
+    data-ga="back_to_home"
+  >
+    ← Back to BSMS Web
+  </a>
+
+</div>
+
+<!-- ================================
+     FOOTER
+================================ -->
+
+<div class="footer">
+
+  © 2026 Jellyfish Jelly.
+  <a
+    href="/privacy.html"
+    data-ga="footer_privacy"
+  >
+    Privacy Policy
+  </a>
+
+</div>
+
+<script>
+/*
+ * BSMS Web
+ * Copyright © 2026 Jellyfish Jelly
+ * SPDX-License-Identifier: MIT
+ */
+
+/* =================================
+   OFFLINE STATE
+================================= */
+
+window.addEventListener('offline', () => {
+  document
+    .getElementById('offlineBanner')
+    .classList.add('show');
+});
+
+window.addEventListener('online', () => {
+  document
+    .getElementById('offlineBanner')
+    .classList.remove('show');
+});
+
+if (!navigator.onLine) {
+  document
+    .getElementById('offlineBanner')
+    .classList.add('show');
+}
+
+
+/* =================================
+   SESSION
+================================= */
+
+if (!localStorage.getItem('session_id')) {
+
+  const chars =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+  let sid = '';
+
+  for (let i = 0; i < 10; i++) {
+
+    sid += chars.charAt(
+      Math.floor(Math.random() * chars.length)
+    );
+
+  }
+
+  localStorage.setItem(
+    'session_id',
+    sid
+  );
+}
+
+const SESSION_KEY =
+  'bsms_auth_session';
+
+let authSession = null;
+let isGuest = true;
+
+
+/* =================================
+   AUTH SESSION
+================================= */
+
+function syncAuthSession() {
+
+  const raw =
+    localStorage.getItem(SESSION_KEY);
+
+  if (raw) {
+
+    try {
+
+      authSession =
+        JSON.parse(raw);
+
+      isGuest =
+        !authSession.loggedIn;
+
+    } catch {
+
+      authSession = null;
+      isGuest = true;
+
+    }
+
+  } else {
+
+    authSession = null;
+    isGuest = true;
+
+  }
+
+  renderUserIcon();
+}
+
+
+/* =================================
+   USER ICON
+================================= */
+
+function renderUserIcon() {
+
+  const btn =
+    document.getElementById('globalUserBtn');
+
+  if (isGuest) {
+
+    btn.innerHTML = `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+      </svg>
+    `;
+
+    btn.style.border =
+      "2px solid var(--border)";
+
+  } else {
+
+    if (authSession.pfp) {
+
+      btn.innerHTML =
+        `<img src="${authSession.pfp}" alt="Avatar">`;
+
+      btn.style.border =
+        "none";
+
+    } else {
+
+      btn.innerHTML =
+        (
+          authSession.displayName ||
+          authSession.username ||
+          "?"
+        )
+        .charAt(0)
+        .toUpperCase();
+
+      btn.style.border =
+        "2px solid var(--border)";
+
+    }
+
+  }
+}
+
+
+/* =================================
+   USER ICON CLICK
+================================= */
+
+function handleUserIconClick() {
+
+  if (isGuest) {
+
+    window.location.href =
+      '/accounts#signup';
+
+    return;
+  }
+
+  document.getElementById(
+    'accPopupName'
+  ).textContent =
+    authSession.displayName ||
+    authSession.username;
+
+  document.getElementById(
+    'accPopupUser'
+  ).textContent =
+    authSession.username;
+
+  const ava =
+    document.getElementById(
+      'accPopupAvatar'
+    );
+
+  if (authSession.pfp) {
+
+    ava.innerHTML =
+      `<img src="${authSession.pfp}" style="width:100%;height:100%;object-fit:cover;" alt="Avatar">`;
+
+  } else {
+
+    ava.innerHTML =
+      (
+        authSession.displayName ||
+        authSession.username ||
+        "?"
+      )
+      .charAt(0)
+      .toUpperCase();
+
+  }
+
+  openPopup('accountPopup');
+}
+
+
+/* =================================
+   POPUPS
+================================= */
+
+function openPopup(id) {
+
+  const popup =
+    document.getElementById(id);
+
+  popup.style.display =
+    'flex';
+
+}
+
+function closePopup(id) {
+
+  const popup =
+    document.getElementById(id);
+
+  popup.style.display =
+    'none';
+
+}
+
+
+/* =================================
+   STORAGE SESSION CHANGES
+================================= */
+
+window.addEventListener(
+  'storage',
+  (event) => {
+
+    if (
+      event.key === SESSION_KEY
+    ) {
+
+      syncAuthSession();
+
+    }
+
+  }
+);
+
+syncAuthSession();
+
+
+/* =================================
+   BUG REPORT FORM
+================================= */
+
+const bugReportForm =
+  document.getElementById(
+    'bugReportForm'
+  );
+
+const submitButton =
+  document.getElementById(
+    'submitButton'
+  );
+
+const statusMessage =
+  document.getElementById(
+    'statusMessage'
+  );
+
+
+function showStatus(
+  message,
+  type
+) {
+
+  statusMessage.textContent =
+    message;
+
+  statusMessage.className =
+    `show ${type}`;
+
+}
+
+
+function clearStatus() {
+
+  statusMessage.textContent =
+    '';
+
+  statusMessage.className =
+    '';
+
+}
+
+
+bugReportForm.addEventListener(
+  'submit',
+  async (event) => {
+
+    event.preventDefault();
+
+    clearStatus();
+
+    const name =
+      document
+        .getElementById('name')
+        .value
+        .trim();
+
+    const area =
+      document
+        .getElementById('area')
+        .value
+        .trim();
+
+    const summary =
+      document
+        .getElementById('summary')
+        .value
+        .trim();
+
+    const details =
+      document
+        .getElementById('details')
+        .value
+        .trim();
+
+
+    if (!area) {
+
+      showStatus(
+        'Please select where you are having the problem.',
+        'error'
+      );
+
+      document
+        .getElementById('area')
+        .focus();
+
+      return;
+    }
+
+
+    if (!summary) {
+
+      showStatus(
+        'Please briefly describe the bug.',
+        'error'
+      );
+
+      document
+        .getElementById('summary')
+        .focus();
+
+      return;
+    }
+
+
+    if (summary.length > 300) {
+
+      showStatus(
+        'Your bug description is too long.',
+        'error'
+      );
+
+      return;
+    }
+
+
+    if (name.length > 100) {
+
+      showStatus(
+        'Your name is too long.',
+        'error'
+      );
+
+      return;
+    }
+
+
+    if (details.length > 3000) {
+
+      showStatus(
+        'Your additional information is too long.',
+        'error'
+      );
+
+      return;
+    }
+
+
+    if (!navigator.onLine) {
+
+      showStatus(
+        'You are currently offline. Please reconnect and try again.',
+        'error'
+      );
+
+      return;
+    }
+
+
+    submitButton.disabled =
+      true;
+
+    submitButton.textContent =
+      'Submitting...';
+
+
+    try {
+
+      const response =
+        await fetch(
+          '/api/bug-report',
+          {
+            method:'POST',
+
+            headers:{
+              'Content-Type':
+                'application/json'
+            },
+
+            body:JSON.stringify({
+
+              name:
+                name || null,
+
+              area,
+
+              summary,
+
+              details:
+                details || null,
+
+              sessionId:
+                localStorage.getItem(
+                  'session_id'
+                ) || null,
+
+              username:
+                authSession?.username ||
+                null
+
+            })
+          }
+        );
+
+
+      let result = null;
+
+      try {
+
+        result =
+          await response.json();
+
+      } catch {
+
+        result = null;
+
+      }
+
+
+      if (
+        !response.ok ||
+        !result?.success
+      ) {
+
+        throw new Error(
+          result?.error ||
+          'Unable to submit your bug report.'
+        );
+
+      }
+
+
+      bugReportForm.reset();
+
+      showStatus(
+        'Bug report submitted successfully. Thank you for helping improve BSMS Web!',
+        'success'
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        'Bug report submission failed:',
+        error
+      );
+
+      showStatus(
+        error.message ||
+        'Something went wrong while submitting your bug report. Please try again.',
+        'error'
+      );
+
+
+    } finally {
+
+      submitButton.disabled =
+        false;
+
+      submitButton.textContent =
+        'Submit Bug Report';
+
+    }
+
+  }
+);
+
+
+/* =================================
+   VERSION
+================================= */
+
+window.BSMS_WEB_PAGE_VERSION =
+  "5.0";
+
+window.BSMS_WEB_PAGE_NAME =
+  "bug-report";
+
+</script>
+
+<script src="/js/version-check.js"></script>
+
+</body>
+</html>
