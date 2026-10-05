@@ -392,6 +392,42 @@ a { color: var(--accent); text-decoration: none; }
     </div>
 </div>
 
+<!-- Restored Group Creation Modal -->
+<div id="createGroupModal" class="overlay layer-top" onclick="if(event.target===this) UI.closeModal('createGroupModal')">
+    <div class="modal-card">
+        <h2>Create Group Chat</h2>
+        <p>Start a new community space.</p>
+        <input type="text" id="newGroupName" class="input-field" placeholder="Group Name (3-30 chars)" maxlength="30">
+        <button class="btn" onclick="GroupManager.create()">Create Group</button>
+        <button class="btn sec" onclick="UI.closeModal('createGroupModal')" style="margin-top: 8px;">Cancel</button>
+    </div>
+</div>
+
+<!-- Restored Group Join Modal -->
+<div id="joinGroupModal" class="overlay layer-top" onclick="if(event.target===this) UI.closeModal('joinGroupModal')">
+    <div class="modal-card">
+        <h2>Join Group Chat</h2>
+        <p>Enter an invite code to join an existing group.</p>
+        <input type="text" id="joinGroupCode" class="input-field" placeholder="Enter Invite Code (e.g. ABCDEF)" style="text-transform: uppercase;">
+        <button class="btn" onclick="GroupManager.join()">Join Group</button>
+        <button class="btn sec" onclick="UI.closeModal('joinGroupModal')" style="margin-top: 8px;">Cancel</button>
+    </div>
+</div>
+
+<!-- Restored Group Info Modal -->
+<div id="groupInfoModal" class="overlay layer-top" onclick="if(event.target===this) UI.closeModal('groupInfoModal')">
+    <div class="modal-card">
+        <h2 id="giName">Group Info</h2>
+        <p id="giMembers" style="margin-bottom: 12px; font-weight: bold;">Members: 1</p>
+        <div id="giInviteSection">
+            <p style="margin-bottom: 8px; font-size: 0.95rem; color: var(--fg2);">Invite Code:</p>
+            <div class="join-code-box" id="giCode">------</div>
+            <button class="btn sec" onclick="GroupManager.copyCode()" style="margin-bottom: 20px;"><svg class="ic"><use href="#ico-copy"></use></svg> Copy Code</button>
+        </div>
+        <button class="btn warn" onclick="GroupManager.leaveGroup()"><svg class="ic"><use href="#ico-leave"></use></svg> Leave Group</button>
+    </div>
+</div>
+
 <div id="ctxMenu">
     <button class="ctx-item" id="ctxBtnCopy" onclick="ContextMenu.copy()" data-ga="ctx_copy"><svg class="ic"><use href="#ico-copy"></use></svg> Copy</button>
     <button class="ctx-item" id="ctxBtnReply" onclick="ContextMenu.reply()" data-ga="ctx_reply"><svg class="ic"><use href="#ico-reply"></use></svg> Reply</button>
@@ -406,6 +442,12 @@ a { color: var(--accent); text-decoration: none; }
         <div id="sideHeader">
             <div class="side-title-row">
                 <h1>Chats</h1>
+                <!-- Restored Plus Button and Menu -->
+                <button class="icon-btn" id="btnPlus" onclick="UI.togglePlusMenu(event)"><svg class="ic"><use href="#ico-plus"></use></svg></button>
+                <div id="plusMenu">
+                    <button class="plus-item" onclick="GroupManager.showCreateModal()"><svg class="ic" style="display:inline-block; vertical-align:middle; width:18px; margin-right:8px;"><use href="#ico-chat"></use></svg> Create Group</button>
+                    <button class="plus-item" onclick="GroupManager.showJoinModal()"><svg class="ic" style="display:inline-block; vertical-align:middle; width:18px; margin-right:8px;"><use href="#ico-plus"></use></svg> Join with Code</button>
+                </div>
             </div>
             <div class="search-box">
                 <svg class="ic"><use href="#ico-search"></use></svg>
@@ -429,6 +471,8 @@ a { color: var(--accent); text-decoration: none; }
                 <h3 id="activeChatName">---</h3>
                 <span id="activeChatStatus">---</span>
             </div>
+            <!-- Restored Chat Info/Settings Button -->
+            <button id="btnChatInfo" class="icon-btn" onclick="GroupManager.showInfo()" style="display:none;"><svg class="ic"><use href="#ico-settings"></use></svg></button>
         </div>
 
         <div id="pinnedBanner" onclick="ScrollManager.scrollToPin()">
@@ -479,9 +523,6 @@ a { color: var(--accent); text-decoration: none; }
 window.addEventListener('offline', () => document.getElementById('offlineBanner').classList.add('show'));
 window.addEventListener('online', () => document.getElementById('offlineBanner').classList.remove('show'));
 if (!navigator.onLine) document.getElementById('offlineBanner').classList.add('show');
-
-const SESSION_KEY = 'bsms_auth_session';
-let currentSessionId = localStorage.getItem('session_id') || "";
 
 const State = {
     user: null,
@@ -543,6 +584,10 @@ const UI = {
     hide: id => { const e = document.getElementById(id); if(e) e.style.display = 'none'; },
     openModal: id => document.getElementById(id).classList.add('show'),
     closeModal: id => document.getElementById(id).classList.remove('show'),
+    togglePlusMenu: (e) => {
+        e.stopPropagation();
+        document.getElementById('plusMenu').classList.toggle('show');
+    },
     setLoad: (pct, label) => {
         const lb = document.getElementById('loadBar');
         const lp = document.getElementById('loadPct');
@@ -576,7 +621,7 @@ const ApiClient = {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Session-ID': currentSessionId
+                    'X-Session-ID': localStorage.getItem('session_id') || ""
                 },
                 body: JSON.stringify(params)
             });
@@ -619,6 +664,20 @@ const PollingManager = {
         try {
             const data = await ApiClient.call('sync');
             if (!data) return;
+            
+            // FIX: Poisoned UID auto-correction.
+            // Old accounts.html saved "username" as the uid. We MUST use the backend push key.
+            if (data.myUid && State.user.uid !== data.myUid) {
+                console.warn("[BSMS Web] Fixing poisoned UID in localStorage...");
+                State.user.uid = data.myUid;
+                let sessStr = localStorage.getItem('bsms_auth_session');
+                if (sessStr) {
+                    let sess = JSON.parse(sessStr);
+                    sess.uid = data.myUid;
+                    localStorage.setItem('bsms_auth_session', JSON.stringify(sess));
+                }
+            }
+
             State.usersCache = data.users || {};
             State.accountsCache = data.accounts || {};
             State.channels = data.channels || {};
@@ -654,7 +713,6 @@ const AuthManager = {
 
             UI.setLoad(40, "Connecting to Backend");
             
-            // Ping backend to set online status
             await ApiClient.call('status', { status: 'online' });
             
             document.getElementById('loginModal').classList.remove('show');
@@ -662,7 +720,6 @@ const AuthManager = {
 
             PollingManager.start();
             
-            // Wait briefly for first sync
             setTimeout(() => {
                 UI.setLoad(100, "Ready");
                 if (window.innerWidth <= 768) document.getElementById('sidebar').classList.add('hidden');
@@ -681,6 +738,73 @@ const AuthManager = {
     }
 };
 
+const GroupManager = {
+    showCreateModal: () => {
+        document.getElementById('newGroupName').value = '';
+        UI.openModal('createGroupModal');
+        document.getElementById('plusMenu').classList.remove('show');
+    },
+    showJoinModal: () => {
+        document.getElementById('joinGroupCode').value = '';
+        UI.openModal('joinGroupModal');
+        document.getElementById('plusMenu').classList.remove('show');
+    },
+    create: async () => {
+        const name = document.getElementById('newGroupName').value.trim();
+        if (name.length < 3 || name.length > 30) return UI.showError("Group name must be 3-30 characters.");
+        try {
+            const res = await ApiClient.call('createGroup', { name });
+            UI.closeModal('createGroupModal');
+            if (res && res.cid) ChatManager.open(res.cid);
+            PollingManager.syncGlobal();
+        } catch(e) { UI.showError(e.message || "Failed to create group."); }
+    },
+    join: async () => {
+        const code = document.getElementById('joinGroupCode').value.trim().toUpperCase();
+        if (!code) return UI.showError("Please enter a valid code.");
+        try {
+            const res = await ApiClient.call('joinGroup', { code });
+            UI.closeModal('joinGroupModal');
+            if (res && res.cid) ChatManager.open(res.cid);
+            PollingManager.syncGlobal();
+        } catch(e) { UI.showError(e.message || "Failed to join group."); }
+    },
+    showInfo: () => {
+        if (!State.activeChannelId || State.activeType !== 'gcs') return;
+        const c = State.channels[State.activeChannelId];
+        if (!c) return;
+        
+        document.getElementById('giName').innerText = c.name || "Group";
+        document.getElementById('giMembers').innerText = `Members: ${Object.keys(c.members || {}).length}`;
+        
+        const inviteSec = document.getElementById('giInviteSection');
+        if (c.config && c.config.joinCode) {
+            inviteSec.style.display = 'block';
+            document.getElementById('giCode').innerText = c.config.joinCode;
+        } else {
+            inviteSec.style.display = 'none';
+        }
+        
+        UI.openModal('groupInfoModal');
+    },
+    copyCode: () => {
+        const code = document.getElementById('giCode').innerText;
+        if(code && code !== '------') {
+            navigator.clipboard.writeText(code);
+            UI.toast("Invite code copied!");
+        }
+    },
+    leaveGroup: async () => {
+        if (!confirm("Are you sure you want to leave this group?")) return;
+        try {
+            await ApiClient.call('leaveGroup', { cid: State.activeChannelId });
+            UI.closeModal('groupInfoModal');
+            ChatManager.close();
+            PollingManager.syncGlobal();
+        } catch(e) { UI.showError(e.message || "Failed to leave group."); }
+    }
+};
+
 const SearchManager = {
     init: function() {
         const inp = document.getElementById('searchInput');
@@ -695,14 +819,21 @@ const SearchManager = {
 
                 State.searchTimeout = setTimeout(() => {
                     let matches = [];
-                    for(let uid in State.usersCache) {
-                        if (uid !== State.user.uid && uid.toLowerCase().includes(q)) {
-                            const acc = State.accountsCache[uid] || {};
+                    // FIX: Loop through ALL accounts from accountsCache, not just online usersCache
+                    for(let uid in State.accountsCache) {
+                        if (uid === State.user.uid) continue;
+                        
+                        const acc = State.accountsCache[uid];
+                        // Match against both display name and strict username
+                        const searchable = `${acc.displayName || ""} @${acc.username || ""}`.toLowerCase();
+                        
+                        if (searchable.includes(q)) {
                             matches.push({
                                 uid: uid,
-                                displayName: acc.displayName || uid,
+                                displayName: acc.displayName || acc.username || uid,
+                                username: acc.username || uid,
                                 avatar: acc.avatar,
-                                online: State.usersCache[uid].status === 'online'
+                                online: State.usersCache[uid]?.status === 'online'
                             });
                         }
                     }
@@ -725,7 +856,7 @@ const SearchManager = {
             let html = '';
             matches.slice(0,10).forEach(u => {
                 const dot = u.online ? `<div class="status-dot online"></div>` : `<div class="status-dot"></div>`;
-                const avHtml = u.avatar ? `<img src="${Utils.escapeHTML(u.avatar)}">` : u.uid.charAt(0).toUpperCase();
+                const avHtml = u.avatar ? `<img src="${Utils.escapeHTML(u.avatar)}">` : (u.displayName || u.username).charAt(0).toUpperCase();
                 html += `
                 <div class="search-item" onclick="SearchManager.startDM('${u.uid}')">
                     <div class="c-av" style="width:40px; height:40px; font-size:1.2rem;">
@@ -734,7 +865,7 @@ const SearchManager = {
                     </div>
                     <div style="flex:1; overflow:hidden;">
                         <div style="font-weight:bold; color:var(--fg); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${Utils.escapeHTML(u.displayName)}</div>
-                        <div style="font-size:0.9rem; color:var(--fg2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">@${Utils.escapeHTML(u.uid)}</div>
+                        <div style="font-size:0.9rem; color:var(--fg2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">@${Utils.escapeHTML(u.username)}</div>
                     </div>
                 </div>`;
             });
@@ -750,7 +881,9 @@ const SearchManager = {
         let existingId = null;
         for(let id in State.channels) {
             const c = State.channels[id];
-            if(c._type === 'dms' && c.members[State.user.uid] && c.members[targetUid]) { existingId = id; break; }
+            if(c._type === 'dms' && c.members && c.members[State.user.uid] && c.members[targetUid]) { 
+                existingId = id; break; 
+            }
         }
 
         if (existingId) {
@@ -775,7 +908,11 @@ const SidebarManager = {
             let previewText = "New conversation";
 
             if (c.messages) {
-                let msgs = Object.keys(c.messages).map(mid => ({mid, ...c.messages[mid]}));
+                // FIX: Protect against null array items
+                let msgs = Object.keys(c.messages)
+                    .map(mid => ({mid, ...c.messages[mid]}))
+                    .filter(m => m && m.timestamp); 
+                
                 msgs.sort((a,b) => a.timestamp - b.timestamp);
                 if (msgs.length > 0) {
                     const lastM = msgs[msgs.length - 1];
@@ -798,15 +935,18 @@ const SidebarManager = {
             let avHtml = "?";
 
             if (c._type === 'dms') {
-                const otherUid = Object.keys(c.members).find(u => u !== State.user.uid);
+                const otherUid = Object.keys(c.members || {}).find(u => u !== State.user.uid);
                 if (otherUid) {
                     const acc = State.accountsCache[otherUid] || {};
-                    title = acc.displayName || otherUid;
+                    title = acc.displayName || acc.username || otherUid;
                     isOnline = State.usersCache[otherUid]?.status === 'online';
                     avHtml = acc.avatar ? `<img src="${Utils.escapeHTML(acc.avatar)}">` : title.charAt(0).toUpperCase();
+                } else {
+                    title = "Unknown User";
                 }
             } else {
-                avHtml = title ? title.charAt(0).toUpperCase() : "?";
+                title = c.name || "Group";
+                avHtml = title.charAt(0).toUpperCase();
             }
 
             const activeCls = State.activeChannelId === id ? 'active' : '';
@@ -840,7 +980,6 @@ const ScrollManager = {
         const feed = document.getElementById('chatLog');
         if(feed) {
             feed.addEventListener('scroll', () => {
-                // Strict definition of scrolled up
                 State.isScrolledUp = (feed.scrollHeight - feed.scrollTop) > (feed.clientHeight + 10);
                 if (!State.isScrolledUp) {
                     document.getElementById('smartScrollPill').classList.remove('show');
@@ -873,38 +1012,43 @@ const ScrollManager = {
 
 const ChatManager = {
     open: async function(cid) {
-        if (State.activeChannelId === cid) { if(window.innerWidth <= 768) SidebarManager.hideMobile(); return; }
-        this.close();
+        // FIX: Wrap inside Try/Catch so a rendering crash doesn't permanently break the UI state
+        try {
+            if (State.activeChannelId === cid) { if(window.innerWidth <= 768) SidebarManager.hideMobile(); return; }
+            this.close();
 
-        State.activeChannelId = cid;
-        const c = State.channels[cid];
-        if (!c) return;
+            State.activeChannelId = cid;
+            const c = State.channels[cid];
+            if (!c) return;
 
-        State.activeType = c._type;
-        State.currentRole = c.members[State.user.uid]?.role || 'member';
+            State.activeType = c._type;
+            State.currentRole = c.members[State.user.uid]?.role || 'member';
 
-        UI.hide('emptyState');
-        UI.show('chatHeader');
-        UI.show('composerWrap');
+            UI.hide('emptyState');
+            UI.show('chatHeader');
+            UI.show('composerWrap');
 
-        if (window.innerWidth <= 768) SidebarManager.hideMobile();
+            if (window.innerWidth <= 768) SidebarManager.hideMobile();
 
-        const draft = localStorage.getItem('draft_' + cid) || '';
-        document.getElementById('msgInput').innerText = draft;
-        const cc = document.getElementById('charCounter');
-        cc.innerText = `${draft.length}/100`;
+            const draft = localStorage.getItem('draft_' + cid) || '';
+            document.getElementById('msgInput').innerText = draft;
+            const cc = document.getElementById('charCounter');
+            cc.innerText = `${draft.length}/100`;
 
-        this.updateHeader();
-        SidebarManager.render();
+            this.updateHeader();
+            SidebarManager.render();
 
-        document.getElementById('chatLog').innerHTML = '';
-        State.lastRenderedDate = null;
-        c.messages = {}; // Flush local to force fresh render
+            document.getElementById('chatLog').innerHTML = '';
+            State.lastRenderedDate = null;
+            c.messages = {}; // Flush local to force fresh render
 
-        // Start message polling
-        clearInterval(State.msgInterval);
-        PollingManager.syncMessages(); // Immediate fetch
-        State.msgInterval = setInterval(PollingManager.syncMessages, 2500);
+            clearInterval(State.msgInterval);
+            PollingManager.syncMessages(); // Immediate fetch
+            State.msgInterval = setInterval(PollingManager.syncMessages, 2500);
+        } catch (e) {
+            console.error("[BSMS Web] Failed to open chat:", e);
+            UI.showError("Failed to open chat due to a data error.");
+        }
     },
 
     close: function() {
@@ -932,26 +1076,36 @@ const ChatManager = {
         const c = State.channels[State.activeChannelId];
         const nEl = document.getElementById('activeChatName');
         const sEl = document.getElementById('activeChatStatus');
+        const infoBtn = document.getElementById('btnChatInfo');
 
         if (c._type === 'dms') {
-            const otherUid = Object.keys(c.members).find(id => id !== State.user.uid);
-            const acc = State.accountsCache[otherUid] || { displayName: otherUid };
+            const otherUid = Object.keys(c.members || {}).find(id => id !== State.user.uid);
+            const acc = State.accountsCache[otherUid] || { displayName: "Unknown User" };
             nEl.innerText = acc.displayName;
             const oStatus = State.usersCache[otherUid]?.status === 'online';
             sEl.innerText = oStatus ? "Online" : "Offline";
             sEl.style.color = oStatus ? "#22c55e" : "var(--fg2)";
+            
+            infoBtn.style.display = 'none';
+            document.getElementById('activeChatInfo').classList.remove('clickable');
+            document.getElementById('activeChatInfo').onclick = null;
         } else {
-            nEl.innerText = c.name;
-            sEl.innerText = `${Object.keys(c.members).length} members`;
+            nEl.innerText = c.name || "Group";
+            sEl.innerText = `${Object.keys(c.members || {}).length} members`;
             sEl.style.color = "var(--fg2)";
+            
+            infoBtn.style.display = 'flex';
+            document.getElementById('activeChatInfo').classList.add('clickable');
+            document.getElementById('activeChatInfo').onclick = GroupManager.showInfo;
         }
 
         const pb = document.getElementById('pinnedBanner');
         let pinnedFound = false;
         if(c.messages) {
             for(let mid in c.messages) {
-                if(c.messages[mid].status?.pinned) {
-                    const m = c.messages[mid];
+                const m = c.messages[mid];
+                if (!m) continue; // FIX: Protect against null array iterations
+                if(m.status?.pinned) {
                     pb.style.display = 'flex';
                     pb.dataset.msgid = mid;
                     document.getElementById('pinnedText').innerText = m.status.deletedByMod ? "Deleted message" : (m.status.unsent ? "Unsent message" : m.content);
@@ -975,14 +1129,14 @@ const ChatManager = {
 
         for (let mid in newMsgs) {
             const m = newMsgs[mid];
+            if (!m) continue; // FIX: Protect against null array iterations
+
             if (!c.messages[mid]) {
-                // New message
                 c.messages[mid] = m;
                 this.renderMessageNode(mid, m);
                 needsScroll = true;
                 lastSender = m.senderUid;
             } else {
-                // Update check (shallow compare)
                 const old = c.messages[mid];
                 if (old.content !== m.content || JSON.stringify(old.status) !== JSON.stringify(m.status)) {
                     c.messages[mid] = m;
@@ -1020,7 +1174,8 @@ const ChatManager = {
         let html = `<div class="msg-row ${cls}" id="msg-${msgId}">`;
 
         if (isGroup && !isMine) {
-            const disp = (State.accountsCache[m.senderUid] && State.accountsCache[m.senderUid].displayName) || m.senderUid;
+            const acc = State.accountsCache[m.senderUid] || {};
+            const disp = acc.displayName || acc.username || m.senderUid;
             html += `<div class="msg-author">${Utils.escapeHTML(disp)}</div>`;
         }
 
@@ -1035,7 +1190,8 @@ const ChatManager = {
             if (m.status?.repliedTo && m.status.repliedTo !== false) {
                 const repMsg = c.messages[m.status.repliedTo];
                 if(repMsg) {
-                    const repDisp = (State.accountsCache[repMsg.senderUid] && State.accountsCache[repMsg.senderUid].displayName) || repMsg.senderUid;
+                    const rAcc = State.accountsCache[repMsg.senderUid] || {};
+                    const repDisp = rAcc.displayName || rAcc.username || repMsg.senderUid;
                     let repSnippet = repMsg.status?.unsent ? "Unsent" : (repMsg.status?.deletedByMod ? "Deleted" : repMsg.content);
                     content += `<div class="quote-box" onclick="ScrollManager.scrollToMessage('${m.status.repliedTo}')">
                         <strong>${Utils.escapeHTML(repDisp)}</strong>
@@ -1046,7 +1202,7 @@ const ChatManager = {
 
             content += `<div class="msg-text">${Utils.escapeHTML(m.content)}</div>`;
             
-            const timeStr = Utils.timeAgo(m.timestamp); // Dynamic relative time format
+            const timeStr = Utils.timeAgo(m.timestamp);
             html += `<div class="msg-bubble-wrap">
                 <div class="msg-bubble">${content}<div class="msg-meta">${timeStr}</div></div>
                 <div class="msg-ctx-trigger" onclick="ContextMenu.open(event, '${msgId}')"><svg class="ic"><use href="#ico-dots"></use></svg></div>
@@ -1063,7 +1219,8 @@ const ChatManager = {
         let active = [];
         for (let uid in members) {
             if (uid !== State.user.uid && members[uid].isTyping) {
-                active.push((State.accountsCache[uid] && State.accountsCache[uid].displayName) || uid);
+                const acc = State.accountsCache[uid] || {};
+                active.push(acc.displayName || acc.username || uid);
             }
         }
 
@@ -1078,7 +1235,6 @@ const ComposerManager = {
         if (!State.activeChannelId) return;
         const c = State.channels[State.activeChannelId];
         
-        // 5-Second Cooldown Enforcement
         const now = Date.now();
         if (now - State.lastMessageTime < 5000) {
             UI.toast("Please wait 5 seconds before sending another message.");
@@ -1091,7 +1247,6 @@ const ComposerManager = {
 
         const btn = document.getElementById('btnSend');
 
-        // Apply Cooldown UI
         State.lastMessageTime = now;
         btn.disabled = true;
         btn.classList.add('greyed');
@@ -1114,11 +1269,10 @@ const ComposerManager = {
             localStorage.removeItem('draft_' + c._id);
             ApiClient.call('typing', { cid: c._id, type: c._type, isTyping: false });
             
-            // Immediate sync to show message instantly
             PollingManager.syncMessages();
         } catch(e) { 
             UI.showError(e.message || "Failed to send message."); 
-            State.lastMessageTime = 0; // Reset cooldown on failure
+            State.lastMessageTime = 0; 
         }
     },
 
@@ -1135,10 +1289,12 @@ const ContextMenu = {
             if (!e.target.closest('#ctxMenu') && !e.target.closest('.msg-ctx-trigger')) {
                 this.close();
             }
+            if (!e.target.closest('#plusMenu') && !e.target.closest('#btnPlus')) {
+                document.getElementById('plusMenu').classList.remove('show');
+            }
         });
     },
     open: function(e, msgId) {
-        // Fix for bounding client rect error: ensure event and currentTarget exist
         if (!e || !e.currentTarget) return;
         e.stopPropagation();
 
@@ -1159,7 +1315,6 @@ const ContextMenu = {
 
         menu.classList.add('show');
         
-        // Safe positioning
         const rect = e.currentTarget.getBoundingClientRect();
         let y = rect.top;
         let x = rect.left;
@@ -1183,7 +1338,8 @@ const ContextMenu = {
         const m = c.messages[this.targetId];
         State.replyContext = this.targetId;
 
-        const disp = (State.accountsCache[m.senderUid] && State.accountsCache[m.senderUid].displayName) || m.senderUid;
+        const acc = State.accountsCache[m.senderUid] || {};
+        const disp = acc.displayName || acc.username || m.senderUid;
         document.getElementById('rplName').innerText = disp;
         document.getElementById('rplText').innerText = m.content;
         UI.show('activeReplyBar');

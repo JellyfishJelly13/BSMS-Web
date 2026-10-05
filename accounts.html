@@ -409,15 +409,14 @@ window.addEventListener('offline', () => document.getElementById('offlineBanner'
 window.addEventListener('online', () => document.getElementById('offlineBanner').classList.remove('show'));
 if (!navigator.onLine) document.getElementById('offlineBanner').classList.add('show');
 
-// Establish global session ID
+// Establish global session ID on load if missing
 if (!localStorage.getItem('session_id')) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let sid = '';
     for (let i = 0; i < 10; i++) sid += chars.charAt(Math.floor(Math.random() * chars.length));
     localStorage.setItem('session_id', sid);
-    console.log("[BSMS Web :: Auth] Generated new session_id.");
+    console.log("[BSMS Web :: Auth] Generated new fallback session_id.");
 }
-const currentSessionId = localStorage.getItem('session_id');
 
 const SESSION_KEY = 'bsms_auth_session';
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -449,7 +448,8 @@ function init() {
 
 async function apiFetch(endpoint, options = {}) {
     if (!options.headers) options.headers = {};
-    options.headers['X-Session-ID'] = currentSessionId;
+    // CRITICAL FIX: Fetch the session ID directly from local storage for every request
+    options.headers['X-Session-ID'] = localStorage.getItem('session_id') || "";
     options.headers['Content-Type'] = 'application/json';
 
     try {
@@ -476,7 +476,10 @@ async function apiFetch(endpoint, options = {}) {
 
 async function fetchCloudProfile() {
     try {
-        const data = await apiFetch(`/api/account`);
+        const data = await apiFetch(`/api/auth`, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'getProfile' })
+        });
         if (data && data.profile) {
             currentAccountData = data.profile;
             loadDashboard();
@@ -493,7 +496,6 @@ async function fetchCloudProfile() {
 function handleHash() {
     let hash = window.location.hash || '#';
     
-    // Small timeout to allow CSS transitions if needed, but we handle it via classes
     setTimeout(() => {
         document.getElementById('initLoadingScreen').classList.remove('show');
         
@@ -517,7 +519,6 @@ function handleHash() {
 // ---------- UI HELPERS ----------
 function showScreen(id) {
     document.querySelectorAll('.screen, #appShell').forEach(s => s.classList.remove('show'));
-    // Force reflow
     void document.getElementById(id).offsetWidth;
     document.getElementById(id).classList.add('show');
 }
@@ -603,11 +604,15 @@ async function handleAuth() {
     try {
         const data = await apiFetch(`/api/auth`, {
             method: 'POST',
-            body: JSON.stringify({ mode: authMode, username: user, password: pass })
+            body: JSON.stringify({ 
+                action: authMode === 'signup' ? 'register' : 'login',
+                username: user, 
+                password: pass 
+            })
         });
         
         if (data && data.success) {
-            completeLogin(data.profile);
+            completeLogin(data);
         }
     } catch (err) { 
         showAlert(err.message || "Connection error."); 
@@ -617,17 +622,26 @@ async function handleAuth() {
 }
 
 function completeLogin(data) {
+    // CRITICAL FIX: Save the new sessionId returned by the backend into local storage.
+    // Without this, the frontend keeps using the random 10-char string generated on load.
+    if (data.sessionId) {
+        localStorage.setItem('session_id', data.sessionId);
+    }
+
     const sessionObj = {
-        loggedIn: true, uid: data.username, username: data.username,
-        displayName: data.displayName || data.username, pfp: data.avatar || ""
+        loggedIn: true, 
+        uid: data.uid, 
+        username: data.profile.username,
+        displayName: data.profile.displayName || data.profile.username, 
+        pfp: data.profile.avatar || ""
     };
+    
     localStorage.setItem(SESSION_KEY, JSON.stringify(sessionObj));
     authSession = sessionObj;
-    currentAccountData = data;
+    currentAccountData = data.profile;
     
     document.getElementById('authPassword').value = '';
     
-    // Check for callback URL to redirect safely
     const cb = new URLSearchParams(window.location.search).get('callback_url');
     if (cb && cb.startsWith('/') && !cb.startsWith('//')) {
         window.location.href = cb;
@@ -639,7 +653,10 @@ function completeLogin(data) {
 
 async function logout() {
     try {
-        await apiFetch(`/api/auth/logout`, { method: 'POST' });
+        await apiFetch(`/api/auth`, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'logout' }) 
+        });
     } catch(e) {
         console.warn("[BSMS Web :: Auth] Backend logout failed, clearing locally.");
     }
@@ -654,11 +671,9 @@ function loadDashboard() {
     document.getElementById('initLoadingScreen').classList.remove('show');
     showScreen('appShell');
     
-    // Sidebar Updates
     document.getElementById('sidebarUsername').textContent = authSession.username;
     document.getElementById('mobileSidebarUsername').textContent = authSession.username;
     
-    // Form fields
     document.getElementById('profileUsername').value = authSession.username;
     document.getElementById('profileDisplayName').value = currentAccountData.displayName || authSession.username;
     document.getElementById('profileBio').value = currentAccountData.bio || "";
@@ -683,7 +698,6 @@ function handleAvatarUpload(e) {
     if (!file) return;
     if (!file.type.startsWith('image/')) return showAlert("Please select a valid image.");
 
-    // Client-side compression
     const reader = new FileReader();
     reader.onload = (event) => {
         const img = new Image();
@@ -692,7 +706,6 @@ function handleAvatarUpload(e) {
             canvas.width = 256; canvas.height = 256;
             const ctx = canvas.getContext('2d');
             
-            // Calculate cover sizing
             const scale = Math.max(256 / img.width, 256 / img.height);
             const x = (256 / 2) - (img.width / 2) * scale;
             const y = (256 / 2) - (img.height / 2) * scale;
@@ -716,6 +729,7 @@ async function saveProfile() {
     
     try {
         const updateObj = {
+            action: 'updateProfile',
             displayName: dName || authSession.username,
             bio: document.getElementById('profileBio').value.trim(),
             email: document.getElementById('profileEmail').value.trim(),
@@ -723,14 +737,13 @@ async function saveProfile() {
             avatar: pendingAvatarBase64 || ""
         };
         
-        await apiFetch(`/api/account`, {
-            method: 'PUT',
+        await apiFetch(`/api/auth`, {
+            method: 'POST',
             body: JSON.stringify(updateObj)
         });
         
         Object.assign(currentAccountData, updateObj);
         
-        // Update Local Session
         authSession.displayName = updateObj.displayName;
         authSession.pfp = updateObj.avatar;
         localStorage.setItem(SESSION_KEY, JSON.stringify(authSession));
@@ -763,22 +776,21 @@ function openUsernameModal() {
 async function executeUsernameChange() {
     let newName = document.getElementById('newUsernameInput').value.replace(/ /g, '_');
     if (newName.length < 3 || newName.length > 20) return showAlert("3-20 characters required.");
-	if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(newName)) return showAlert("Letters, numbers, underscores, and dashes only.");
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(newName)) return showAlert("Letters, numbers, underscores, and dashes only.");
     if (newName === authSession.username) return showAlert("That is already your username.");
 
     setButtonLoading('confirmUsernameBtn', true);
     try {
-        const data = await apiFetch(`/api/account/username`, {
-            method: 'PUT',
-            body: JSON.stringify({ newUsername: newName })
+        const data = await apiFetch(`/api/auth`, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'changeUsername', newUsername: newName })
         });
         
-        // Migrate locally
-        authSession.uid = newName; authSession.username = newName;
+        authSession.username = newName;
         localStorage.setItem(SESSION_KEY, JSON.stringify(authSession));
         
         closePopup('changeUsernameModal'); showToast("Username changed!");
-        fetchCloudProfile(); // Full re-fetch to ensure sync
+        fetchCloudProfile();
     } catch (err) { 
         showAlert(err.message || "Error changing username."); 
     } finally {
@@ -794,9 +806,9 @@ async function changePassword() {
     
     setButtonLoading('updatePasswordBtn', true);
     try {
-        await apiFetch(`/api/account/password`, {
-            method: 'PUT',
-            body: JSON.stringify({ currentPassword: cp, newPassword: np })
+        await apiFetch(`/api/auth`, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'changePassword', currentPassword: cp, newPassword: np })
         });
         
         document.getElementById('secCurrentPass').value = ''; document.getElementById('secNewPass').value = ''; document.getElementById('secConfirmPass').value = '';
@@ -813,7 +825,10 @@ async function loadSessions() {
     container.innerHTML = `<div style="text-align:center; color:var(--fg2); padding: 20px;">Loading sessions...</div>`;
     
     try {
-        const data = await apiFetch(`/api/account/sessions`);
+        const data = await apiFetch(`/api/auth`, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'getSessions' })
+        });
         container.innerHTML = '';
         
         if (!data.sessions || Object.keys(data.sessions).length === 0) {
@@ -821,8 +836,10 @@ async function loadSessions() {
             return;
         }
 
+        const freshSessionId = localStorage.getItem('session_id');
+
         for (const [sid, sData] of Object.entries(data.sessions)) {
-            const isCurrent = sid === currentSessionId;
+            const isCurrent = sid === freshSessionId;
             const lastActive = new Date(sData.lastActive).toLocaleString();
             
             const card = document.createElement('div');
@@ -844,9 +861,9 @@ async function loadSessions() {
 async function revokeSession(sid) {
     if(!confirm("Are you sure you want to log out this device?")) return;
     try {
-        await apiFetch(`/api/account/sessions`, {
-            method: 'DELETE',
-            body: JSON.stringify({ sessionId: sid })
+        await apiFetch(`/api/auth`, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'revokeSession', sessionId: sid })
         });
         showToast("Session revoked.");
         loadSessions();
@@ -884,7 +901,6 @@ function verifyAccountDeletion() {
     if (iu !== authSession.username) return showAlert("Incorrect username.");
     if (!ip) return showAlert("Password is required.");
 
-    // Note: True validation happens on the backend during the execute step.
     closePopup('deleteAccountModal');
     
     deleteTimer = 10;
@@ -906,9 +922,9 @@ function cancelDeletion() {
 async function executeFinalDeletion(password) {
     showAction("Deleting account...");
     try {
-        await apiFetch(`/api/account`, {
-            method: 'DELETE',
-            body: JSON.stringify({ password })
+        await apiFetch(`/api/auth`, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'deleteAccount', password })
         });
         
         closePopup('deleteCountdownModal');

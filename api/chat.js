@@ -5,6 +5,7 @@
  */
 
 import admin from 'firebase-admin';
+import crypto from 'crypto';
 
 // Safe Firebase Initialization
 if (!admin.apps.length) {
@@ -40,14 +41,33 @@ async function getUserBySession(sessionId) {
     return null;
 }
 
-export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
+// Extracted Profanity Checker
+async function checkProfanity(text) {
+    if (!text) return false;
+    let strippedText = text
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[\u200B-\u200D\uFEFF]/g, "")
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+        .replace(/\s+/g, "")
+        .replace(/@/g, "a").replace(/\$/g, "s").replace(/0/g, "o")
+        .replace(/1/g, "i").replace(/3/g, "e").replace(/4/g, "a")
+        .replace(/5/g, "s").replace(/7/g, "t")
+        .toLowerCase();
 
-    if (!db) {
-        return res.status(500).json({ error: "Database failed to initialize. Check environment variables." });
+    try {
+        const glinModule = await import('glin-profanity');
+        const profanityCheck = glinModule.default || glinModule; 
+        return profanityCheck(text) || profanityCheck(strippedText);
+    } catch (err) {
+        console.error("[BSMS Web :: API] Glin Profanity Failed to Load:", err);
+        const blockList = ['fuck', 'shit', 'bitch', 'asshole', 'cunt', 'nigger', 'nigga', 'faggot'];
+        return blockList.some(word => strippedText.includes(word));
     }
+}
+
+export default async function handler(req, res) {
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    if (!db) return res.status(500).json({ error: "Database failed to initialize. Check environment variables." });
 
     const action = req.query.action;
     const sessionId = req.headers['x-session-id'];
@@ -58,9 +78,7 @@ export default async function handler(req, res) {
         if (!userLookup) return res.status(401).json({ error: 'Unauthorized session.' });
 
         const { uid, account } = userLookup;
-        if (account.account_status === 'banned') {
-            return res.status(403).json({ error: 'Account banned.', account_status: 'banned' });
-        }
+        if (account.account_status === 'banned') return res.status(403).json({ error: 'Account banned.', account_status: 'banned' });
 
         await db.ref(`/accounts/${uid}/sessions/${sessionId}/lastActive`).set(Date.now());
 
@@ -76,7 +94,8 @@ export default async function handler(req, res) {
                 
                 for (const [id, acc] of Object.entries(allAccounts)) {
                     if (acc.account_status !== 'deleted') {
-                        accountsCache[id] = { displayName: acc.displayName, avatar: acc.avatar };
+                        // FIX: Expose username alongside displayName for accurate searching
+                        accountsCache[id] = { displayName: acc.displayName, username: acc.username, avatar: acc.avatar };
                     }
                 }
 
@@ -89,7 +108,8 @@ export default async function handler(req, res) {
                             if (channel.members && channel.members[uid]) {
                                 let strippedMessages = {};
                                 if (channel.messages) {
-                                    const mKeys = Object.keys(channel.messages);
+                                    // FIX: Protect against Firebase turning integer keys into arrays full of nulls
+                                    let mKeys = Object.keys(channel.messages).filter(k => channel.messages[k] !== null);
                                     if (mKeys.length > 0) {
                                         const lastKey = mKeys[mKeys.length - 1];
                                         strippedMessages[lastKey] = channel.messages[lastKey];
@@ -105,8 +125,9 @@ export default async function handler(req, res) {
                         }
                     }
                 }
-
-                return res.status(200).json({ users: usersCache, accounts: accountsCache, channels: myChannels });
+                
+                // FIX: Force return myUid so the frontend can auto-correct poisoned local storage
+                return res.status(200).json({ myUid: uid, users: usersCache, accounts: accountsCache, channels: myChannels });
             }
 
             case 'messages': {
@@ -116,10 +137,7 @@ export default async function handler(req, res) {
                 const chSnap = await db.ref(`/chat/conversations/${type}/${cid}`).once('value');
                 const channel = chSnap.val();
                 
-                if (!channel || !channel.members || !channel.members[uid]) {
-                    return res.status(403).json({ error: "Not a member of this channel." });
-                }
-
+                if (!channel || !channel.members || !channel.members[uid]) return res.status(403).json({ error: "Not a member of this channel." });
                 return res.status(200).json({ messages: channel.messages || {}, members: channel.members || {} });
             }
 
@@ -129,56 +147,17 @@ export default async function handler(req, res) {
 
                 const chSnap = await db.ref(`/chat/conversations/${type}/${cid}`).once('value');
                 const channel = chSnap.val();
-                if (!channel || !channel.members || !channel.members[uid]) {
-                    return res.status(403).json({ error: "Not a member." });
-                }
+                if (!channel || !channel.members || !channel.members[uid]) return res.status(403).json({ error: "Not a member." });
 
-                // 1. Validate basic characters
                 const validTextRegex = /^[\x20-\x7E\p{Emoji}\s]*$/u;
-                if (!validTextRegex.test(content)) {
-                    return res.status(400).json({ error: 'Invalid characters or formatting detected.' });
-                }
-
-                // 2. Aggressive Normalization to catch bypass attempts
-                let strippedText = content
-                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove accents
-                    .replace(/[\u200B-\u200D\uFEFF]/g, "") // Remove invisible characters
-                    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") // Remove punctuation
-                    .replace(/\s+/g, "") // Remove spaces to catch spaced-out words
-                    .replace(/@/g, "a")
-                    .replace(/\$/g, "s")
-                    .replace(/0/g, "o")
-                    .replace(/1/g, "i")
-                    .replace(/3/g, "e")
-                    .replace(/4/g, "a")
-                    .replace(/5/g, "s")
-                    .replace(/7/g, "t")
-                    .toLowerCase();
-
-                // 3. Dynamic Import to bypass Vercel ESM crash
-                try {
-                    const glinModule = await import('glin-profanity');
-                    const profanityCheck = glinModule.default || glinModule; 
-                    
-                    // Run Glin on both the raw content and the aggressively stripped version
-                    if (profanityCheck(content) || profanityCheck(strippedText)) {
-                        return res.status(400).json({ error: 'Profanity detected.' });
-                    }
-                } catch (err) {
-                    console.error("[BSMS Web :: API] Glin Profanity Failed to Load:", err);
-                    // Fallback blocklist just in case the module fails
-                    const blockList = ['fuck', 'shit', 'bitch', 'asshole', 'cunt', 'nigger', 'nigga', 'faggot'];
-                    if (blockList.some(word => strippedText.includes(word))) {
-                        return res.status(400).json({ error: 'Profanity detected.' });
-                    }
-                }
+                if (!validTextRegex.test(content)) return res.status(400).json({ error: 'Invalid characters or formatting detected.' });
+                if (await checkProfanity(content)) return res.status(400).json({ error: 'Profanity detected.' });
 
                 const lastMsgSnap = await db.ref(`/chat/users/${uid}/lastMessageTimestamp`).once('value');
                 const lastTs = lastMsgSnap.val() || 0;
                 const now = Date.now();
                 if (now - lastTs < 5000) return res.status(429).json({ error: "Please wait 5 seconds before sending another message." });
 
-                // Transaction fix for high concurrency
                 const msgIdRef = db.ref(`/chat/conversations/${type}/${cid}/config/lastMessageId`);
                 const transactionResult = await msgIdRef.transaction((current) => {
                     return (current || 99999) + 1;
@@ -195,7 +174,6 @@ export default async function handler(req, res) {
 
                 await db.ref(`/chat/conversations/${type}/${cid}/messages/${newId}`).set(msgObj);
                 await db.ref(`/chat/users/${uid}/lastMessageTimestamp`).set(now);
-                
                 return res.status(200).json({ success: true, messageId: newId });
             }
 
@@ -230,7 +208,6 @@ export default async function handler(req, res) {
             case 'typing': {
                 const { cid, type, isTyping } = payload;
                 if (!cid || !type) return res.status(400).json({ error: "Missing data" });
-                
                 await db.ref(`/chat/conversations/${type}/${cid}/members/${uid}/isTyping`).set(Boolean(isTyping));
                 return res.status(200).json({ success: true });
             }
@@ -255,22 +232,71 @@ export default async function handler(req, res) {
                 const dms = convosSnap.val() || {};
                 
                 for (const [id, c] of Object.entries(dms)) {
-                    if (c.members && c.members[uid] && c.members[targetUid]) {
-                        return res.status(200).json({ cid: id }); 
-                    }
+                    if (c.members && c.members[uid] && c.members[targetUid]) return res.status(200).json({ cid: id }); 
                 }
 
-                // ID Collision fix: Use Firebase built-in push key
                 const newCid = db.ref('/chat/conversations/dms').push().key;
                 await db.ref(`/chat/conversations/dms/${newCid}`).set({
                     config: { createdAt: Date.now(), lastMessageId: 99999 },
-                    members: {
-                        [uid]: { role: 'member', isTyping: false },
-                        [targetUid]: { role: 'member', isTyping: false }
-                    }
+                    members: { [uid]: { role: 'member', isTyping: false }, [targetUid]: { role: 'member', isTyping: false } }
                 });
 
                 return res.status(200).json({ cid: newCid });
+            }
+
+            case 'createGroup': {
+                const { name } = payload;
+                if (!name || name.length < 3 || name.length > 30) return res.status(400).json({ error: "Group name must be 3-30 characters." });
+                if (await checkProfanity(name)) return res.status(400).json({ error: "Profanity detected in group name." });
+
+                const joinCode = crypto.randomBytes(3).toString('hex').toUpperCase();
+                const newCid = db.ref('/chat/conversations/gcs').push().key;
+
+                await db.ref(`/chat/conversations/gcs/${newCid}`).set({
+                    name: name,
+                    config: { createdAt: Date.now(), lastMessageId: 99999, joinCode: joinCode, ownerUid: uid },
+                    members: { [uid]: { role: 'owner', isTyping: false } }
+                });
+                return res.status(200).json({ success: true, cid: newCid });
+            }
+
+            case 'joinGroup': {
+                const { code } = payload;
+                if (!code) return res.status(400).json({ error: "Missing invite code." });
+                
+                const gcsSnap = await db.ref('/chat/conversations/gcs').once('value');
+                const gcs = gcsSnap.val() || {};
+                
+                let targetCid = null;
+                for (const [id, c] of Object.entries(gcs)) {
+                    if (c.config && c.config.joinCode === code.toUpperCase()) {
+                        targetCid = id;
+                        break;
+                    }
+                }
+                
+                if (!targetCid) return res.status(404).json({ error: "Invalid invite code." });
+                
+                await db.ref(`/chat/conversations/gcs/${targetCid}/members/${uid}`).set({ role: 'member', isTyping: false });
+                return res.status(200).json({ success: true, cid: targetCid });
+            }
+
+            case 'leaveGroup': {
+                const { cid } = payload;
+                if (!cid) return res.status(400).json({ error: "Missing channel id." });
+                
+                const gcsSnap = await db.ref(`/chat/conversations/gcs/${cid}`).once('value');
+                const group = gcsSnap.val();
+                
+                if (!group || !group.members || !group.members[uid]) return res.status(404).json({ error: "Group not found or you are not a member." });
+                
+                await db.ref(`/chat/conversations/gcs/${cid}/members/${uid}`).remove();
+                
+                const updatedMembers = { ...group.members };
+                delete updatedMembers[uid];
+                if (Object.keys(updatedMembers).length === 0) await db.ref(`/chat/conversations/gcs/${cid}`).remove();
+                
+                return res.status(200).json({ success: true });
             }
 
             default:
