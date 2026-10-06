@@ -3,148 +3,523 @@ BSMS Web
 Copyright © 2026 Jellyfish Jelly
 SPDX-License-Identifier: MIT
 -->
+
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>404 - Page Not Found</title>
 
 <!-- Favicons -->
+
 <link rel="icon" href="/img/icon.png">
 <link rel="apple-touch-icon" href="/img/app-icon.png">
 
 <!-- Google Analytics 4 -->
+
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-2TKPQV995W"></script>
+
 <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-2TKPQV995W');
+window.dataLayer = window.dataLayer || [];
+
+function gtag() {
+    dataLayer.push(arguments);
+}
+
+gtag('js', new Date());
+gtag('config', 'G-2TKPQV995W');
 </script>
+
 <script src="/js/analytics.js"></script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap');
 
-*,*::before,*::after{
-  box-sizing:border-box;
+*, *::before, *::after {
+    box-sizing: border-box;
 }
 
-:root{
-  --red:#BB001E;
-  --red-h:#d10022;
-  --red-glow:rgba(187,0,30,0.35);
-  --font:'Patrick Hand',cursive;
+:root {
+    --red: #BB001E;
+    --red-bright: #e00025;
+    --red-soft: rgba(187, 0, 30, 0.18);
+    --red-glow: rgba(187, 0, 30, 0.4);
+
+    --font: 'Patrick Hand', cursive;
 }
 
-html,body{
-  margin:0;
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  background:#000;
-  color:#fff;
-  font-family:var(--font);
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+
+    background: #000;
+    color: #fff;
+
+    font-family: var(--font);
 }
 
-body{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
+body {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            rgba(187, 0, 30, 0.075) 0%,
+            rgba(187, 0, 30, 0.025) 35%,
+            transparent 70%
+        ),
+        #000;
 }
 
-/* Offline Banner */
+/* =========================================================
+   OFFLINE BANNER
+========================================================= */
+
 #offlineBanner {
-  position: fixed; top: 0; left: 0; width: 100%; background: #ef4444; color: #fff;
-  text-align: center; padding: 10px; font-family: var(--font); font-size: 18px;
-  z-index: 10000; transform: translateY(-100%); transition: transform 0.3s ease;
-}
-#offlineBanner.show { transform: translateY(0); }
+    position: fixed;
 
-/* animations */
-@keyframes fadeIn{
-  from{opacity:0}
-  to{opacity:1}
-}
+    top: 0;
+    left: 0;
 
-@keyframes popIn{
-  from{
-    opacity:0;
-    transform:scale(.92) translateY(14px);
-  }
-  to{
-    opacity:1;
-    transform:scale(1) translateY(0);
-  }
-}
+    width: 100%;
 
-/* CARD */
-.card{
-  width:min(560px,100%);
-  background:rgba(0,0,0,0.97);
-  border:3px solid var(--red);
-  border-radius:28px;
-  padding:40px 30px;
-  text-align:center;
-  animation:fadeIn .25s ease, popIn .3s ease;
+    padding: 10px 16px;
+
+    background: #ef4444;
+    color: #fff;
+
+    text-align: center;
+
+    font-family: var(--font);
+    font-size: 18px;
+
+    z-index: 10000;
+
+    transform: translateY(-100%);
+
+    transition: transform 0.3s ease;
 }
 
-.error-code{
-  font-size:120px;
-  line-height:1;
-  margin:0;
-  color:var(--red);
-  text-shadow:0 0 35px rgba(187,0,30,0.55);
+#offlineBanner.show {
+    transform: translateY(0);
 }
 
-.title{
-  font-size:42px;
-  margin:10px 0 12px;
+/* =========================================================
+   CARD
+========================================================= */
+
+.card {
+    position: relative;
+
+    width: min(560px, 100%);
+
+    padding: 42px 34px 34px;
+
+    text-align: center;
+
+    /*
+     * Intentionally translucent so the Bulldog's movement
+     * remains visible even when crossing the card.
+     */
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.035),
+            rgba(255, 255, 255, 0.008)
+        ),
+        rgba(8, 8, 8, 0.72);
+
+    border: 1px solid rgba(187, 0, 30, 0.72);
+
+    border-radius: 26px;
+
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.025) inset,
+        0 22px 70px rgba(0, 0, 0, 0.7),
+        0 0 45px rgba(187, 0, 30, 0.09);
+
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+
+    /*
+     * Card stays below the Bulldog.
+     */
+    z-index: 5;
+
+    animation:
+        cardIn 0.5s cubic-bezier(.2, .8, .2, 1) both;
 }
 
-.desc{
-  font-size:22px;
-  color:rgba(255,255,255,0.65);
-  line-height:1.5;
-  margin:0;
+/* Top red line */
+
+.card::before {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: 50%;
+
+    width: 76px;
+    height: 3px;
+
+    transform: translateX(-50%);
+
+    background: var(--red);
+
+    border-radius: 0 0 8px 8px;
+
+    box-shadow:
+        0 0 16px rgba(187, 0, 30, 0.55);
 }
+
+/* Small corner details */
+
+.card::after {
+    content: "";
+
+    position: absolute;
+
+    inset: 10px;
+
+    border: 1px solid rgba(255, 255, 255, 0.018);
+
+    border-radius: 19px;
+
+    pointer-events: none;
+}
+
+/* =========================================================
+   404
+========================================================= */
+
+.error-code {
+    position: relative;
+    z-index: 1;
+
+    margin: 0;
+
+    font-size: 112px;
+    line-height: 0.82;
+
+    letter-spacing: -4px;
+
+    color: var(--red);
+
+    text-shadow:
+        0 0 15px rgba(187, 0, 30, 0.3),
+        0 0 38px rgba(187, 0, 30, 0.18);
+}
+
+/* =========================================================
+   TITLE
+========================================================= */
+
+.title {
+    position: relative;
+    z-index: 1;
+
+    margin: 22px 0 8px;
+
+    font-size: 42px;
+    line-height: 1.1;
+
+    color: #fff;
+}
+
+/* =========================================================
+   DESCRIPTION
+========================================================= */
+
+.desc {
+    position: relative;
+    z-index: 1;
+
+    max-width: 430px;
+
+    margin: 0 auto;
+
+    color: rgba(255, 255, 255, 0.58);
+
+    font-size: 20px;
+    line-height: 1.5;
+}
+
+/* =========================================================
+   BUTTON
+========================================================= */
 
 .btn {
-  display: inline-block; font-family: var(--font); font-size: 19px;
-  padding: 10px 18px; border-radius: 12px; border: 2px solid var(--red);
-  background: var(--red); color: #fff; cursor: pointer;
-  transition: transform .15s, background .15s, box-shadow .15s, border-color .15s;
-  text-decoration: none; text-align: center; line-height: 1.2; width: auto;
-  margin-top: 24px;
-}
-.btn:hover { background: var(--red-h); transform: scale(1.03); box-shadow: 0 4px 18px var(--red-glow); }
-.btn:active { transform: scale(.97); }
+    position: relative;
+    z-index: 1;
 
-@media(max-width:600px){
-  .error-code{font-size:90px;}
-  .title{font-size:34px;}
-  .desc{font-size:19px;}
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 45px;
+
+    margin-top: 27px;
+    padding: 9px 21px;
+
+    border: 1px solid var(--red);
+    border-radius: 12px;
+
+    background: var(--red);
+
+    color: #fff;
+
+    font-family: var(--font);
+    font-size: 20px;
+
+    line-height: 1;
+
+    text-decoration: none;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 6px 22px rgba(187, 0, 30, 0.18);
+
+    transition:
+        transform 0.16s ease,
+        background 0.16s ease,
+        box-shadow 0.16s ease;
+}
+
+.btn:hover {
+    background: var(--red-bright);
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 9px 28px rgba(187, 0, 30, 0.35);
+}
+
+.btn:active {
+    transform: translateY(0) scale(0.97);
+}
+
+/* =========================================================
+   BOUNCING BULLDOG
+========================================================= */
+
+#dvdLogo {
+    position: fixed;
+
+    top: 0;
+    left: 0;
+
+    width: 92px;
+    height: 92px;
+
+    object-fit: contain;
+
+    /*
+     * IMPORTANT:
+     * Above the card.
+     */
+    z-index: 20;
+
+    pointer-events: none;
+    user-select: none;
+
+    will-change: transform, filter;
+
+    /*
+     * Default tint.
+     */
+    filter:
+        brightness(0)
+        saturate(100%)
+        invert(12%)
+        sepia(95%)
+        saturate(6438%)
+        hue-rotate(340deg)
+        brightness(83%)
+        contrast(115%)
+        drop-shadow(0 0 8px rgba(187, 0, 30, 0.4))
+        drop-shadow(0 0 20px rgba(187, 0, 30, 0.18));
+
+    transition:
+        filter 0.16s ease;
+}
+
+/* =========================================================
+   CARD ANIMATION
+========================================================= */
+
+@keyframes cardIn {
+    from {
+        opacity: 0;
+        transform: scale(0.94) translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    body {
+        padding: 14px;
+    }
+
+    #dvdLogo {
+        width: 68px;
+        height: 68px;
+    }
+
+    .card {
+        width: 100%;
+
+        padding: 34px 22px 29px;
+
+        border-radius: 23px;
+    }
+
+    .error-code {
+        font-size: 84px;
+    }
+
+    .title {
+        margin-top: 18px;
+
+        font-size: 34px;
+    }
+
+    .desc {
+        font-size: 18px;
+    }
+
+    .btn {
+        margin-top: 23px;
+
+        font-size: 19px;
+    }
+}
+
+/* =========================================================
+   SHORT SCREENS
+========================================================= */
+
+@media (max-height: 600px) {
+
+    .card {
+        padding-top: 27px;
+        padding-bottom: 25px;
+    }
+
+    .error-code {
+        font-size: 72px;
+    }
+
+    .title {
+        margin-top: 15px;
+
+        font-size: 30px;
+    }
+
+    .desc {
+        font-size: 17px;
+    }
+
+    .btn {
+        margin-top: 17px;
+    }
+}
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .card {
+        animation: none;
+    }
+
+    #dvdLogo {
+        transition: none;
+    }
+
+    .btn {
+        transition: none;
+    }
 }
 </style>
+
 </head>
 
 <body>
 
-<div id="offlineBanner">You are currently offline</div>
+<!-- =======================================================
+     OFFLINE BANNER
+======================================================= -->
+
+<div id="offlineBanner">
+    You are currently offline
+</div>
+
+<!-- =======================================================
+     BOUNCING BULLDOG
+======================================================= -->
+
+<img
+ id="dvdLogo"
+ src="/img/icon.png"
+ alt=""
+ aria-hidden="true"
+/>
+
+<!-- =======================================================
+     ERROR CARD
+======================================================= -->
 
 <div class="card">
-  <h1 class="error-code">404</h1>
 
-  <div class="title">Page Not Found</div>
 
-  <p class="desc">
-    The page you are looking for does<br>
-    not exist or may have been removed.
-  </p>
-  
-  <a href="/" class="btn" data-ga="404_home_btn">Go Back Home</a>
+<h1 class="error-code">
+    404
+</h1>
+
+<div class="title">
+    Page Not Found
+</div>
+
+<p class="desc">
+    The page you're looking for doesn't exist,
+    or it may have been moved or removed.
+</p>
+
+<a
+    href="/"
+    class="btn"
+    data-ga="404_home_btn"
+>
+    Go Back Home
+</a>
+
+
 </div>
 
 <script>
@@ -153,17 +528,483 @@ body{
  * Copyright © 2026 Jellyfish Jelly
  * SPDX-License-Identifier: MIT
  */
-window.addEventListener('offline', () => document.getElementById('offlineBanner').classList.add('show'));
-window.addEventListener('online', () => document.getElementById('offlineBanner').classList.remove('show'));
-if (!navigator.onLine) document.getElementById('offlineBanner').classList.add('show');
+
+/* =========================================================
+   OFFLINE STATUS
+========================================================= */
+
+const offlineBanner =
+    document.getElementById('offlineBanner');
+
+window.addEventListener('offline', () => {
+    offlineBanner.classList.add('show');
+});
+
+window.addEventListener('online', () => {
+    offlineBanner.classList.remove('show');
+});
+
+if (!navigator.onLine) {
+    offlineBanner.classList.add('show');
+}
+
+
+/* =========================================================
+   SESSION ID
+========================================================= */
 
 if (!localStorage.getItem('session_id')) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+    const chars =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
     let sid = '';
-    for (let i = 0; i < 10; i++) sid += chars.charAt(Math.floor(Math.random() * chars.length));
+
+    for (let i = 0; i < 10; i++) {
+        sid += chars.charAt(
+            Math.floor(Math.random() * chars.length)
+        );
+    }
+
     localStorage.setItem('session_id', sid);
-    console.log("[BSMS Web :: System] Generated new session_id.");
+
+    console.log(
+        '[BSMS Web :: System] Generated new session_id.'
+    );
 }
+
+
+/* =========================================================
+   DVD BULLDOG
+========================================================= */
+
+const logo =
+    document.getElementById('dvdLogo');
+
+
+/*
+ * DVD-style tint palette.
+ *
+ * These are intentionally very different colors so each
+ * collision is obvious.
+ */
+const tints = [
+
+    /*
+     * Red
+     */
+    `
+        brightness(0)
+        saturate(100%)
+        invert(12%)
+        sepia(95%)
+        saturate(6438%)
+        hue-rotate(340deg)
+        brightness(83%)
+        contrast(115%)
+    `,
+
+    /*
+     * Blue
+     */
+    `
+        brightness(0)
+        saturate(100%)
+        invert(24%)
+        sepia(97%)
+        saturate(3293%)
+        hue-rotate(190deg)
+        brightness(87%)
+        contrast(105%)
+    `,
+
+    /*
+     * Green
+     */
+    `
+        brightness(0)
+        saturate(100%)
+        invert(54%)
+        sepia(82%)
+        saturate(1139%)
+        hue-rotate(75deg)
+        brightness(91%)
+        contrast(106%)
+    `,
+
+    /*
+     * Yellow
+     */
+    `
+        brightness(0)
+        saturate(100%)
+        invert(77%)
+        sepia(95%)
+        saturate(1457%)
+        hue-rotate(2deg)
+        brightness(105%)
+        contrast(105%)
+    `,
+
+    /*
+     * Purple
+     */
+    `
+        brightness(0)
+        saturate(100%)
+        invert(20%)
+        sepia(99%)
+        saturate(3235%)
+        hue-rotate(250deg)
+        brightness(91%)
+        contrast(110%)
+    `,
+
+    /*
+     * Cyan
+     */
+    `
+        brightness(0)
+        saturate(100%)
+        invert(71%)
+        sepia(73%)
+        saturate(1160%)
+        hue-rotate(130deg)
+        brightness(90%)
+        contrast(105%)
+    `,
+
+    /*
+     * Orange
+     */
+    `
+        brightness(0)
+        saturate(100%)
+        invert(56%)
+        sepia(91%)
+        saturate(2444%)
+        hue-rotate(345deg)
+        brightness(102%)
+        contrast(105%)
+    `,
+
+    /*
+     * Pink
+     */
+    `
+        brightness(0)
+        saturate(100%)
+        invert(29%)
+        sepia(90%)
+        saturate(3704%)
+        hue-rotate(300deg)
+        brightness(105%)
+        contrast(107%)
+    `
+];
+
+
+/*
+ * Current tint.
+ */
+let tintIndex = 0;
+
+
+/*
+ * Add the Bulldog's glow to whichever tint
+ * is currently active.
+ */
+function applyTint() {
+
+    const glowColors = [
+        'rgba(187,0,30,0.42)',
+        'rgba(30,110,255,0.42)',
+        'rgba(30,190,90,0.38)',
+        'rgba(255,205,20,0.42)',
+        'rgba(150,50,255,0.42)',
+        'rgba(30,220,220,0.4)',
+        'rgba(255,120,20,0.42)',
+        'rgba(255,50,150,0.42)'
+    ];
+
+    logo.style.filter =
+        tints[tintIndex] +
+        `
+        drop-shadow(0 0 8px ${glowColors[tintIndex]})
+        drop-shadow(0 0 21px ${glowColors[tintIndex]})
+        `;
+}
+
+
+/*
+ * Change tint after a collision.
+ */
+function changeTint() {
+
+    /*
+     * Never immediately repeat the same tint.
+     */
+    let next;
+
+    do {
+        next =
+            Math.floor(Math.random() * tints.length);
+    } while (
+        next === tintIndex &&
+        tints.length > 1
+    );
+
+    tintIndex = next;
+
+    applyTint();
+}
+
+
+/* =========================================================
+   POSITION / SPEED
+========================================================= */
+
+let x = 100;
+let y = 100;
+
+let velocityX = 1.25;
+let velocityY = 1.08;
+
+let logoWidth = 92;
+let logoHeight = 92;
+
+let lastTime =
+    performance.now();
+
+
+/* =========================================================
+   SIZE
+========================================================= */
+
+function updateLogoSize() {
+
+    const mobile =
+        window.innerWidth <= 600;
+
+    logoWidth =
+        mobile ? 68 : 92;
+
+    logoHeight =
+        mobile ? 68 : 92;
+
+    logo.style.width =
+        logoWidth + 'px';
+
+    logo.style.height =
+        logoHeight + 'px';
+}
+
+
+/* =========================================================
+   KEEP INSIDE VIEWPORT
+========================================================= */
+
+function keepLogoInsideScreen() {
+
+    const maxX =
+        Math.max(
+            0,
+            window.innerWidth - logoWidth
+        );
+
+    const maxY =
+        Math.max(
+            0,
+            window.innerHeight - logoHeight
+        );
+
+    x =
+        Math.max(
+            0,
+            Math.min(x, maxX)
+        );
+
+    y =
+        Math.max(
+            0,
+            Math.min(y, maxY)
+        );
+}
+
+
+/* =========================================================
+   ANIMATION
+========================================================= */
+
+function animateLogo(currentTime) {
+
+    /*
+     * Normalize movement so the Bulldog doesn't move
+     * dramatically faster on high-refresh-rate displays.
+     */
+    const delta =
+        Math.min(
+            (currentTime - lastTime) / 16.6667,
+            2
+        );
+
+    lastTime =
+        currentTime;
+
+
+    const maxX =
+        Math.max(
+            0,
+            window.innerWidth - logoWidth
+        );
+
+    const maxY =
+        Math.max(
+            0,
+            window.innerHeight - logoHeight
+        );
+
+
+    x += velocityX * delta;
+    y += velocityY * delta;
+
+
+    let collided = false;
+
+
+    /*
+     * LEFT EDGE
+     */
+    if (x <= 0) {
+
+        x = 0;
+
+        velocityX =
+            Math.abs(velocityX);
+
+        collided = true;
+    }
+
+
+    /*
+     * RIGHT EDGE
+     */
+    if (x >= maxX) {
+
+        x = maxX;
+
+        velocityX =
+            -Math.abs(velocityX);
+
+        collided = true;
+    }
+
+
+    /*
+     * TOP EDGE
+     */
+    if (y <= 0) {
+
+        y = 0;
+
+        velocityY =
+            Math.abs(velocityY);
+
+        collided = true;
+    }
+
+
+    /*
+     * BOTTOM EDGE
+     */
+    if (y >= maxY) {
+
+        y = maxY;
+
+        velocityY =
+            -Math.abs(velocityY);
+
+        collided = true;
+    }
+
+
+    /*
+     * A collision means the Bulldog touched
+     * ANY viewport edge.
+     */
+    if (collided) {
+        changeTint();
+    }
+
+
+    logo.style.transform =
+        `translate3d(${x}px, ${y}px, 0)`;
+
+
+    requestAnimationFrame(
+        animateLogo
+    );
+}
+
+
+/* =========================================================
+   RESIZE
+========================================================= */
+
+window.addEventListener('resize', () => {
+
+    updateLogoSize();
+
+    keepLogoInsideScreen();
+
+});
+
+
+/* =========================================================
+   INITIAL POSITION
+========================================================= */
+
+updateLogoSize();
+
+x =
+    Math.random() *
+    Math.max(
+        1,
+        window.innerWidth - logoWidth
+    );
+
+y =
+    Math.random() *
+    Math.max(
+        1,
+        window.innerHeight - logoHeight
+    );
+
+
+/*
+ * Random initial direction.
+ */
+velocityX =
+    (Math.random() > 0.5 ? 1 : -1) *
+    (1.05 + Math.random() * 0.45);
+
+velocityY =
+    (Math.random() > 0.5 ? 1 : -1) *
+    (0.95 + Math.random() * 0.45);
+
+
+/*
+ * Start with the first tint.
+ */
+applyTint();
+
+
+/*
+ * Start animation.
+ */
+requestAnimationFrame(
+    animateLogo
+);
 </script>
 
 </body>
