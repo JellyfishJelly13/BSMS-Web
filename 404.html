@@ -31,101 +31,203 @@ SPDX-License-Identifier: MIT
   box-sizing:border-box;
 }
 
-:root{
-  --red:#BB001E;
-  --red-h:#d10022;
-  --red-glow:rgba(187,0,30,0.35);
-  --font:'Patrick Hand',cursive;
+:root {
+  --red: #BB001E;
+  --red-h: #d10022;
+  --red-bright: #e00025;
+  --red-glow: rgba(187,0,30,0.35);
+  --bg-dots: rgba(187, 0, 30, 0.25);
+  --font: 'Patrick Hand',cursive;
+  --dark: #0a0405;
 }
 
-html,body{
-  margin:0;
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  background:#000;
-  color:#fff;
-  font-family:var(--font);
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: #fff;
+  font-family: var(--font);
+  background: #000;
+  /* Add subtle background transitions for the Chaos switch */
+  transition: background-color 0.2s;
 }
 
-body{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
+/* =========================================
+   SCREENS OVERLAYS (THE TRAP FLIP)
+   ========================================= */
+
+.view-layer {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 5;
 }
 
-/* Offline Banner */
+.view-layer.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* =========================================
+   VIEW 1: CLASSIC (Original clean HTML look)
+   ========================================= */
+
+.classic-card {
+  width: min(560px, 100%);
+  background: rgba(0,0,0,0.97);
+  border: 3px solid var(--red);
+  border-radius: 28px;
+  padding: 40px 30px;
+  text-align: center;
+  animation: fadeIn 0.25s ease, popIn 0.3s ease;
+}
+
+.classic-card .error-code { font-size: 120px; line-height: 1; margin: 0; color: var(--red); text-shadow: 0 0 35px rgba(187,0,30,0.55); }
+.classic-card .title { font-size: 42px; margin: 10px 0 12px; }
+.classic-card .desc { font-size: 22px; color: rgba(255,255,255,0.65); line-height: 1.5; margin: 0; }
+
+.classic-card .btn {
+  display: inline-block; font-family: var(--font); font-size: 19px; padding: 10px 18px; 
+  border-radius: 12px; border: 2px solid var(--red); background: var(--red); color: #fff; 
+  cursor: pointer; text-decoration: none; text-align: center; margin-top: 24px;
+  transition: transform .15s, background .15s, box-shadow .15s, border-color .15s;
+}
+.classic-card .btn:hover { background: var(--red-h); transform: scale(1.03); box-shadow: 0 4px 18px var(--red-glow); }
+.classic-card .btn:active { transform: scale(.97); }
+
+.warning-note {
+  margin-top: 35px; margin-bottom: 0; font-size: 18px; color: rgba(255,255,255,0.3);
+}
+
+/* =========================================
+   VIEW 2: COMIC CHAOS REDESIGN 
+   ========================================= */
+
+.chaos-bg {
+    background-color: var(--dark);
+    background-image: radial-gradient(var(--bg-dots) 2px, transparent 2.5px), radial-gradient(var(--bg-dots) 2px, transparent 2.5px);
+    background-size: 35px 35px;
+    background-position: 0 0, 17.5px 17.5px;
+}
+
+/* Comic Wrapper */
+#chaos-mode.active .chaos-error-wrapper {
+    animation: comicContentFadeIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.1) both;
+}
+
+.chaos-content {
+    background: #0f0a0a;
+    border: 5px solid var(--red);
+    border-radius: 18px;
+    padding: 60px 40px;
+    text-align: center;
+    box-shadow: 15px 15px 0px rgba(187, 0, 30, 0.4), inset -6px -6px 0px rgba(0,0,0,0.4);
+    transform-origin: center bottom;
+    width: min(700px, 100vw);
+    transition: transform 0.1s;
+}
+
+.chaos-content .error-code { font-size: clamp(100px, 15vw, 160px); line-height: .9; letter-spacing: 5px; color: transparent; display: inline-block; filter: drop-shadow(4px 4px 0px #fff); margin: 0; }
+.chaos-content .digit { display: inline-block; color: var(--red); text-shadow: -3px 3px 0 var(--dark), 2px -2px 0 var(--red-bright); }
+.digit-1 { animation: wibbleWobble 2.3s infinite ease-in-out; }
+.digit-2 { animation: wibbleWobble 2.6s infinite ease-in-out alternate-reverse; animation-delay: 0.1s; }
+.digit-3 { animation: wibbleWobble 2.4s infinite ease-in-out; animation-delay: 0.25s; }
+
+.chaos-content .title { margin: 35px 0 0 0; font-size: clamp(38px, 6vw, 56px); line-height: 1; color: #fff; text-transform: uppercase; text-shadow: 3px 3px 0px var(--red); transform: rotate(-1.5deg); }
+.chaos-content .desc { max-width: 480px; margin: 22px auto 0; color: #ffdcdb; font-size: clamp(20px, 3vw, 24px); line-height: 1.35; background: rgba(187, 0, 30, 0.2); padding: 10px 18px; border-radius: 6px; border: 2px dashed rgba(255,255,255,0.1); transform: rotate(0.8deg); }
+
+.btn-comic-wrapper { margin-top: 40px; transform: rotate(-1.5deg); display: inline-block; }
+.btn-comic {
+    display: inline-flex; align-items: center; justify-content: center; padding: 14px 28px;
+    background: #fff; border: 3px solid #000; border-radius: 8px; color: var(--dark);
+    font-family: var(--font); font-size: 26px; font-weight: 700; text-decoration: none; pointer-events: auto;
+    box-shadow: 6px 6px 0px var(--red); transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.15s;
+}
+.btn-comic:hover { transform: translateY(-5px) translateX(-5px) rotate(2deg); background: var(--red-bright); color: #fff; box-shadow: 12px 12px 0px rgba(0,0,0,1); border-color: #fff; }
+.btn-comic:active { transform: translate(2px, 2px) rotate(0); box-shadow: 2px 2px 0px var(--red); }
+
+
+/* =========================================
+   BOUNCING BULLDOG + SHAKE
+   ========================================= */
+.dvd-logo {
+    position: fixed; top: 0; left: 0; object-fit: contain; z-index: 20;
+    pointer-events: auto; user-select: none; cursor: crosshair;
+    will-change: transform, filter; transition: filter .18s ease;
+}
+
+body.shaking-v2 {
+    animation: intenseChaosShake 0.1s infinite !important;
+}
+
+body.shaking-v2::after {
+    content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 100;
+    background: radial-gradient(circle, transparent 20%, rgba(187, 0, 30, 0.5) 100%);
+    mix-blend-mode: color-dodge; pointer-events: none;
+}
+
+
+/* =========================================
+   ANIMATIONS & MOBILE ADJUSTMENTS
+   ========================================= */
+
+@keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+@keyframes popIn{ from{opacity:0; transform:scale(.92) translateY(14px);} to{opacity:1; transform:scale(1) translateY(0);} }
+@keyframes warningPulse { 0% { opacity: 0.15; transform: scale(0.98); } 100% { opacity: 0.45; transform: scale(1); } }
+
+@keyframes comicContentFadeIn { 0% { opacity: 0; transform: scale(0.85) rotate(-3deg); } 70% { transform: scale(1.02) rotate(1deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
+@keyframes wibbleWobble { 0%, 100% { transform: translateY(0px) rotate(-3deg) scale(1); } 50% { transform: translateY(-12px) rotate(3deg) scale(1.05); } }
+
+@keyframes intenseChaosShake {
+    0%   { transform: translate(0, 0) rotate(0deg) scale(1); filter: invert(0) saturate(1); }
+    20%  { transform: translate(-30px, 15px) rotate(-4deg) scale(1.1); filter: hue-rotate(60deg) invert(1) saturate(3); }
+    40%  { transform: translate(30px, -20px) rotate(3deg) scale(0.9); filter: blur(3px) invert(0); }
+    60%  { transform: translate(-15px, 35px) rotate(5deg) scale(1.05); filter: hue-rotate(-90deg) invert(1) drop-shadow(0 0 50px red); }
+    80%  { transform: translate(25px, 20px) rotate(-6deg) scale(0.95); filter: contrast(3) saturate(1.5) blur(1px); }
+    100% { transform: translate(0, 0) rotate(0deg) scale(1); filter: invert(0); }
+}
+
+
+/* OFFLINE BANNER (MORPHS IN COMIC MODE) */
 #offlineBanner {
   position: fixed; top: 0; left: 0; width: 100%; background: #ef4444; color: #fff;
-  text-align: center; padding: 10px; font-family: var(--font); font-size: 18px;
-  z-index: 10000; transform: translateY(-100%); transition: transform 0.3s ease;
+  text-align: center; padding: 10px; font-size: 18px; z-index: 10000;
+  transform: translateY(-100%); transition: all 0.3s ease; font-family: var(--font);
 }
 #offlineBanner.show { transform: translateY(0); }
-
-/* animations */
-@keyframes fadeIn{
-  from{opacity:0}
-  to{opacity:1}
+#offlineBanner.comic-style {
+    font-size: 24px; padding: 12px 16px 24px 16px;
+    clip-path: polygon(0 0, 100% 0, 100% 70%, 97% 95%, 65% 82%, 25% 100%, 0% 78%);
+    background: var(--red-bright);
 }
-
-@keyframes popIn{
-  from{
-    opacity:0;
-    transform:scale(.92) translateY(14px);
-  }
-  to{
-    opacity:1;
-    transform:scale(1) translateY(0);
-  }
-}
-
-/* CARD */
-.card{
-  width:min(560px,100%);
-  background:rgba(0,0,0,0.97);
-  border:3px solid var(--red);
-  border-radius:28px;
-  padding:40px 30px;
-  text-align:center;
-  animation:fadeIn .25s ease, popIn .3s ease;
-}
-
-.error-code{
-  font-size:120px;
-  line-height:1;
-  margin:0;
-  color:var(--red);
-  text-shadow:0 0 35px rgba(187,0,30,0.55);
-}
-
-.title{
-  font-size:42px;
-  margin:10px 0 12px;
-}
-
-.desc{
-  font-size:22px;
-  color:rgba(255,255,255,0.65);
-  line-height:1.5;
-  margin:0;
-}
-
-.btn {
-  display: inline-block; font-family: var(--font); font-size: 19px;
-  padding: 10px 18px; border-radius: 12px; border: 2px solid var(--red);
-  background: var(--red); color: #fff; cursor: pointer;
-  transition: transform .15s, background .15s, box-shadow .15s, border-color .15s;
-  text-decoration: none; text-align: center; line-height: 1.2; width: auto;
-  margin-top: 24px;
-}
-.btn:hover { background: var(--red-h); transform: scale(1.03); box-shadow: 0 4px 18px var(--red-glow); }
-.btn:active { transform: scale(.97); }
 
 @media(max-width:600px){
-  .error-code{font-size:90px;}
-  .title{font-size:34px;}
-  .desc{font-size:19px;}
+  .classic-card .error-code {font-size:90px;}
+  .classic-card .title {font-size:34px;}
+  .classic-card .desc {font-size:19px;}
+
+  .chaos-content { padding: 40px 25px; box-shadow: 10px 10px 0 var(--red); }
+  .chaos-content .title { margin-top: 25px; transform: none;}
+  .chaos-content .desc { margin-top: 15px; }
+  .btn-comic-wrapper { margin-top: 25px; transform: none; }
+}
+
+@media(max-height:600px){
+  .chaos-content { padding: 30px 25px; }
+  .chaos-content .error-code { font-size: 85px; letter-spacing: -2px; }
+  .chaos-content .title { margin-top: 20px; font-size: 34px; }
+  .chaos-content .desc { font-size: 18px; padding: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.shaking-v2 { animation: none !important; filter: none !important; }
+  .digit-1, .digit-2, .digit-3 { animation: none !important; transform: none !important; }
 }
 </style>
 </head>
@@ -134,28 +236,49 @@ body{
 
 <div id="offlineBanner">You are currently offline</div>
 
-<div class="card">
-  <h1 class="error-code">404</h1>
+<!-- THE NORMAL "CLASSIC" LOOK -->
+<div id="classic-mode" class="view-layer active">
+  <div class="classic-card">
+    <h1 class="error-code">404</h1>
+    <div class="title">Page Not Found</div>
+    <p class="desc">
+      The page you are looking for does<br>
+      not exist or may have been removed.
+    </p>
+    <a href="/" class="btn" data-ga="404_home_btn">Go Back Home</a>
+  </div>
+</div>
 
-  <div class="title">Page Not Found</div>
 
-  <p class="desc">
-    The page you are looking for does<br>
-    not exist or may have been removed.
-  </p>
-  
-  <a href="/" class="btn" data-ga="404_home_btn">Go Back Home</a>
+<!-- THE HIDDEN COMIC TRAP / CHAOS LOOK -->
+<div id="chaos-mode" class="view-layer">
+  <div class="chaos-error-wrapper">
+      <main id="chaosBox" class="chaos-content">
+          <h1 class="error-code">
+              <span class="digit digit-1">4</span>
+              <span class="digit digit-2">0</span>
+              <span class="digit digit-3">4</span>
+          </h1>
+          <div class="title">Page Not Found</div>
+          <p class="desc">
+              The page you're looking for was mysteriously swallowed by the void,
+              or it never even existed to begin with...
+          </p>
+          <div class="btn-comic-wrapper">
+              <a href="/" class="btn-comic" data-ga="404_home_btn">Escape to Home!</a>
+          </div>
+      </main>
+  </div>
 </div>
 
 <script>
-/*
- * BSMS Web
- * Copyright © 2026 Jellyfish Jelly
- * SPDX-License-Identifier: MIT
- */
-window.addEventListener('offline', () => document.getElementById('offlineBanner').classList.add('show'));
-window.addEventListener('online', () => document.getElementById('offlineBanner').classList.remove('show'));
-if (!navigator.onLine) document.getElementById('offlineBanner').classList.add('show');
+/* =========================================
+   OFFLINE & SESSION MGMT
+   ========================================= */
+const banner = document.getElementById('offlineBanner');
+window.addEventListener('offline', () => banner.classList.add('show'));
+window.addEventListener('online', () => banner.classList.remove('show'));
+if (!navigator.onLine) banner.classList.add('show');
 
 if (!localStorage.getItem('session_id')) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -164,6 +287,228 @@ if (!localStorage.getItem('session_id')) {
     localStorage.setItem('session_id', sid);
     console.log("[BSMS Web :: System] Generated new session_id.");
 }
+
+/* =========================================
+   GLOBAL SYSTEM & COLORS 
+   ========================================= */
+
+const tints = [
+    `saturate(1.18) contrast(1.04) hue-rotate(0deg) drop-shadow(0 0 8px rgba(187, 0, 30, .40)) drop-shadow(0 0 18px rgba(187, 0, 30, .16))`,
+    `saturate(1.20) contrast(1.04) hue-rotate(18deg) drop-shadow(0 0 8px rgba(255, 125, 35, .42)) drop-shadow(0 0 18px rgba(255, 125, 35, .16))`,
+    `saturate(1.20) contrast(1.04) hue-rotate(38deg) drop-shadow(0 0 8px rgba(255, 210, 40, .42)) drop-shadow(0 0 18px rgba(255, 210, 40, .16))`,
+    `saturate(1.18) contrast(1.04) hue-rotate(85deg) drop-shadow(0 0 8px rgba(45, 205, 100, .40)) drop-shadow(0 0 18px rgba(45, 205, 100, .15))`,
+    `saturate(1.20) contrast(1.04) hue-rotate(175deg) drop-shadow(0 0 8px rgba(40, 115, 255, .42)) drop-shadow(0 0 18px rgba(40, 115, 255, .16))`,
+    `saturate(1.20) contrast(1.04) hue-rotate(260deg) drop-shadow(0 0 8px rgba(165, 70, 255, .42)) drop-shadow(0 0 18px rgba(165, 70, 255, .16))`,
+    `saturate(1.20) contrast(1.04) hue-rotate(315deg) drop-shadow(0 0 8px rgba(255, 70, 160, .42)) drop-shadow(0 0 18px rgba(255, 70, 160, .16))`
+];
+
+function createColorBag() {
+    let bag = [0, 1, 2, 3, 4, 5, 6];
+    for (let i = bag.length - 1; i > 0; i--) {
+        const randomI = Math.floor(Math.random() * (i + 1));
+        [bag[i], bag[randomI]] = [bag[randomI], bag[i]];
+    }
+    return bag;
+}
+
+
+/* =========================================
+   BULLDOGS & ENGINE PHYSICS
+   ========================================= */
+
+const COLOR_CHANGE_COOLDOWN = 450;
+const MAX_BULLDOGS = 75;
+const bulldogs = [];
+let hasUnleashedChaos = false;
+
+function applyTint(b) {
+    b.el.style.filter = tints[b.tintIndex];
+}
+
+function changeTint(b, currentTime) {
+    if (currentTime - b.lastColorChange < COLOR_CHANGE_COOLDOWN) return;
+
+    if (b.colorBag.length === 0) {
+        b.colorBag = createColorBag();
+        
+        // BUGFIX: Prevent exact identical color from frontloading the next random sequence!
+        if (b.colorBag[0] === b.tintIndex) {
+            let temp = b.colorBag[0];
+            b.colorBag[0] = b.colorBag[b.colorBag.length - 1];
+            b.colorBag[b.colorBag.length - 1] = temp;
+        }
+    }
+
+    b.tintIndex = b.colorBag.shift();
+    applyTint(b);
+    b.lastColorChange = currentTime;
+}
+
+// SPAM & CREATION FACTORY
+function spawnBulldog(startX, startY, speedX, speedY, popInEffect = false) {
+    if(bulldogs.length >= MAX_BULLDOGS) return;
+
+    const wSize = window.innerWidth <= 600 ? 68 : 92;
+
+    const el = document.createElement('img');
+    el.className = 'dvd-logo';
+    el.src = '/img/icon.png';
+    el.setAttribute('aria-hidden', 'true');
+    el.style.width = wSize + "px";
+    el.style.height = wSize + "px";
+    
+    // Add zIndex tracking upwards so latest spawned is heavily favored in front!
+    el.style.zIndex = 20 + bulldogs.length; 
+    document.body.appendChild(el);
+
+    const bConfig = {
+        el,
+        x: startX, y: startY, w: wSize, h: wSize,
+        vx: speedX, vy: speedY,
+        colorBag: createColorBag(),
+        tintIndex: 0,
+        lastColorChange: performance.now()
+    };
+    
+    bConfig.tintIndex = bConfig.colorBag.shift();
+    applyTint(bConfig);
+
+    // CLICK TRAP EVENT! 
+    el.addEventListener('mousedown', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        triggerMadness(bConfig);
+    });
+    
+    // Smooth animated popup if birthed forcefully from an exploding original dog
+    if(popInEffect) {
+        el.animate([ { transform: `translate3d(${startX}px, ${startY}px, 0) scale(0)`, opacity: 0 },
+                     { transform: `translate3d(${startX}px, ${startY}px, 0) scale(1)`, opacity: 1 } ], 
+                   { duration: 400, easing: "ease-out" });
+    }
+
+    bulldogs.push(bConfig);
+}
+
+
+/* =========================================
+   TRIGGER THE TRAP 
+   ========================================= */
+let shakeTimer = null;
+const theComicBox = document.getElementById('chaosBox');
+
+function triggerMadness(clickedDogConfig) {
+    
+    // == FLIP THE SCREENS! First time execution ==
+    if(!hasUnleashedChaos) {
+        hasUnleashedChaos = true;
+        document.body.classList.add("chaos-bg");
+        document.getElementById("classic-mode").classList.remove("active");
+        document.getElementById("chaos-mode").classList.add("active");
+        
+        banner.classList.add("comic-style"); 
+        if(!navigator.onLine) {
+           banner.innerText = "Dang! You are currently offline ✂️";
+        }
+        
+        // Make original floating dog way more jittery immediately!
+        bulldogs[0].vx *= 1.8; bulldogs[0].vy *= 1.8;
+    }
+
+    // == APPLY CAMERA/SCREEN DAMAGE SHAKES (resets itself over and over!) ==
+    document.body.classList.remove('shaking-v2');
+    void document.body.offsetWidth; // Recalculate frame reflow buffer
+    document.body.classList.add('shaking-v2');
+    clearTimeout(shakeTimer);
+    shakeTimer = setTimeout(() => { document.body.classList.remove('shaking-v2'); }, 850);
+
+    // Bounce the center card module out-of-whack temporarily! 
+    const randRots = ["10deg", "-12deg", "25deg", "-15deg"];
+    theComicBox.style.transform = `scale(1.08) rotate(${randRots[Math.floor(Math.random() * randRots.length)]})`;
+    setTimeout(() => { theComicBox.style.transform = ""; }, 500);
+
+    // Visually distort and explode whichever single bulldog is targeted by User Pointer
+    clickedDogConfig.el.animate([
+        { transform: `translate3d(${clickedDogConfig.x}px, ${clickedDogConfig.y}px, 0) scale(1) rotate(0)` },
+        { transform: `translate3d(${clickedDogConfig.x}px, ${clickedDogConfig.y}px, 0) scale(3.5) rotate(720deg)`, filter: 'saturate(4) invert(1)' },
+        { transform: `translate3d(${clickedDogConfig.x}px, ${clickedDogConfig.y}px, 0) scale(1) rotate(0)` }
+    ], { duration: 600, easing: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)' });
+
+    // The Magic Part - Vomit Mini Dogs!
+    const spawnNum = Math.floor(Math.random() * 4) + 4; // Yield between 4 and 7 additions every touch
+    for (let i = 0; i < spawnNum; i++) {
+        // High explosive burst velocity multiplier mapping limits to page corner edges!
+        let fastSpeedsX = (Math.random() > 0.5 ? 1 : -1) * (2.8 + (Math.random() * 4.0));
+        let fastSpeedsY = (Math.random() > 0.5 ? 1 : -1) * (2.8 + (Math.random() * 4.0));
+        spawnBulldog(clickedDogConfig.x, clickedDogConfig.y, fastSpeedsX, fastSpeedsY, true);
+    }
+}
+
+
+/* =========================================
+   ANIMATION TICKS
+   ========================================= */
+let lastTime = performance.now();
+
+function animateBulldogs(currentTime) {
+    const delta = Math.min((currentTime - lastTime) / 16.6667, 3);
+    lastTime = currentTime;
+
+    const mX = window.innerWidth;
+    const mY = window.innerHeight;
+
+    for (let i = 0; i < bulldogs.length; i++) {
+        let b = bulldogs[i];
+
+        const boundX = Math.max(0, mX - b.w);
+        const boundY = Math.max(0, mY - b.h);
+
+        b.x += b.vx * delta;
+        b.y += b.vy * delta;
+
+        let collided = false;
+        
+        // Screen bounds mapping / Deflection logic. 
+        if (b.x <= 0) { b.x = 0; b.vx = Math.abs(b.vx); collided = true; }
+        else if (b.x >= boundX) { b.x = boundX; b.vx = -Math.abs(b.vx); collided = true; }
+        if (b.y <= 0) { b.y = 0; b.vy = Math.abs(b.vy); collided = true; }
+        else if (b.y >= boundY) { b.y = boundY; b.vy = -Math.abs(b.vy); collided = true; }
+
+        if (collided) changeTint(b, currentTime);
+        b.el.style.transform = `translate3d(${b.x}px, ${b.y}px, 0)`;
+    }
+
+    requestAnimationFrame(animateBulldogs);
+}
+
+
+window.addEventListener('resize', () => {
+    const wS = window.innerWidth <= 600 ? 68 : 92;
+    for (let i = 0; i < bulldogs.length; i++) {
+        let b = bulldogs[i];
+        b.w = wS; b.h = wS;
+        b.el.style.width = wS + 'px';
+        b.el.style.height = wS + 'px';
+
+        const maxX = Math.max(0, window.innerWidth - b.w);
+        const maxY = Math.max(0, window.innerHeight - b.h);
+
+        b.x = Math.max(0, Math.min(b.x, maxX));
+        b.y = Math.max(0, Math.min(b.y, maxY));
+    }
+});
+
+/* =========================================
+   BOOT LOAD OPERATION SEQUENCE 
+   ========================================= */
+
+const initSize = window.innerWidth <= 600 ? 68 : 92;
+let sX = Math.random() * Math.max(1, window.innerWidth - initSize);
+let sY = Math.random() * Math.max(1, window.innerHeight - initSize);
+let vxS = (Math.random() > 0.5 ? 1 : -1) * (1.70 + Math.random() * 0.90);
+let vyS = (Math.random() > 0.5 ? 1 : -1) * (1.50 + Math.random() * 0.80);
+
+spawnBulldog(sX, sY, vxS, vyS, false);
+requestAnimationFrame(animateBulldogs);
 </script>
 
 </body>
