@@ -13,12 +13,8 @@ SPDX-License-Identifier: MIT
 
 <title>404 - Page Not Found</title>
 
-<!-- Favicons -->
-
 <link rel="icon" href="/img/icon.png">
 <link rel="apple-touch-icon" href="/img/app-icon.png">
-
-<!-- Google Analytics 4 -->
 
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-2TKPQV995W"></script>
 
@@ -53,25 +49,14 @@ body {
     width: 100%;
     height: 100%;
     margin: 0;
-
     overflow: hidden;
-
     background: #000;
     color: #fff;
-
     font-family: var(--font);
-}
-
-/*
- * The shake is applied to the entire page contents.
- */
-body.shaking {
-    animation: insaneShake 0.05s infinite;
 }
 
 body {
     position: relative;
-
     display: flex;
     align-items: center;
     justify-content: center;
@@ -79,16 +64,20 @@ body {
     background:
         radial-gradient(
             circle at center,
-            rgba(187, 0, 30, 0.065) 0%,
-            rgba(187, 0, 30, 0.02) 35%,
+            rgba(187, 0, 30, .065) 0%,
+            rgba(187, 0, 30, .02) 35%,
             transparent 70%
         ),
         #000;
 }
 
-/* =========================================================
-   INSANE CLICK SHAKE
-========================================================= */
+/* =========================================
+   INSANE SCREEN SHAKE
+   ========================================= */
+
+body.shaking {
+    animation: insaneShake .05s infinite;
+}
 
 @keyframes insaneShake {
 
@@ -97,39 +86,39 @@ body {
     }
 
     10% {
-        transform: translate(-14px, 9px) rotate(-0.8deg);
+        transform: translate(-14px, 9px) rotate(-.8deg);
     }
 
     20% {
-        transform: translate(12px, -11px) rotate(0.7deg);
+        transform: translate(12px, -11px) rotate(.7deg);
     }
 
     30% {
-        transform: translate(-11px, -7px) rotate(-0.6deg);
+        transform: translate(-11px, -7px) rotate(-.6deg);
     }
 
     40% {
-        transform: translate(15px, 12px) rotate(0.9deg);
+        transform: translate(15px, 12px) rotate(.9deg);
     }
 
     50% {
-        transform: translate(-13px, -13px) rotate(-0.8deg);
+        transform: translate(-13px, -13px) rotate(-.8deg);
     }
 
     60% {
-        transform: translate(10px, 8px) rotate(0.7deg);
+        transform: translate(10px, 8px) rotate(.7deg);
     }
 
     70% {
-        transform: translate(-15px, -5px) rotate(-0.9deg);
+        transform: translate(-15px, -5px) rotate(-.9deg);
     }
 
     80% {
-        transform: translate(13px, 11px) rotate(0.8deg);
+        transform: translate(13px, 11px) rotate(.8deg);
     }
 
     90% {
-        transform: translate(-9px, -10px) rotate(-0.5deg);
+        transform: translate(-9px, -10px) rotate(-.5deg);
     }
 
     100% {
@@ -137,13 +126,12 @@ body {
     }
 }
 
-/* =========================================================
+/* =========================================
    OFFLINE BANNER
-========================================================= */
+   ========================================= */
 
 #offlineBanner {
     position: fixed;
-
     top: 0;
     left: 0;
 
@@ -162,17 +150,16 @@ body {
     z-index: 10000;
 
     transform: translateY(-100%);
-
-    transition: transform 0.3s ease;
+    transition: transform .3s ease;
 }
 
 #offlineBanner.show {
     transform: translateY(0);
 }
 
-/* =========================================================
-   PAGE CONTENT
-========================================================= */
+/* =========================================
+   ERROR CONTENT
+   ========================================= */
 
 .error-content {
     position: relative;
@@ -185,33 +172,24 @@ body {
 
     pointer-events: none;
 
-    animation:
-        contentFadeIn 0.55s ease both;
+    animation: contentFadeIn .55s ease both;
 }
-
-/* =========================================================
-   404
-========================================================= */
 
 .error-code {
     margin: 0;
 
     font-size: clamp(105px, 16vw, 170px);
 
-    line-height: 0.8;
+    line-height: .8;
 
     letter-spacing: -6px;
 
     color: var(--red);
 
     text-shadow:
-        0 0 14px rgba(187, 0, 30, 0.35),
-        0 0 38px rgba(187, 0, 30, 0.2);
+        0 0 14px rgba(187, 0, 30, .35),
+        0 0 38px rgba(187, 0, 30, .2);
 }
-
-/* =========================================================
-   TITLE
-========================================================= */
 
 .title {
     margin-top: 25px;
@@ -223,31 +201,23 @@ body {
     color: #fff;
 
     text-shadow:
-        0 2px 18px rgba(0, 0, 0, 0.75);
+        0 2px 18px rgba(0, 0, 0, .75);
 }
-
-/* =========================================================
-   DESCRIPTION
-========================================================= */
 
 .desc {
     max-width: 500px;
 
     margin: 14px auto 0;
 
-    color: rgba(255, 255, 255, 0.58);
+    color: rgba(255, 255, 255, .58);
 
     font-size: clamp(18px, 2.5vw, 21px);
 
     line-height: 1.45;
 
     text-shadow:
-        0 2px 14px rgba(0, 0, 0, 0.9);
+        0 2px 14px rgba(0, 0, 0, .9);
 }
-
-/* =========================================================
-   BUTTON
-========================================================= */
 
 .btn {
     display: inline-flex;
@@ -265,11 +235,12 @@ body {
 
     border-radius: 12px;
 
-    background: rgba(187, 0, 30, 0.9);
+    background: rgba(187, 0, 30, .9);
 
     color: #fff;
 
     font-family: var(--font);
+
     font-size: 20px;
 
     line-height: 1;
@@ -279,12 +250,12 @@ body {
     pointer-events: auto;
 
     box-shadow:
-        0 7px 25px rgba(187, 0, 30, 0.2);
+        0 7px 25px rgba(187, 0, 30, .2);
 
     transition:
-        transform 0.16s ease,
-        background 0.16s ease,
-        box-shadow 0.16s ease;
+        transform .16s ease,
+        background .16s ease,
+        box-shadow .16s ease;
 }
 
 .btn:hover {
@@ -293,16 +264,16 @@ body {
     transform: translateY(-2px);
 
     box-shadow:
-        0 10px 30px rgba(187, 0, 30, 0.4);
+        0 10px 30px rgba(187, 0, 30, .4);
 }
 
 .btn:active {
-    transform: scale(0.97);
+    transform: scale(.97);
 }
 
-/* =========================================================
+/* =========================================
    BOUNCING BULLDOG
-========================================================= */
+   ========================================= */
 
 #dvdLogo {
     position: fixed;
@@ -315,35 +286,29 @@ body {
 
     object-fit: contain;
 
-    /*
-     * Above everything, including the text.
-     */
     z-index: 20;
 
     pointer-events: auto;
+
     user-select: none;
 
     cursor: pointer;
 
     will-change: transform, filter;
 
-    /*
-     * Original Bulldog appearance with
-     * only a very subtle tint.
-     */
     filter:
         saturate(1.12)
         contrast(1.03)
-        drop-shadow(0 0 7px rgba(187, 0, 30, 0.28))
-        drop-shadow(0 0 16px rgba(187, 0, 30, 0.12));
+        drop-shadow(0 0 7px rgba(187, 0, 30, .28))
+        drop-shadow(0 0 16px rgba(187, 0, 30, .12));
 
     transition:
-        filter 0.18s ease;
+        filter .18s ease;
 }
 
-/* =========================================================
+/* =========================================
    CONTENT ANIMATION
-========================================================= */
+   ========================================= */
 
 @keyframes contentFadeIn {
 
@@ -358,9 +323,9 @@ body {
     }
 }
 
-/* =========================================================
-   MOBILE
-========================================================= */
+/* =========================================
+   RESPONSIVE
+   ========================================= */
 
 @media (max-width: 600px) {
 
@@ -386,10 +351,6 @@ body {
     }
 }
 
-/* =========================================================
-   SHORT SCREENS
-========================================================= */
-
 @media (max-height: 600px) {
 
     .error-code {
@@ -410,10 +371,6 @@ body {
         margin-top: 17px;
     }
 }
-
-/* =========================================================
-   REDUCED MOTION
-========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
 
@@ -439,17 +396,9 @@ body {
 
 <body>
 
-<!-- =======================================================
-     OFFLINE BANNER
-======================================================= -->
-
 <div id="offlineBanner">
     You are currently offline
 </div>
-
-<!-- =======================================================
-     BOUNCING BULLDOG
-======================================================= -->
 
 <img
  id="dvdLogo"
@@ -457,10 +406,6 @@ body {
  alt=""
  aria-hidden="true"
 />
-
-<!-- =======================================================
-     404 CONTENT
-======================================================= -->
 
 <main class="error-content">
 
@@ -490,15 +435,10 @@ body {
 </main>
 
 <script>
-/*
- * BSMS Web
- * Copyright © 2026 Jellyfish Jelly
- * SPDX-License-Identifier: MIT
- */
 
-/* =========================================================
+/* =========================================
    OFFLINE STATUS
-========================================================= */
+   ========================================= */
 
 const offlineBanner =
     document.getElementById('offlineBanner');
@@ -516,9 +456,9 @@ if (!navigator.onLine) {
 }
 
 
-/* =========================================================
+/* =========================================
    SESSION ID
-========================================================= */
+   ========================================= */
 
 if (!localStorage.getItem('session_id')) {
 
@@ -541,106 +481,165 @@ if (!localStorage.getItem('session_id')) {
 }
 
 
-/* =========================================================
+/* =========================================
    BULLDOG
-========================================================= */
+   ========================================= */
 
 const logo =
     document.getElementById('dvdLogo');
 
 
-/* =========================================================
-   COLORS
-========================================================= */
+/* =========================================
+   COLOR SYSTEM
+   =========================================
 
-/*
- * Exactly seven possible colors:
- *
- * Red
- * Orange
- * Yellow
- * Green
- * Blue
- * Purple
- * Pink
- *
- * Each one keeps the original Bulldog visible.
- */
+   There are exactly 7 colors:
+
+   0 = Red
+   1 = Orange
+   2 = Yellow
+   3 = Green
+   4 = Blue
+   5 = Purple
+   6 = Pink
+
+   The Bulldog must use EVERY color in the
+   current cycle before any color is allowed
+   to appear again.
+
+   This prevents things like:
+
+   Red → Green → Red
+
+   and guarantees that Orange and Yellow
+   actually get their turn.
+   ========================================= */
 
 const tints = [
 
     /* RED */
-    `
-        saturate(1.18)
-        contrast(1.04)
-        hue-rotate(0deg)
-        drop-shadow(0 0 8px rgba(187, 0, 30, 0.40))
-        drop-shadow(0 0 18px rgba(187, 0, 30, 0.16))
-    `,
+    `saturate(1.18)
+     contrast(1.04)
+     hue-rotate(0deg)
+     drop-shadow(0 0 8px rgba(187, 0, 30, .40))
+     drop-shadow(0 0 18px rgba(187, 0, 30, .16))`,
 
     /* ORANGE */
-    `
-        saturate(1.20)
-        contrast(1.04)
-        hue-rotate(18deg)
-        drop-shadow(0 0 8px rgba(255, 125, 35, 0.42))
-        drop-shadow(0 0 18px rgba(255, 125, 35, 0.16))
-    `,
+    `saturate(1.20)
+     contrast(1.04)
+     hue-rotate(18deg)
+     drop-shadow(0 0 8px rgba(255, 125, 35, .42))
+     drop-shadow(0 0 18px rgba(255, 125, 35, .16))`,
 
     /* YELLOW */
-    `
-        saturate(1.20)
-        contrast(1.04)
-        hue-rotate(38deg)
-        drop-shadow(0 0 8px rgba(255, 210, 40, 0.42))
-        drop-shadow(0 0 18px rgba(255, 210, 40, 0.16))
-    `,
+    `saturate(1.20)
+     contrast(1.04)
+     hue-rotate(38deg)
+     drop-shadow(0 0 8px rgba(255, 210, 40, .42))
+     drop-shadow(0 0 18px rgba(255, 210, 40, .16))`,
 
     /* GREEN */
-    `
-        saturate(1.18)
-        contrast(1.04)
-        hue-rotate(85deg)
-        drop-shadow(0 0 8px rgba(45, 205, 100, 0.40))
-        drop-shadow(0 0 18px rgba(45, 205, 100, 0.15))
-    `,
+    `saturate(1.18)
+     contrast(1.04)
+     hue-rotate(85deg)
+     drop-shadow(0 0 8px rgba(45, 205, 100, .40))
+     drop-shadow(0 0 18px rgba(45, 205, 100, .15))`,
 
     /* BLUE */
-    `
-        saturate(1.20)
-        contrast(1.04)
-        hue-rotate(175deg)
-        drop-shadow(0 0 8px rgba(40, 115, 255, 0.42))
-        drop-shadow(0 0 18px rgba(40, 115, 255, 0.16))
-    `,
+    `saturate(1.20)
+     contrast(1.04)
+     hue-rotate(175deg)
+     drop-shadow(0 0 8px rgba(40, 115, 255, .42))
+     drop-shadow(0 0 18px rgba(40, 115, 255, .16))`,
 
     /* PURPLE */
-    `
-        saturate(1.20)
-        contrast(1.04)
-        hue-rotate(260deg)
-        drop-shadow(0 0 8px rgba(165, 70, 255, 0.42))
-        drop-shadow(0 0 18px rgba(165, 70, 255, 0.16))
-    `,
+    `saturate(1.20)
+     contrast(1.04)
+     hue-rotate(260deg)
+     drop-shadow(0 0 8px rgba(165, 70, 255, .42))
+     drop-shadow(0 0 18px rgba(165, 70, 255, .16))`,
 
     /* PINK */
-    `
-        saturate(1.20)
-        contrast(1.04)
-        hue-rotate(315deg)
-        drop-shadow(0 0 8px rgba(255, 70, 160, 0.42))
-        drop-shadow(0 0 18px rgba(255, 70, 160, 0.16))
-    `
+    `saturate(1.20)
+     contrast(1.04)
+     hue-rotate(315deg)
+     drop-shadow(0 0 8px rgba(255, 70, 160, .42))
+     drop-shadow(0 0 18px rgba(255, 70, 160, .16))`
 ];
 
 
-let tintIndex = 0;
+/*
+   The first cycle is shuffled so the page
+   doesn't always start red → orange → yellow.
+
+   After every color has been used, a new
+   cycle is generated.
+*/
+
+let colorBag = [];
 
 
-/* =========================================================
-   APPLY TINT
-========================================================= */
+/* Create a randomized bag containing all
+   seven colors exactly once. */
+function createColorBag() {
 
+    const bag = [
+        0, // red
+        1, // orange
+        2, // yellow
+        3, // green
+        4, // blue
+        5, // purple
+        6  // pink
+    ];
+
+    /*
+       Fisher-Yates shuffle.
+    */
+
+    for (let i = bag.length - 1; i > 0; i--) {
+
+        const randomIndex =
+            Math.floor(Math.random() * (i + 1));
+
+        [
+            bag[i],
+            bag[randomIndex]
+        ] = [
+            bag[randomIndex],
+            bag[i]
+        ];
+    }
+
+    return bag;
+}
+
+
+/* Start with a shuffled color cycle. */
+colorBag = createColorBag();
+
+
+/*
+   Current color.
+*/
+let tintIndex = colorBag.shift();
+
+
+/*
+   Prevent rapid flashing.
+
+   Even if the Bulldog hits another edge
+   immediately after a corner collision,
+   the color cannot change more than once
+   every 450 milliseconds.
+*/
+const COLOR_CHANGE_COOLDOWN = 450;
+
+let lastColorChange =
+    performance.now() - COLOR_CHANGE_COOLDOWN;
+
+
+/* Apply current color. */
 function applyTint() {
 
     logo.style.filter =
@@ -648,87 +647,113 @@ function applyTint() {
 }
 
 
-/* =========================================================
-   CHANGE TINT
-========================================================= */
+/*
+   Change to the next color.
 
-function changeTint() {
+   IMPORTANT:
 
-    let next;
+   We DO NOT randomly choose a color here.
+
+   Instead, we pull colors from the shuffled
+   bag. Therefore:
+
+   Red
+   → Green
+   → Pink
+   → Yellow
+   → Blue
+   → Orange
+   → Purple
+   → ...
+
+   A color cannot repeat until all six
+   other colors have appeared.
+*/
+function changeTint(currentTime) {
 
     /*
-     * Pick a random color, but NEVER the current one.
-     */
-    do {
+       Ignore collisions that happen too soon
+       after the previous color change.
+    */
+    if (
+        currentTime - lastColorChange
+        < COLOR_CHANGE_COOLDOWN
+    ) {
+        return;
+    }
 
-        next =
-            Math.floor(
-                Math.random() * tints.length
-            );
 
-    } while (
-        next === tintIndex
-    );
+    /*
+       If the current color cycle is empty,
+       create an entirely new randomized cycle.
+    */
+    if (colorBag.length === 0) {
+        colorBag = createColorBag();
+    }
 
-    tintIndex = next;
 
+    /*
+       Take the next color from the bag.
+    */
+    tintIndex =
+        colorBag.shift();
+
+
+    /*
+       Apply it.
+    */
     applyTint();
+
+
+    /*
+       Remember exactly when the change happened.
+    */
+    lastColorChange =
+        currentTime;
 }
 
 
-/* =========================================================
-   BULLDOG CLICK
-========================================================= */
+/* =========================================
+   CLICK → INSANE SHAKE
+   ========================================= */
 
 let shakeTimer = null;
 
 logo.addEventListener('click', () => {
 
     /*
-     * Restart the shake if the Bulldog is clicked
-     * again during an existing shake.
-     */
+       Restart the shake even if the Bulldog
+       gets clicked while already shaking.
+    */
+
     document.body.classList.remove('shaking');
 
-    /*
-     * Force the browser to recognize the removal
-     * before restarting the animation.
-     */
     void document.body.offsetWidth;
 
     document.body.classList.add('shaking');
 
+
     clearTimeout(shakeTimer);
 
-    shakeTimer =
-        setTimeout(() => {
+    shakeTimer = setTimeout(() => {
 
-            document.body.classList.remove(
-                'shaking'
-            );
+        document.body.classList.remove('shaking');
 
-        }, 1000);
+    }, 1000);
 });
 
 
-/* =========================================================
-   POSITION / SPEED
-========================================================= */
+/* =========================================
+   BOUNCING PHYSICS
+   ========================================= */
 
 let x = 100;
 let y = 100;
 
 
 /*
- * This is 2× the previous speed.
- *
- * Previous:
- * ~1.05–1.50
- *
- * New:
- * ~2.10–3.00
- */
-
+   2× speed from the original version.
+*/
 let velocityX = 2.50;
 let velocityY = 2.16;
 
@@ -736,13 +761,14 @@ let velocityY = 2.16;
 let logoWidth = 92;
 let logoHeight = 92;
 
+
 let lastTime =
     performance.now();
 
 
-/* =========================================================
-   LOGO SIZE
-========================================================= */
+/* =========================================
+   RESPONSIVE LOGO SIZE
+   ========================================= */
 
 function updateLogoSize() {
 
@@ -763,9 +789,9 @@ function updateLogoSize() {
 }
 
 
-/* =========================================================
-   KEEP INSIDE VIEWPORT
-========================================================= */
+/* =========================================
+   KEEP LOGO ON SCREEN
+   ========================================= */
 
 function keepLogoInsideScreen() {
 
@@ -795,15 +821,17 @@ function keepLogoInsideScreen() {
 }
 
 
-/* =========================================================
-   DVD ANIMATION
-========================================================= */
+/* =========================================
+   ANIMATION
+   ========================================= */
 
 function animateLogo(currentTime) {
 
     /*
-     * Normalize movement for different refresh rates.
-     */
+       Convert elapsed milliseconds into a
+       roughly 60 FPS movement multiplier.
+    */
+
     const delta =
         Math.min(
             (currentTime - lastTime) / 16.6667,
@@ -828,18 +856,31 @@ function animateLogo(currentTime) {
 
 
     /*
-     * Move.
-     */
-    x += velocityX * delta;
-    y += velocityY * delta;
+       Move the Bulldog.
+    */
 
+    x +=
+        velocityX * delta;
+
+    y +=
+        velocityY * delta;
+
+
+    /*
+       IMPORTANT:
+
+       One collision can trigger multiple
+       boundary checks at a corner.
+
+       We intentionally use ONE `collided`
+       boolean so a corner can only request
+       ONE color change.
+    */
 
     let collided = false;
 
 
-    /* =====================================================
-       LEFT
-    ===================================================== */
+    /* LEFT WALL */
 
     if (x <= 0) {
 
@@ -852,9 +893,7 @@ function animateLogo(currentTime) {
     }
 
 
-    /* =====================================================
-       RIGHT
-    ===================================================== */
+    /* RIGHT WALL */
 
     if (x >= maxX) {
 
@@ -867,9 +906,7 @@ function animateLogo(currentTime) {
     }
 
 
-    /* =====================================================
-       TOP
-    ===================================================== */
+    /* TOP WALL */
 
     if (y <= 0) {
 
@@ -882,9 +919,7 @@ function animateLogo(currentTime) {
     }
 
 
-    /* =====================================================
-       BOTTOM
-    ===================================================== */
+    /* BOTTOM WALL */
 
     if (y >= maxY) {
 
@@ -898,20 +933,20 @@ function animateLogo(currentTime) {
 
 
     /*
-     * Every wall collision changes the Bulldog's color.
-     *
-     * Since changeTint() cannot select the current
-     * tint, the same color can NEVER appear twice
-     * in a row.
-     */
+       ONE color change maximum per frame,
+       with the 450ms cooldown enforced inside
+       changeTint().
+    */
+
     if (collided) {
-        changeTint();
+        changeTint(currentTime);
     }
 
 
     /*
-     * Position the Bulldog.
-     */
+       Draw Bulldog.
+    */
+
     logo.style.transform =
         `translate3d(${x}px, ${y}px, 0)`;
 
@@ -922,29 +957,28 @@ function animateLogo(currentTime) {
 }
 
 
-/* =========================================================
-   RESIZE
-========================================================= */
+/* =========================================
+   START
+   ========================================= */
 
-window.addEventListener('resize', () => {
+window.addEventListener(
+    'resize',
+    () => {
 
-    updateLogoSize();
+        updateLogoSize();
 
-    keepLogoInsideScreen();
+        keepLogoInsideScreen();
 
-});
+    }
+);
 
-
-/* =========================================================
-   INITIALIZE
-========================================================= */
 
 updateLogoSize();
 
 
 /*
- * Random starting position.
- */
+   Random starting position.
+*/
 
 x =
     Math.random() *
@@ -962,8 +996,8 @@ y =
 
 
 /*
- * Random starting direction.
- */
+   Random starting direction and 2× speed.
+*/
 
 velocityX =
     (Math.random() > 0.5 ? 1 : -1) *
@@ -975,19 +1009,20 @@ velocityY =
 
 
 /*
- * Initial red tint.
- */
+   Apply initial randomized color.
+*/
 
 applyTint();
 
 
 /*
- * Start animation.
- */
+   Start animation.
+*/
 
 requestAnimationFrame(
     animateLogo
 );
+
 </script>
 
 </body>
