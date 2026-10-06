@@ -62,6 +62,13 @@ body {
     font-family: var(--font);
 }
 
+/*
+ * The shake is applied to the entire page contents.
+ */
+body.shaking {
+    animation: insaneShake 0.05s infinite;
+}
+
 body {
     position: relative;
 
@@ -77,6 +84,57 @@ body {
             transparent 70%
         ),
         #000;
+}
+
+/* =========================================================
+   INSANE CLICK SHAKE
+========================================================= */
+
+@keyframes insaneShake {
+
+    0% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+
+    10% {
+        transform: translate(-14px, 9px) rotate(-0.8deg);
+    }
+
+    20% {
+        transform: translate(12px, -11px) rotate(0.7deg);
+    }
+
+    30% {
+        transform: translate(-11px, -7px) rotate(-0.6deg);
+    }
+
+    40% {
+        transform: translate(15px, 12px) rotate(0.9deg);
+    }
+
+    50% {
+        transform: translate(-13px, -13px) rotate(-0.8deg);
+    }
+
+    60% {
+        transform: translate(10px, 8px) rotate(0.7deg);
+    }
+
+    70% {
+        transform: translate(-15px, -5px) rotate(-0.9deg);
+    }
+
+    80% {
+        transform: translate(13px, 11px) rotate(0.8deg);
+    }
+
+    90% {
+        transform: translate(-9px, -10px) rotate(-0.5deg);
+    }
+
+    100% {
+        transform: translate(0, 0) rotate(0deg);
+    }
 }
 
 /* =========================================================
@@ -258,18 +316,20 @@ body {
     object-fit: contain;
 
     /*
-     * ABOVE EVERYTHING.
+     * Above everything, including the text.
      */
     z-index: 20;
 
-    pointer-events: none;
+    pointer-events: auto;
     user-select: none;
+
+    cursor: pointer;
 
     will-change: transform, filter;
 
     /*
-     * Start with the Bulldog's ORIGINAL appearance.
-     * Only a very subtle tint is applied.
+     * Original Bulldog appearance with
+     * only a very subtle tint.
      */
     filter:
         saturate(1.12)
@@ -282,7 +342,7 @@ body {
 }
 
 /* =========================================================
-   ANIMATION
+   CONTENT ANIMATION
 ========================================================= */
 
 @keyframes contentFadeIn {
@@ -368,6 +428,10 @@ body {
     .btn {
         transition: none;
     }
+
+    body.shaking {
+        animation: none;
+    }
 }
 </style>
 
@@ -400,7 +464,7 @@ body {
 
 <main class="error-content">
 
-
+```
 <h1 class="error-code">
     404
 </h1>
@@ -421,7 +485,7 @@ body {
 >
     Go Back Home
 </a>
-
+```
 
 </main>
 
@@ -485,126 +549,88 @@ const logo =
     document.getElementById('dvdLogo');
 
 
+/* =========================================================
+   COLORS
+========================================================= */
+
 /*
- * These are SUBTLE tint values.
+ * Exactly seven possible colors:
  *
- * The Bulldog itself remains visible and retains its
- * original image details. We are NOT converting the
- * image to a solid color.
+ * Red
+ * Orange
+ * Yellow
+ * Green
+ * Blue
+ * Purple
+ * Pink
+ *
+ * Each one keeps the original Bulldog visible.
  */
+
 const tints = [
 
-    /*
-     * Red
-     */
-    {
-        filter:
-            `
-            saturate(1.18)
-            contrast(1.04)
-            hue-rotate(0deg)
-            drop-shadow(0 0 8px rgba(187, 0, 30, 0.38))
-            drop-shadow(0 0 18px rgba(187, 0, 30, 0.16))
-            `
-    },
+    /* RED */
+    `
+        saturate(1.18)
+        contrast(1.04)
+        hue-rotate(0deg)
+        drop-shadow(0 0 8px rgba(187, 0, 30, 0.40))
+        drop-shadow(0 0 18px rgba(187, 0, 30, 0.16))
+    `,
 
-    /*
-     * Blue
-     */
-    {
-        filter:
-            `
-            saturate(1.22)
-            contrast(1.04)
-            hue-rotate(175deg)
-            drop-shadow(0 0 8px rgba(40, 115, 255, 0.4))
-            drop-shadow(0 0 18px rgba(40, 115, 255, 0.16))
-            `
-    },
+    /* ORANGE */
+    `
+        saturate(1.20)
+        contrast(1.04)
+        hue-rotate(18deg)
+        drop-shadow(0 0 8px rgba(255, 125, 35, 0.42))
+        drop-shadow(0 0 18px rgba(255, 125, 35, 0.16))
+    `,
 
-    /*
-     * Green
-     */
-    {
-        filter:
-            `
-            saturate(1.18)
-            contrast(1.04)
-            hue-rotate(85deg)
-            drop-shadow(0 0 8px rgba(45, 205, 100, 0.38))
-            drop-shadow(0 0 18px rgba(45, 205, 100, 0.15))
-            `
-    },
+    /* YELLOW */
+    `
+        saturate(1.20)
+        contrast(1.04)
+        hue-rotate(38deg)
+        drop-shadow(0 0 8px rgba(255, 210, 40, 0.42))
+        drop-shadow(0 0 18px rgba(255, 210, 40, 0.16))
+    `,
 
-    /*
-     * Yellow
-     */
-    {
-        filter:
-            `
-            saturate(1.22)
-            contrast(1.04)
-            hue-rotate(38deg)
-            drop-shadow(0 0 8px rgba(255, 210, 40, 0.4))
-            drop-shadow(0 0 18px rgba(255, 210, 40, 0.16))
-            `
-    },
+    /* GREEN */
+    `
+        saturate(1.18)
+        contrast(1.04)
+        hue-rotate(85deg)
+        drop-shadow(0 0 8px rgba(45, 205, 100, 0.40))
+        drop-shadow(0 0 18px rgba(45, 205, 100, 0.15))
+    `,
 
-    /*
-     * Purple
-     */
-    {
-        filter:
-            `
-            saturate(1.2)
-            contrast(1.04)
-            hue-rotate(260deg)
-            drop-shadow(0 0 8px rgba(165, 70, 255, 0.4))
-            drop-shadow(0 0 18px rgba(165, 70, 255, 0.16))
-            `
-    },
+    /* BLUE */
+    `
+        saturate(1.20)
+        contrast(1.04)
+        hue-rotate(175deg)
+        drop-shadow(0 0 8px rgba(40, 115, 255, 0.42))
+        drop-shadow(0 0 18px rgba(40, 115, 255, 0.16))
+    `,
 
-    /*
-     * Cyan
-     */
-    {
-        filter:
-            `
-            saturate(1.2)
-            contrast(1.04)
-            hue-rotate(150deg)
-            drop-shadow(0 0 8px rgba(40, 220, 220, 0.4))
-            drop-shadow(0 0 18px rgba(40, 220, 220, 0.16))
-            `
-    },
+    /* PURPLE */
+    `
+        saturate(1.20)
+        contrast(1.04)
+        hue-rotate(260deg)
+        drop-shadow(0 0 8px rgba(165, 70, 255, 0.42))
+        drop-shadow(0 0 18px rgba(165, 70, 255, 0.16))
+    `,
 
-    /*
-     * Orange
-     */
-    {
-        filter:
-            `
-            saturate(1.18)
-            contrast(1.04)
-            hue-rotate(18deg)
-            drop-shadow(0 0 8px rgba(255, 125, 35, 0.4))
-            drop-shadow(0 0 18px rgba(255, 125, 35, 0.16))
-            `
-    },
-
-    /*
-     * Pink
-     */
-    {
-        filter:
-            `
-            saturate(1.2)
-            contrast(1.04)
-            hue-rotate(315deg)
-            drop-shadow(0 0 8px rgba(255, 70, 160, 0.4))
-            drop-shadow(0 0 18px rgba(255, 70, 160, 0.16))
-            `
-    }
+    /* PINK */
+    `
+        saturate(1.20)
+        contrast(1.04)
+        hue-rotate(315deg)
+        drop-shadow(0 0 8px rgba(255, 70, 160, 0.42))
+        drop-shadow(0 0 18px rgba(255, 70, 160, 0.16))
+    `
 ];
 
 
@@ -618,7 +644,7 @@ let tintIndex = 0;
 function applyTint() {
 
     logo.style.filter =
-        tints[tintIndex].filter;
+        tints[tintIndex];
 }
 
 
@@ -630,6 +656,9 @@ function changeTint() {
 
     let next;
 
+    /*
+     * Pick a random color, but NEVER the current one.
+     */
     do {
 
         next =
@@ -638,8 +667,7 @@ function changeTint() {
             );
 
     } while (
-        next === tintIndex &&
-        tints.length > 1
+        next === tintIndex
     );
 
     tintIndex = next;
@@ -649,14 +677,61 @@ function changeTint() {
 
 
 /* =========================================================
-   POSITION
+   BULLDOG CLICK
+========================================================= */
+
+let shakeTimer = null;
+
+logo.addEventListener('click', () => {
+
+    /*
+     * Restart the shake if the Bulldog is clicked
+     * again during an existing shake.
+     */
+    document.body.classList.remove('shaking');
+
+    /*
+     * Force the browser to recognize the removal
+     * before restarting the animation.
+     */
+    void document.body.offsetWidth;
+
+    document.body.classList.add('shaking');
+
+    clearTimeout(shakeTimer);
+
+    shakeTimer =
+        setTimeout(() => {
+
+            document.body.classList.remove(
+                'shaking'
+            );
+
+        }, 1000);
+});
+
+
+/* =========================================================
+   POSITION / SPEED
 ========================================================= */
 
 let x = 100;
 let y = 100;
 
-let velocityX = 1.25;
-let velocityY = 1.08;
+
+/*
+ * This is 2× the previous speed.
+ *
+ * Previous:
+ * ~1.05–1.50
+ *
+ * New:
+ * ~2.10–3.00
+ */
+
+let velocityX = 2.50;
+let velocityY = 2.16;
+
 
 let logoWidth = 92;
 let logoHeight = 92;
@@ -689,7 +764,7 @@ function updateLogoSize() {
 
 
 /* =========================================================
-   KEEP INSIDE SCREEN
+   KEEP INSIDE VIEWPORT
 ========================================================= */
 
 function keepLogoInsideScreen() {
@@ -721,11 +796,14 @@ function keepLogoInsideScreen() {
 
 
 /* =========================================================
-   BOUNCING ANIMATION
+   DVD ANIMATION
 ========================================================= */
 
 function animateLogo(currentTime) {
 
+    /*
+     * Normalize movement for different refresh rates.
+     */
     const delta =
         Math.min(
             (currentTime - lastTime) / 16.6667,
@@ -749,6 +827,9 @@ function animateLogo(currentTime) {
         );
 
 
+    /*
+     * Move.
+     */
     x += velocityX * delta;
     y += velocityY * delta;
 
@@ -756,7 +837,9 @@ function animateLogo(currentTime) {
     let collided = false;
 
 
-    /* LEFT */
+    /* =====================================================
+       LEFT
+    ===================================================== */
 
     if (x <= 0) {
 
@@ -769,7 +852,9 @@ function animateLogo(currentTime) {
     }
 
 
-    /* RIGHT */
+    /* =====================================================
+       RIGHT
+    ===================================================== */
 
     if (x >= maxX) {
 
@@ -782,7 +867,9 @@ function animateLogo(currentTime) {
     }
 
 
-    /* TOP */
+    /* =====================================================
+       TOP
+    ===================================================== */
 
     if (y <= 0) {
 
@@ -795,7 +882,9 @@ function animateLogo(currentTime) {
     }
 
 
-    /* BOTTOM */
+    /* =====================================================
+       BOTTOM
+    ===================================================== */
 
     if (y >= maxY) {
 
@@ -809,13 +898,20 @@ function animateLogo(currentTime) {
 
 
     /*
-     * Every wall collision gets a new tint.
+     * Every wall collision changes the Bulldog's color.
+     *
+     * Since changeTint() cannot select the current
+     * tint, the same color can NEVER appear twice
+     * in a row.
      */
     if (collided) {
         changeTint();
     }
 
 
+    /*
+     * Position the Bulldog.
+     */
     logo.style.transform =
         `translate3d(${x}px, ${y}px, 0)`;
 
@@ -827,7 +923,7 @@ function animateLogo(currentTime) {
 
 
 /* =========================================================
-   WINDOW RESIZE
+   RESIZE
 ========================================================= */
 
 window.addEventListener('resize', () => {
@@ -871,22 +967,22 @@ y =
 
 velocityX =
     (Math.random() > 0.5 ? 1 : -1) *
-    (1.05 + Math.random() * 0.45);
+    (2.10 + Math.random() * 0.90);
 
 velocityY =
     (Math.random() > 0.5 ? 1 : -1) *
-    (0.95 + Math.random() * 0.45);
+    (2.00 + Math.random() * 0.80);
 
 
 /*
- * Initial Bulldog appearance.
+ * Initial red tint.
  */
 
 applyTint();
 
 
 /*
- * Start the DVD animation.
+ * Start animation.
  */
 
 requestAnimationFrame(
