@@ -41,16 +41,17 @@ gtag('config', 'G-2TKPQV995W');
 :root {
     --red: #BB001E;
     --red-bright: #e00025;
+    --dark: #0a0405;
+    --bg-dots: rgba(187, 0, 30, 0.25);
     --font: 'Patrick Hand', cursive;
 }
 
-html,
-body {
+html, body {
     width: 100%;
     height: 100%;
     margin: 0;
     overflow: hidden;
-    background: #000;
+    background: var(--dark);
     color: #fff;
     font-family: var(--font);
 }
@@ -61,96 +62,35 @@ body {
     align-items: center;
     justify-content: center;
 
-    background:
-        radial-gradient(
-            circle at center,
-            rgba(187, 0, 30, .065) 0%,
-            rgba(187, 0, 30, .02) 35%,
-            transparent 70%
-        ),
-        #000;
+    /* A playful red comic halftone dot pattern fitting "Patrick Hand" perfectly! */
+    background-image: radial-gradient(var(--bg-dots) 2px, transparent 2.5px),
+                      radial-gradient(var(--bg-dots) 2px, transparent 2.5px);
+    background-size: 35px 35px;
+    background-position: 0 0, 17.5px 17.5px;
+    
+    transition: filter 0.1s;
 }
 
 /* =========================================
-   INSANE SCREEN SHAKE
-   ========================================= */
-
-body.shaking {
-    animation: insaneShake .05s infinite;
-}
-
-@keyframes insaneShake {
-
-    0% {
-        transform: translate(0, 0) rotate(0deg);
-    }
-
-    10% {
-        transform: translate(-14px, 9px) rotate(-.8deg);
-    }
-
-    20% {
-        transform: translate(12px, -11px) rotate(.7deg);
-    }
-
-    30% {
-        transform: translate(-11px, -7px) rotate(-.6deg);
-    }
-
-    40% {
-        transform: translate(15px, 12px) rotate(.9deg);
-    }
-
-    50% {
-        transform: translate(-13px, -13px) rotate(-.8deg);
-    }
-
-    60% {
-        transform: translate(10px, 8px) rotate(.7deg);
-    }
-
-    70% {
-        transform: translate(-15px, -5px) rotate(-.9deg);
-    }
-
-    80% {
-        transform: translate(13px, 11px) rotate(.8deg);
-    }
-
-    90% {
-        transform: translate(-9px, -10px) rotate(-.5deg);
-    }
-
-    100% {
-        transform: translate(0, 0) rotate(0deg);
-    }
-}
-
-/* =========================================
-   OFFLINE BANNER
+   OFFLINE BANNER (SKETCHY CLIP)
    ========================================= */
 
 #offlineBanner {
     position: fixed;
     top: 0;
     left: 0;
-
     width: 100%;
-
-    padding: 10px 16px;
-
-    background: #ef4444;
+    padding: 12px 16px 24px 16px;
+    background: var(--red-bright);
     color: #fff;
-
     text-align: center;
-
-    font-family: var(--font);
-    font-size: 18px;
-
+    font-size: 24px;
     z-index: 10000;
-
+    
+    /* Drawn shape clipping to match the font! */
+    clip-path: polygon(0 0, 100% 0, 100% 70%, 97% 95%, 65% 82%, 25% 100%, 0% 78%);
     transform: translateY(-100%);
-    transition: transform .3s ease;
+    transition: transform .4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 #offlineBanner.show {
@@ -158,237 +98,189 @@ body.shaking {
 }
 
 /* =========================================
-   ERROR CONTENT
+   COMIC ERROR CARD DESIGN
    ========================================= */
 
-.error-content {
+.error-wrapper {
     position: relative;
-
     z-index: 5;
-
     width: min(700px, 90vw);
-
-    text-align: center;
-
     pointer-events: none;
+    animation: contentFadeIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.1) both;
+}
 
-    animation: contentFadeIn .55s ease both;
+.error-content {
+    background: #0f0a0a;
+    border: 5px solid var(--red);
+    border-radius: 18px;
+    padding: 60px 40px;
+    text-align: center;
+    box-shadow: 15px 15px 0px rgba(187, 0, 30, 0.4), inset -6px -6px 0px rgba(0,0,0,0.4);
+    transform-origin: center bottom;
+    transition: transform 0.1s;
 }
 
 .error-code {
     margin: 0;
-
-    font-size: clamp(105px, 16vw, 170px);
-
-    line-height: .8;
-
-    letter-spacing: -6px;
-
-    color: var(--red);
-
-    text-shadow:
-        0 0 14px rgba(187, 0, 30, .35),
-        0 0 38px rgba(187, 0, 30, .2);
+    font-size: clamp(100px, 15vw, 160px);
+    line-height: .9;
+    letter-spacing: 5px;
+    color: transparent;
+    display: inline-block;
+    filter: drop-shadow(4px 4px 0px #fff);
 }
 
+.digit {
+    display: inline-block;
+    color: var(--red);
+    text-shadow: -3px 3px 0 var(--dark), 2px -2px 0 var(--red-bright);
+}
+
+.digit-1 { animation: wibbleWobble 2.3s infinite ease-in-out; }
+.digit-2 { animation: wibbleWobble 2.6s infinite ease-in-out alternate-reverse; animation-delay: 0.1s; }
+.digit-3 { animation: wibbleWobble 2.4s infinite ease-in-out; animation-delay: 0.25s; }
+
 .title {
-    margin-top: 25px;
-
-    font-size: clamp(34px, 5vw, 48px);
-
-    line-height: 1.05;
-
+    margin-top: 35px;
+    font-size: clamp(38px, 6vw, 56px);
+    line-height: 1;
     color: #fff;
-
-    text-shadow:
-        0 2px 18px rgba(0, 0, 0, .75);
+    text-transform: uppercase;
+    text-shadow: 3px 3px 0px var(--red);
+    transform: rotate(-1.5deg);
 }
 
 .desc {
-    max-width: 500px;
+    max-width: 480px;
+    margin: 22px auto 0;
+    color: #ffdcdb;
+    font-size: clamp(20px, 3vw, 24px);
+    line-height: 1.35;
+    background: rgba(187, 0, 30, 0.2);
+    padding: 10px 18px;
+    border-radius: 6px;
+    border: 2px dashed rgba(255,255,255,0.1);
+    transform: rotate(0.8deg);
+}
 
-    margin: 14px auto 0;
-
-    color: rgba(255, 255, 255, .58);
-
-    font-size: clamp(18px, 2.5vw, 21px);
-
-    line-height: 1.45;
-
-    text-shadow:
-        0 2px 14px rgba(0, 0, 0, .9);
+.btn-wrapper {
+    margin-top: 40px;
+    transform: rotate(-1.5deg);
+    display: inline-block;
 }
 
 .btn {
     display: inline-flex;
-
     align-items: center;
     justify-content: center;
-
-    margin-top: 27px;
-
-    min-height: 46px;
-
-    padding: 10px 23px;
-
-    border: 1px solid var(--red);
-
-    border-radius: 12px;
-
-    background: rgba(187, 0, 30, .9);
-
-    color: #fff;
-
+    padding: 14px 28px;
+    background: #fff;
+    border: 3px solid #000;
+    border-radius: 8px;
+    color: var(--dark);
     font-family: var(--font);
-
-    font-size: 20px;
-
-    line-height: 1;
-
+    font-size: 26px;
+    font-weight: 700;
     text-decoration: none;
-
     pointer-events: auto;
-
-    box-shadow:
-        0 7px 25px rgba(187, 0, 30, .2);
-
-    transition:
-        transform .16s ease,
-        background .16s ease,
-        box-shadow .16s ease;
+    box-shadow: 6px 6px 0px var(--red);
+    transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.15s;
 }
 
 .btn:hover {
+    transform: translateY(-5px) translateX(-5px) rotate(2deg);
     background: var(--red-bright);
-
-    transform: translateY(-2px);
-
-    box-shadow:
-        0 10px 30px rgba(187, 0, 30, .4);
+    color: #fff;
+    box-shadow: 12px 12px 0px rgba(0,0,0,1);
+    border-color: #fff;
 }
 
 .btn:active {
-    transform: scale(.97);
+    transform: translate(2px, 2px) rotate(0);
+    box-shadow: 2px 2px 0px var(--red);
 }
 
 /* =========================================
    BOUNCING BULLDOG
    ========================================= */
 
-#dvdLogo {
+.dvd-logo {
     position: fixed;
-
     top: 0;
     left: 0;
-
-    width: 92px;
-    height: 92px;
-
     object-fit: contain;
-
     z-index: 20;
-
     pointer-events: auto;
-
     user-select: none;
-
-    cursor: pointer;
-
+    cursor: crosshair; /* Begs to be clicked! */
     will-change: transform, filter;
-
-    filter:
-        saturate(1.12)
-        contrast(1.03)
-        drop-shadow(0 0 7px rgba(187, 0, 30, .28))
-        drop-shadow(0 0 16px rgba(187, 0, 30, .12));
-
-    transition:
-        filter .18s ease;
+    transition: filter .18s ease;
 }
 
 /* =========================================
-   CONTENT ANIMATION
+   ANIMATIONS
    ========================================= */
 
 @keyframes contentFadeIn {
+    0% { opacity: 0; transform: scale(0.85) rotate(-3deg); }
+    70% { transform: scale(1.02) rotate(1deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0); }
+}
 
-    from {
-        opacity: 0;
-        transform: translateY(12px);
-    }
+@keyframes wibbleWobble {
+    0%, 100% { transform: translateY(0px) rotate(-3deg) scale(1); }
+    50% { transform: translateY(-12px) rotate(3deg) scale(1.05); }
+}
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+/* =========================================
+   INSANE SUPER SHAKE MODE
+   ========================================= */
+
+body.chaos-mode {
+    animation: intenseChaosShake 0.1s infinite !important;
+}
+
+body.chaos-mode::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle, transparent 20%, rgba(187, 0, 30, 0.5) 100%);
+    mix-blend-mode: color-dodge;
+    pointer-events: none;
+    z-index: 100;
+}
+
+@keyframes intenseChaosShake {
+    0%   { transform: translate(0, 0) rotate(0deg) scale(1); filter: invert(0) saturate(1); }
+    20%  { transform: translate(-30px, 15px) rotate(-4deg) scale(1.1); filter: hue-rotate(60deg) invert(1) saturate(3); }
+    40%  { transform: translate(30px, -20px) rotate(3deg) scale(0.9); filter: blur(3px) invert(0); }
+    60%  { transform: translate(-15px, 35px) rotate(5deg) scale(1.05); filter: hue-rotate(-90deg) invert(1) drop-shadow(0 0 50px red); }
+    80%  { transform: translate(25px, 20px) rotate(-6deg) scale(0.95); filter: contrast(3) saturate(1.5) blur(1px); }
+    100% { transform: translate(0, 0) rotate(0deg) scale(1); filter: invert(0); }
 }
 
 /* =========================================
    RESPONSIVE
    ========================================= */
-
 @media (max-width: 600px) {
-
-    #dvdLogo {
-        width: 68px;
-        height: 68px;
-    }
-
-    .error-code {
-        letter-spacing: -4px;
-    }
-
-    .title {
-        margin-top: 20px;
-    }
-
-    .desc {
-        max-width: 380px;
-    }
-
-    .btn {
-        margin-top: 23px;
-    }
+    .error-content { padding: 40px 25px; box-shadow: 10px 10px 0 var(--red); }
+    .title { margin-top: 25px; transform: none;}
+    .desc { margin-top: 15px; }
+    .btn-wrapper { margin-top: 25px; transform: none; }
 }
 
 @media (max-height: 600px) {
-
-    .error-code {
-        font-size: 90px;
-    }
-
-    .title {
-        margin-top: 17px;
-        font-size: 32px;
-    }
-
-    .desc {
-        margin-top: 9px;
-        font-size: 17px;
-    }
-
-    .btn {
-        margin-top: 17px;
-    }
+    .error-content { padding: 30px 25px; }
+    .error-code { font-size: 85px; letter-spacing: -2px; }
+    .title { margin-top: 20px; font-size: 34px; }
+    .desc { font-size: 18px; padding: 6px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-
-    .error-content {
-        animation: none;
-    }
-
-    #dvdLogo {
-        transition: none;
-    }
-
-    .btn {
-        transition: none;
-    }
-
-    body.shaking {
-        animation: none;
-    }
+    .error-wrapper { animation: none; }
+    .digit { animation: none !important; transform: none !important;}
+    .btn, .dvd-logo { transition: none; }
+    body.chaos-mode { animation: none !important; filter: none !important; }
 }
 </style>
 
@@ -397,42 +289,39 @@ body.shaking {
 <body>
 
 <div id="offlineBanner">
-    You are currently offline
+    Dang! You are currently offline ✂️
 </div>
 
-<img
- id="dvdLogo"
- src="/img/icon.png"
- alt=""
- aria-hidden="true"
-/>
-
-<main class="error-content">
-
-```
-<h1 class="error-code">
-    404
-</h1>
-
-<div class="title">
-    Page Not Found
+<div class="error-wrapper">
+    <main class="error-content">
+        
+        <h1 class="error-code">
+            <span class="digit digit-1">4</span>
+            <span class="digit digit-2">0</span>
+            <span class="digit digit-3">4</span>
+        </h1>
+        
+        <div class="title">
+            Page Not Found
+        </div>
+        
+        <p class="desc">
+            The page you're looking for was mysteriously swallowed by the void,
+            or it never even existed to begin with...
+        </p>
+        
+        <div class="btn-wrapper">
+            <a
+                href="/"
+                class="btn"
+                data-ga="404_home_btn"
+            >
+                Escape to Home!
+            </a>
+        </div>
+        
+    </main>
 </div>
-
-<p class="desc">
-    The page you're looking for doesn't exist,
-    or it may have been moved or removed.
-</p>
-
-<a
-    href="/"
-    class="btn"
-    data-ga="404_home_btn"
->
-    Go Back Home
-</a>
-```
-
-</main>
 
 <script>
 
@@ -440,590 +329,257 @@ body.shaking {
    OFFLINE STATUS
    ========================================= */
 
-const offlineBanner =
-    document.getElementById('offlineBanner');
+const offlineBanner = document.getElementById('offlineBanner');
 
-window.addEventListener('offline', () => {
-    offlineBanner.classList.add('show');
-});
-
-window.addEventListener('online', () => {
-    offlineBanner.classList.remove('show');
-});
-
-if (!navigator.onLine) {
-    offlineBanner.classList.add('show');
-}
-
+window.addEventListener('offline', () => { offlineBanner.classList.add('show'); });
+window.addEventListener('online', () => { offlineBanner.classList.remove('show'); });
+if (!navigator.onLine) { offlineBanner.classList.add('show'); }
 
 /* =========================================
    SESSION ID
    ========================================= */
 
 if (!localStorage.getItem('session_id')) {
-
-    const chars =
-        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let sid = '';
-
     for (let i = 0; i < 10; i++) {
-        sid += chars.charAt(
-            Math.floor(Math.random() * chars.length)
-        );
+        sid += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-
     localStorage.setItem('session_id', sid);
-
-    console.log(
-        '[BSMS Web :: System] Generated new session_id.'
-    );
+    console.log('[BSMS Web :: System] Generated new session_id.');
 }
-
-
-/* =========================================
-   BULLDOG
-   ========================================= */
-
-const logo =
-    document.getElementById('dvdLogo');
-
 
 /* =========================================
    COLOR SYSTEM
-   =========================================
-
-   There are exactly 7 colors:
-
-   0 = Red
-   1 = Orange
-   2 = Yellow
-   3 = Green
-   4 = Blue
-   5 = Purple
-   6 = Pink
-
-   The Bulldog must use EVERY color in the
-   current cycle before any color is allowed
-   to appear again.
-
-   This prevents things like:
-
-   Red → Green → Red
-
-   and guarantees that Orange and Yellow
-   actually get their turn.
    ========================================= */
 
 const tints = [
-
-    /* RED */
-    `saturate(1.18)
-     contrast(1.04)
-     hue-rotate(0deg)
-     drop-shadow(0 0 8px rgba(187, 0, 30, .40))
-     drop-shadow(0 0 18px rgba(187, 0, 30, .16))`,
-
-    /* ORANGE */
-    `saturate(1.20)
-     contrast(1.04)
-     hue-rotate(18deg)
-     drop-shadow(0 0 8px rgba(255, 125, 35, .42))
-     drop-shadow(0 0 18px rgba(255, 125, 35, .16))`,
-
-    /* YELLOW */
-    `saturate(1.20)
-     contrast(1.04)
-     hue-rotate(38deg)
-     drop-shadow(0 0 8px rgba(255, 210, 40, .42))
-     drop-shadow(0 0 18px rgba(255, 210, 40, .16))`,
-
-    /* GREEN */
-    `saturate(1.18)
-     contrast(1.04)
-     hue-rotate(85deg)
-     drop-shadow(0 0 8px rgba(45, 205, 100, .40))
-     drop-shadow(0 0 18px rgba(45, 205, 100, .15))`,
-
-    /* BLUE */
-    `saturate(1.20)
-     contrast(1.04)
-     hue-rotate(175deg)
-     drop-shadow(0 0 8px rgba(40, 115, 255, .42))
-     drop-shadow(0 0 18px rgba(40, 115, 255, .16))`,
-
-    /* PURPLE */
-    `saturate(1.20)
-     contrast(1.04)
-     hue-rotate(260deg)
-     drop-shadow(0 0 8px rgba(165, 70, 255, .42))
-     drop-shadow(0 0 18px rgba(165, 70, 255, .16))`,
-
-    /* PINK */
-    `saturate(1.20)
-     contrast(1.04)
-     hue-rotate(315deg)
-     drop-shadow(0 0 8px rgba(255, 70, 160, .42))
-     drop-shadow(0 0 18px rgba(255, 70, 160, .16))`
+    `saturate(1.18) contrast(1.04) hue-rotate(0deg) drop-shadow(0 0 8px rgba(187, 0, 30, .40)) drop-shadow(0 0 18px rgba(187, 0, 30, .16))`,
+    `saturate(1.20) contrast(1.04) hue-rotate(18deg) drop-shadow(0 0 8px rgba(255, 125, 35, .42)) drop-shadow(0 0 18px rgba(255, 125, 35, .16))`,
+    `saturate(1.20) contrast(1.04) hue-rotate(38deg) drop-shadow(0 0 8px rgba(255, 210, 40, .42)) drop-shadow(0 0 18px rgba(255, 210, 40, .16))`,
+    `saturate(1.18) contrast(1.04) hue-rotate(85deg) drop-shadow(0 0 8px rgba(45, 205, 100, .40)) drop-shadow(0 0 18px rgba(45, 205, 100, .15))`,
+    `saturate(1.20) contrast(1.04) hue-rotate(175deg) drop-shadow(0 0 8px rgba(40, 115, 255, .42)) drop-shadow(0 0 18px rgba(40, 115, 255, .16))`,
+    `saturate(1.20) contrast(1.04) hue-rotate(260deg) drop-shadow(0 0 8px rgba(165, 70, 255, .42)) drop-shadow(0 0 18px rgba(165, 70, 255, .16))`,
+    `saturate(1.20) contrast(1.04) hue-rotate(315deg) drop-shadow(0 0 8px rgba(255, 70, 160, .42)) drop-shadow(0 0 18px rgba(255, 70, 160, .16))`
 ];
 
-
-/*
-   The first cycle is shuffled so the page
-   doesn't always start red → orange → yellow.
-
-   After every color has been used, a new
-   cycle is generated.
-*/
-
-let colorBag = [];
-
-
-/* Create a randomized bag containing all
-   seven colors exactly once. */
 function createColorBag() {
-
-    const bag = [
-        0, // red
-        1, // orange
-        2, // yellow
-        3, // green
-        4, // blue
-        5, // purple
-        6  // pink
-    ];
-
-    /*
-       Fisher-Yates shuffle.
-    */
-
+    let bag = [0, 1, 2, 3, 4, 5, 6];
     for (let i = bag.length - 1; i > 0; i--) {
-
-        const randomIndex =
-            Math.floor(Math.random() * (i + 1));
-
-        [
-            bag[i],
-            bag[randomIndex]
-        ] = [
-            bag[randomIndex],
-            bag[i]
-        ];
+        const randomIndex = Math.floor(Math.random() * (i + 1));
+        [bag[i], bag[randomIndex]] = [bag[randomIndex], bag[i]];
     }
-
     return bag;
 }
 
-
-/* Start with a shuffled color cycle. */
-colorBag = createColorBag();
-
-
-/*
-   Current color.
-*/
-let tintIndex = colorBag.shift();
-
-
-/*
-   Prevent rapid flashing.
-
-   Even if the Bulldog hits another edge
-   immediately after a corner collision,
-   the color cannot change more than once
-   every 450 milliseconds.
-*/
 const COLOR_CHANGE_COOLDOWN = 450;
+const bulldogs = [];
+const MAX_BULLDOGS = 75;
 
-let lastColorChange =
-    performance.now() - COLOR_CHANGE_COOLDOWN;
+/* =========================================
+   BULLDOG LOGIC
+   ========================================= */
 
-
-/* Apply current color. */
-function applyTint() {
-
-    logo.style.filter =
-        tints[tintIndex];
+function applyTint(b) {
+    b.el.style.filter = tints[b.tintIndex];
 }
 
+function changeTint(b, currentTime) {
+    if (currentTime - b.lastColorChange < COLOR_CHANGE_COOLDOWN) return;
 
-/*
-   Change to the next color.
-
-   IMPORTANT:
-
-   We DO NOT randomly choose a color here.
-
-   Instead, we pull colors from the shuffled
-   bag. Therefore:
-
-   Red
-   → Green
-   → Pink
-   → Yellow
-   → Blue
-   → Orange
-   → Purple
-   → ...
-
-   A color cannot repeat until all six
-   other colors have appeared.
-*/
-function changeTint(currentTime) {
-
-    /*
-       Ignore collisions that happen too soon
-       after the previous color change.
-    */
-    if (
-        currentTime - lastColorChange
-        < COLOR_CHANGE_COOLDOWN
-    ) {
-        return;
+    if (b.colorBag.length === 0) {
+        b.colorBag = createColorBag();
+        
+        // BUGFIX: Prevent the exact identical color jumping into the front of the next cycle
+        if (b.colorBag[0] === b.tintIndex) {
+            let temp = b.colorBag[0];
+            b.colorBag[0] = b.colorBag[b.colorBag.length - 1];
+            b.colorBag[b.colorBag.length - 1] = temp;
+        }
     }
 
+    b.tintIndex = b.colorBag.shift();
+    applyTint(b);
+    b.lastColorChange = currentTime;
+}
 
-    /*
-       If the current color cycle is empty,
-       create an entirely new randomized cycle.
-    */
-    if (colorBag.length === 0) {
-        colorBag = createColorBag();
+function spawnBulldog(startX, startY, velocityX, velocityY, clickDelaySpawn = false) {
+    if(bulldogs.length >= MAX_BULLDOGS) return;
+
+    const isMobile = window.innerWidth <= 600;
+    const wSize = isMobile ? 68 : 92;
+
+    const el = document.createElement('img');
+    el.className = 'dvd-logo';
+    el.src = '/img/icon.png';
+    el.setAttribute('aria-hidden', 'true');
+    el.style.width = wSize + "px";
+    el.style.height = wSize + "px";
+    
+    // Send depth index up rapidly if spawned crazily!
+    el.style.zIndex = 20 + bulldogs.length; 
+
+    document.body.appendChild(el);
+
+    const bConfig = {
+        el,
+        x: startX,
+        y: startY,
+        w: wSize,
+        h: wSize,
+        vx: velocityX,
+        vy: velocityY,
+        colorBag: createColorBag(),
+        tintIndex: 0,
+        lastColorChange: performance.now()
+    };
+    
+    bConfig.tintIndex = bConfig.colorBag.shift();
+    applyTint(bConfig);
+
+    // Only clickable if user continues making chaos
+    el.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerInsaneChaos(bConfig);
+    });
+    
+    // Fun burst arrival if spawner creates it
+    if(clickDelaySpawn) {
+        el.animate([ { transform: `translate3d(${startX}px, ${startY}px, 0) scale(0)`, opacity: 0 },
+                     { transform: `translate3d(${startX}px, ${startY}px, 0) scale(1)`, opacity: 1 } ], 
+                   { duration: 400, easing: "ease-out" });
     }
 
-
-    /*
-       Take the next color from the bag.
-    */
-    tintIndex =
-        colorBag.shift();
-
-
-    /*
-       Apply it.
-    */
-    applyTint();
-
-
-    /*
-       Remember exactly when the change happened.
-    */
-    lastColorChange =
-        currentTime;
+    bulldogs.push(bConfig);
 }
 
 
 /* =========================================
-   CLICK → INSANE SHAKE
+   CRAZY CHAOS ON CLICK 
    ========================================= */
 
 let shakeTimer = null;
+const theErrorBox = document.querySelector('.error-content');
 
-logo.addEventListener('click', () => {
-
-    /*
-       Restart the shake even if the Bulldog
-       gets clicked while already shaking.
-    */
-
-    document.body.classList.remove('shaking');
-
+function triggerInsaneChaos(b) {
+    // 1) Flash and Intense Chaos Shake via CSS rules mapped to body
+    document.body.classList.remove('chaos-mode');
     void document.body.offsetWidth;
-
-    document.body.classList.add('shaking');
-
+    document.body.classList.add('chaos-mode');
 
     clearTimeout(shakeTimer);
+    shakeTimer = setTimeout(() => { document.body.classList.remove('chaos-mode'); }, 850);
 
-    shakeTimer = setTimeout(() => {
+    // 2) Shake up the original 404 box radically
+    const spinVals = ["10deg", "-12deg", "25deg", "-15deg"];
+    theErrorBox.style.transform = `scale(1.08) rotate(${spinVals[Math.floor(Math.random() * spinVals.length)]})`;
+    setTimeout(() => { theErrorBox.style.transform = ""; }, 500);
 
-        document.body.classList.remove('shaking');
+    // 3) Visually explode and glitch the bulldog that was actually clicked
+    b.el.animate([
+        { transform: `translate3d(${b.x}px, ${b.y}px, 0) scale(1) rotate(0)` },
+        { transform: `translate3d(${b.x}px, ${b.y}px, 0) scale(3.5) rotate(720deg)`, filter: 'saturate(4) invert(1)' },
+        { transform: `translate3d(${b.x}px, ${b.y}px, 0) scale(1) rotate(0)` }
+    ], { duration: 600, easing: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)' });
 
-    }, 1000);
+    // 4) Shake OUT the bulldog: Drop completely chaotic hyperactive new mini dogs!
+    const clonesAmount = Math.floor(Math.random() * 4) + 4; // Between 4 to 7
+    for (let i = 0; i < clonesAmount; i++) {
+        // High, reckless and totally arbitrary explosive velocities
+        let superSpeedX = (Math.random() > 0.5 ? 1 : -1) * (2.8 + (Math.random() * 4.0));
+        let superSpeedY = (Math.random() > 0.5 ? 1 : -1) * (2.8 + (Math.random() * 4.0));
+        
+        spawnBulldog(b.x, b.y, superSpeedX, superSpeedY, true);
+    }
+}
+
+
+/* =========================================
+   ENGINE ANIMATION TICK 
+   ========================================= */
+
+let lastTime = performance.now();
+
+function animateBulldogs(currentTime) {
+    // Math handles variable tick frames! Delta is clamped to prevent hyperspace jumps
+    const delta = Math.min((currentTime - lastTime) / 16.6667, 3);
+    lastTime = currentTime;
+
+    // Window borders
+    const mX = Math.max(0, window.innerWidth);
+    const mY = Math.max(0, window.innerHeight);
+
+    for (let i = 0; i < bulldogs.length; i++) {
+        let b = bulldogs[i];
+
+        const boundX = mX - b.w;
+        const boundY = mY - b.h;
+
+        b.x += b.vx * delta;
+        b.y += b.vy * delta;
+
+        let collided = false;
+
+        // X collision constraints 
+        if (b.x <= 0) { b.x = 0; b.vx = Math.abs(b.vx); collided = true; }
+        else if (b.x >= boundX) { b.x = boundX; b.vx = -Math.abs(b.vx); collided = true; }
+
+        // Y collision constraints
+        if (b.y <= 0) { b.y = 0; b.vy = Math.abs(b.vy); collided = true; }
+        else if (b.y >= boundY) { b.y = boundY; b.vy = -Math.abs(b.vy); collided = true; }
+
+        if (collided) {
+            changeTint(b, currentTime);
+        }
+
+        b.el.style.transform = `translate3d(${b.x}px, ${b.y}px, 0)`;
+    }
+
+    requestAnimationFrame(animateBulldogs);
+}
+
+
+/* =========================================
+   RESIZING & WINDOW MANAGEMENT 
+   ========================================= */
+
+window.addEventListener('resize', () => {
+    const isMobile = window.innerWidth <= 600;
+    const newSize = isMobile ? 68 : 92;
+
+    for (let i = 0; i < bulldogs.length; i++) {
+        let b = bulldogs[i];
+        b.w = newSize; b.h = newSize;
+        b.el.style.width = newSize + 'px';
+        b.el.style.height = newSize + 'px';
+
+        const maxX = Math.max(0, window.innerWidth - b.w);
+        const maxY = Math.max(0, window.innerHeight - b.h);
+
+        b.x = Math.max(0, Math.min(b.x, maxX));
+        b.y = Math.max(0, Math.min(b.y, maxY));
+    }
 });
 
 
 /* =========================================
-   BOUNCING PHYSICS
+   GENERATE FIRST SCENE 
    ========================================= */
 
-let x = 100;
-let y = 100;
+// Single start velocity based entirely heavily on randomness 
+const startSize = window.innerWidth <= 600 ? 68 : 92;
 
+let initX = Math.random() * Math.max(1, window.innerWidth - startSize);
+let initY = Math.random() * Math.max(1, window.innerHeight - startSize);
 
-/*
-   2× speed from the original version.
-*/
-let velocityX = 2.50;
-let velocityY = 2.16;
+let initSpeedX = (Math.random() > 0.5 ? 1 : -1) * (2.10 + Math.random() * 0.90);
+let initSpeedY = (Math.random() > 0.5 ? 1 : -1) * (2.00 + Math.random() * 0.80);
 
-
-let logoWidth = 92;
-let logoHeight = 92;
-
-
-let lastTime =
-    performance.now();
-
-
-/* =========================================
-   RESPONSIVE LOGO SIZE
-   ========================================= */
-
-function updateLogoSize() {
-
-    const mobile =
-        window.innerWidth <= 600;
-
-    logoWidth =
-        mobile ? 68 : 92;
-
-    logoHeight =
-        mobile ? 68 : 92;
-
-    logo.style.width =
-        logoWidth + 'px';
-
-    logo.style.height =
-        logoHeight + 'px';
-}
-
-
-/* =========================================
-   KEEP LOGO ON SCREEN
-   ========================================= */
-
-function keepLogoInsideScreen() {
-
-    const maxX =
-        Math.max(
-            0,
-            window.innerWidth - logoWidth
-        );
-
-    const maxY =
-        Math.max(
-            0,
-            window.innerHeight - logoHeight
-        );
-
-    x =
-        Math.max(
-            0,
-            Math.min(x, maxX)
-        );
-
-    y =
-        Math.max(
-            0,
-            Math.min(y, maxY)
-        );
-}
-
-
-/* =========================================
-   ANIMATION
-   ========================================= */
-
-function animateLogo(currentTime) {
-
-    /*
-       Convert elapsed milliseconds into a
-       roughly 60 FPS movement multiplier.
-    */
-
-    const delta =
-        Math.min(
-            (currentTime - lastTime) / 16.6667,
-            2
-        );
-
-    lastTime =
-        currentTime;
-
-
-    const maxX =
-        Math.max(
-            0,
-            window.innerWidth - logoWidth
-        );
-
-    const maxY =
-        Math.max(
-            0,
-            window.innerHeight - logoHeight
-        );
-
-
-    /*
-       Move the Bulldog.
-    */
-
-    x +=
-        velocityX * delta;
-
-    y +=
-        velocityY * delta;
-
-
-    /*
-       IMPORTANT:
-
-       One collision can trigger multiple
-       boundary checks at a corner.
-
-       We intentionally use ONE `collided`
-       boolean so a corner can only request
-       ONE color change.
-    */
-
-    let collided = false;
-
-
-    /* LEFT WALL */
-
-    if (x <= 0) {
-
-        x = 0;
-
-        velocityX =
-            Math.abs(velocityX);
-
-        collided = true;
-    }
-
-
-    /* RIGHT WALL */
-
-    if (x >= maxX) {
-
-        x = maxX;
-
-        velocityX =
-            -Math.abs(velocityX);
-
-        collided = true;
-    }
-
-
-    /* TOP WALL */
-
-    if (y <= 0) {
-
-        y = 0;
-
-        velocityY =
-            Math.abs(velocityY);
-
-        collided = true;
-    }
-
-
-    /* BOTTOM WALL */
-
-    if (y >= maxY) {
-
-        y = maxY;
-
-        velocityY =
-            -Math.abs(velocityY);
-
-        collided = true;
-    }
-
-
-    /*
-       ONE color change maximum per frame,
-       with the 450ms cooldown enforced inside
-       changeTint().
-    */
-
-    if (collided) {
-        changeTint(currentTime);
-    }
-
-
-    /*
-       Draw Bulldog.
-    */
-
-    logo.style.transform =
-        `translate3d(${x}px, ${y}px, 0)`;
-
-
-    requestAnimationFrame(
-        animateLogo
-    );
-}
-
-
-/* =========================================
-   START
-   ========================================= */
-
-window.addEventListener(
-    'resize',
-    () => {
-
-        updateLogoSize();
-
-        keepLogoInsideScreen();
-
-    }
-);
-
-
-updateLogoSize();
-
-
-/*
-   Random starting position.
-*/
-
-x =
-    Math.random() *
-    Math.max(
-        1,
-        window.innerWidth - logoWidth
-    );
-
-y =
-    Math.random() *
-    Math.max(
-        1,
-        window.innerHeight - logoHeight
-    );
-
-
-/*
-   Random starting direction and 2× speed.
-*/
-
-velocityX =
-    (Math.random() > 0.5 ? 1 : -1) *
-    (2.10 + Math.random() * 0.90);
-
-velocityY =
-    (Math.random() > 0.5 ? 1 : -1) *
-    (2.00 + Math.random() * 0.80);
-
-
-/*
-   Apply initial randomized color.
-*/
-
-applyTint();
-
-
-/*
-   Start animation.
-*/
-
-requestAnimationFrame(
-    animateLogo
-);
+// Kickstart Original Dog First 
+spawnBulldog(initX, initY, initSpeedX, initSpeedY, false);
+requestAnimationFrame(animateBulldogs);
 
 </script>
-
 </body>
 </html>
