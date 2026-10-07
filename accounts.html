@@ -23,6 +23,9 @@ SPDX-License-Identifier: MIT
 <meta property="og:type" content="website">
 <title>BSMS Web Accounts</title>
 
+<!-- Ban Check Enforcer -->
+<script src="/js/ban-check.js"></script>
+
 <!-- Favicons -->
 <link rel="icon" href="/img/icon.png">
 <link rel="apple-touch-icon" href="/img/app-icon.png">
@@ -448,7 +451,6 @@ function init() {
 
 async function apiFetch(endpoint, options = {}) {
     if (!options.headers) options.headers = {};
-    // CRITICAL FIX: Fetch the session ID directly from local storage for every request
     options.headers['X-Session-ID'] = localStorage.getItem('session_id') || "";
     options.headers['Content-Type'] = 'application/json';
 
@@ -622,8 +624,6 @@ async function handleAuth() {
 }
 
 function completeLogin(data) {
-    // CRITICAL FIX: Save the new sessionId returned by the backend into local storage.
-    // Without this, the frontend keeps using the random 10-char string generated on load.
     if (data.sessionId) {
         localStorage.setItem('session_id', data.sessionId);
     }
@@ -681,7 +681,14 @@ function loadDashboard() {
     document.getElementById('profilePhone').value = currentAccountData.phone || "";
     pendingAvatarBase64 = currentAccountData.avatar || null;
     
-    const cd = currentAccountData.createdAt ? new Date(currentAccountData.createdAt).toLocaleDateString() : 'Unknown';
+    // Fixed strict date parsing to safely handle fallback timestamps
+    let cd = 'Unknown';
+    if (currentAccountData.createdAt) {
+        const dateObj = new Date(currentAccountData.createdAt);
+        if (!isNaN(dateObj.getTime())) {
+            cd = dateObj.toLocaleDateString();
+        }
+    }
     document.getElementById('accountCreatedDate').textContent = cd;
     
     renderAvatarPreview();
