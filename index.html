@@ -209,6 +209,26 @@ html, body {
   box-shadow: none;
 }
 
+/* New disabled button styling */
+.btn.disabled {
+  background: var(--input-bg);
+  border-color: var(--border);
+  color: var(--fg2);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn.disabled:hover {
+  background: var(--input-bg);
+  border-color: var(--border);
+  transform: none;
+  box-shadow: none;
+}
+
+.btn.disabled:active {
+  transform: none;
+}
+
 .hero {
   text-align: center;
   padding: 100px 20px 60px;
@@ -218,9 +238,9 @@ html, body {
 .hero-logo {
   width: 90px;
   height: 90px;
-  border-radius: 18px;
-  box-shadow: 0 8px 24px rgba(var(--theme-rgb), 0.3);
   margin-bottom: 24px;
+  background: transparent;
+  border: none;
 }
 
 .hero h1 {
@@ -272,17 +292,10 @@ html, body {
   overflow: hidden;
 }
 
-.app-card:nth-child(1) {
-  animation-delay: 0.1s;
-}
-
-.app-card:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.app-card:nth-child(3) {
-  animation-delay: 0.3s;
-}
+.app-card:nth-child(1) { animation-delay: 0.1s; }
+.app-card:nth-child(2) { animation-delay: 0.2s; }
+.app-card:nth-child(3) { animation-delay: 0.3s; }
+.app-card:nth-child(4) { animation-delay: 0.4s; }
 
 .app-card:hover {
   border-color: var(--red);
@@ -515,7 +528,6 @@ html, body {
 
   <div class="popup" style="align-items:center;">
 
-
 <div id="accPopupAvatar"
      style="width:86px;height:86px;border-radius:50%;border:3px solid var(--red);margin:0 auto 12px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:36px;background:var(--msg-bg);font-weight:bold;color:var(--fg);">
 </div>
@@ -537,7 +549,6 @@ html, body {
         style="border:none; margin-top:6px;">
   Close
 </button>
-
 
   </div>
 </div>
@@ -613,9 +624,7 @@ html, body {
   <svg class="app-icon"
        viewBox="0 0 24 24"
        aria-hidden="true">
-
     <path d="M21.58 16.09l-1.6-6.39A5.01 5.01 0 0 0 15.12 6H8.88a5.01 5.01 0 0 0-4.86 3.7l-1.6 6.39a2.99 2.99 0 0 0 5.72 1.64l.86-2.15c.15-.36.5-.6.89-.6h4.22c.39 0 .74.24.89.6l.86 2.15a2.99 2.99 0 0 0 5.72-1.64zM9 12H7v2H5v-2H3v-2h2V8h2v2h2v2zm6-1.5a1 1 0 1 1 1-1 1 1 0 0 1-1 1zm3 3a1 1 0 1 1 1-1 1 1 0 0 1-1 1z"/>
-
   </svg>
 
   <h3 class="app-title">Games</h3>
@@ -632,6 +641,26 @@ html, body {
 
 </div>
 
+<div class="app-card">
+
+  <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+  </svg>
+
+  <h3 class="app-title">Proxy</h3>
+
+  <p class="app-desc">
+    Bypass network restrictions and browse the open internet securely. Access educational resources and favorite sites without limits.
+  </p>
+
+  <a href="#"
+     class="btn disabled"
+     onclick="alert('Coming soon!'); return false;"
+     data-ga="launch_proxy">
+    Coming Soon
+  </a>
+
+</div>
 
   </div>
 
@@ -639,14 +668,8 @@ html, body {
 
 <div class="bug-report-section">
 
-<svg class="bug-report-icon"
-    viewBox="0 0 24 24"
-    aria-hidden="true">
-
-
-<path d="M19 8h-1.81A5.99 5.99 0 0 0 15 5.81V4h1V2h-3v2h-2V2H8v2h1v1.81A5.99 5.99 0 0 0 6.81 8H5V6H3v4h2v2H3v4h2v-2h1.81A5.99 5.99 0 0 0 9 16.19V18H8v2h3v-2h2v2h3v-2h-1v-1.81A5.99 5.99 0 0 0 17.19 14H19v2h2v-4h-2v-2h2V6h-2v2zm-4 5a3 3 0 0 1-6 0V9a3 3 0 0 1 6 0v4z"/>
-
-
+  <svg class="bug-report-icon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17l-.59.59-.58.58V4h16v12zm-9-10h2v6h-2zm0 8h2v2h-2z"/>
   </svg>
 
   <h2>Found a bug?</h2>
