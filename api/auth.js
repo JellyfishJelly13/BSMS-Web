@@ -114,18 +114,22 @@ export default async function handler(req, res) {
                 const uid = db.ref('/accounts').push().key;
                 const newSessionId = crypto.randomUUID();
                 
+                // FIXED BUG: Switch to purely JS `Date.now()` here to ensure the exact format returned
+                // matches the standard timestamp logic and won't throw an "Invalid Date" on the frontend.
+                const currentTimestamp = Date.now();
+                
                 const newAccount = {
                     email,
                     username,
                     displayName: username,
                     password: hashPassword(password),
                     account_status: 'active',
-                    createdAt: admin.database.ServerValue.TIMESTAMP,
+                    createdAt: currentTimestamp,
                     avatar: '', 
                     sessions: {
                         [newSessionId]: {
-                            createdAt: admin.database.ServerValue.TIMESTAMP,
-                            lastActive: admin.database.ServerValue.TIMESTAMP
+                            createdAt: currentTimestamp,
+                            lastActive: currentTimestamp
                         }
                     }
                 };
@@ -133,7 +137,7 @@ export default async function handler(req, res) {
                 await db.ref(`/accounts/${uid}`).set(newAccount);
                 await db.ref(`/chat/users/${uid}`).set({
                     status: 'online',
-                    lastSeen: admin.database.ServerValue.TIMESTAMP,
+                    lastSeen: currentTimestamp,
                     lastMessageTimestamp: 0
                 });
 
@@ -164,7 +168,11 @@ export default async function handler(req, res) {
                 }
 
                 if (!targetUid) return res.status(401).json({ error: 'Invalid username/email or password.' });
-                if (targetAcc.account_status === 'banned') return res.status(403).json({ error: 'Account is banned.' });
+                
+                // EXPLICIT CHECK: Ensure banned flag is sent along with error payload
+                if (targetAcc.account_status === 'banned') {
+                    return res.status(403).json({ error: 'Account is banned.', account_status: 'banned' });
+                }
 
                 const newSessionId = crypto.randomUUID();
                 await db.ref(`/accounts/${targetUid}/sessions/${newSessionId}`).set({
@@ -184,11 +192,19 @@ export default async function handler(req, res) {
                 return res.status(200).json({ success: true });
             }
 
-            // --- MISSING ENDPOINTS ADDED BELOW ---
+            // --- PROACTIVE CHECK FOR GLOBALS ---
+            case 'checkBan': {
+                const user = await getUserBySession(sessionId);
+                if (!user) return res.status(401).json({ error: 'Unauthorized.' });
+                if (user.account.account_status === 'banned') return res.status(403).json({ error: 'Account is banned.', account_status: 'banned' });
+                
+                return res.status(200).json({ success: true, account_status: user.account.account_status });
+            }
 
             case 'getProfile': {
                 const user = await getUserBySession(sessionId);
                 if (!user) return res.status(401).json({ error: 'Unauthorized.' });
+                if (user.account.account_status === 'banned') return res.status(403).json({ error: 'Account is banned.', account_status: 'banned' });
                 
                 const { password: _, ...safeProfile } = user.account;
                 return res.status(200).json({ profile: safeProfile });
@@ -197,6 +213,7 @@ export default async function handler(req, res) {
             case 'updateProfile': {
                 const user = await getUserBySession(sessionId);
                 if (!user) return res.status(401).json({ error: 'Unauthorized.' });
+                if (user.account.account_status === 'banned') return res.status(403).json({ error: 'Account is banned.', account_status: 'banned' });
 
                 const { displayName, bio, email, phone, avatar } = payload;
                 const updates = {};
@@ -222,6 +239,7 @@ export default async function handler(req, res) {
             case 'changeUsername': {
                 const user = await getUserBySession(sessionId);
                 if (!user) return res.status(401).json({ error: 'Unauthorized.' });
+                if (user.account.account_status === 'banned') return res.status(403).json({ error: 'Account is banned.', account_status: 'banned' });
                 
                 const { newUsername } = payload;
                 const lastChange = user.account.lastUsernameChange || 0;
@@ -252,6 +270,7 @@ export default async function handler(req, res) {
             case 'changePassword': {
                 const user = await getUserBySession(sessionId);
                 if (!user) return res.status(401).json({ error: 'Unauthorized.' });
+                if (user.account.account_status === 'banned') return res.status(403).json({ error: 'Account is banned.', account_status: 'banned' });
 
                 const { currentPassword, newPassword } = payload;
                 if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Missing password fields.' });
@@ -267,12 +286,15 @@ export default async function handler(req, res) {
             case 'getSessions': {
                 const user = await getUserBySession(sessionId);
                 if (!user) return res.status(401).json({ error: 'Unauthorized.' });
+                if (user.account.account_status === 'banned') return res.status(403).json({ error: 'Account is banned.', account_status: 'banned' });
+
                 return res.status(200).json({ sessions: user.account.sessions || {} });
             }
 
             case 'revokeSession': {
                 const user = await getUserBySession(sessionId);
                 if (!user) return res.status(401).json({ error: 'Unauthorized.' });
+                if (user.account.account_status === 'banned') return res.status(403).json({ error: 'Account is banned.', account_status: 'banned' });
                 
                 if (payload.sessionId) {
                     await db.ref(`/accounts/${user.uid}/sessions/${payload.sessionId}`).remove();
@@ -283,6 +305,7 @@ export default async function handler(req, res) {
             case 'deleteAccount': {
                 const user = await getUserBySession(sessionId);
                 if (!user) return res.status(401).json({ error: 'Unauthorized.' });
+                if (user.account.account_status === 'banned') return res.status(403).json({ error: 'Account is banned.', account_status: 'banned' });
                 
                 if (user.account.password !== hashPassword(payload.password)) {
                     return res.status(401).json({ error: 'Incorrect password.' });
