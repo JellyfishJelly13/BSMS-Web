@@ -19,15 +19,16 @@
     }
 
     // Helper to lock the UI and enforce cross-page constraints
-    function applyBan(reason, expires) {
+    function applyBan(banData) {
         try {
-            localStorage.removeItem(SESSION_KEY);
-            localStorage.setItem('bsms_banned_data', JSON.stringify({ reason, expires }));
+            // Note: Explicitly DO NOT remove SESSION_KEY here. We want them 
+            // logged in so they are actively constrained inside the restriction UI.
+            localStorage.setItem('bsms_banned_data', JSON.stringify(banData));
         } catch(e) { } 
         
         // Strict cross-page enforcement check
         if (typeof window.showBanScreen === 'function') {
-            window.showBanScreen(reason, expires);
+            window.showBanScreen(banData);
         } else {
             // Forcefully redirect to the accounts page to display the UI properly
             if (window.location.pathname !== '/accounts.html' && window.location.pathname !== '/accounts') {
@@ -55,7 +56,7 @@
                     localStorage.removeItem('bsms_banned_data');
                 }).catch(() => {});
             } else {
-                applyBan(banData.reason, banData.expires);
+                applyBan(banData);
             }
         }
     } catch (e) { }
@@ -70,7 +71,11 @@
                 const clone = response.clone();
                 clone.json().then(data => {
                     if (data && data.account_status === 'banned') {
-                        applyBan(data.reason, data.ban_expires);
+                        applyBan({
+                            banType: data.banType, 
+                            reason: data.reason, 
+                            expires: data.ban_expires
+                        });
                     }
                 }).catch(() => {});
             }
@@ -99,7 +104,11 @@
             if (res.status === 403) {
                 res.json().then(data => {
                     if (data && data.account_status === 'banned') {
-                        applyBan(data.reason, data.ban_expires);
+                        applyBan({
+                            banType: data.banType, 
+                            reason: data.reason, 
+                            expires: data.ban_expires
+                        });
                     }
                 }).catch(()=>{});
             } else if (res.ok) {
