@@ -25,9 +25,9 @@ SPDX-License-Identifier: MIT
 
 <!-- Universal Ban Setup -->
 <script>
-window.showBanScreen = function(reason, expires) {
+window.showBanScreen = function(banData) {
     const render = () => {
-        // Hide Main App & Loaders
+        // Hide Main App & Loaders without touching session memory
         const appShell = document.getElementById('appShell');
         const initLoadingScreen = document.getElementById('initLoadingScreen');
         const authScreen = document.getElementById('authScreen');
@@ -37,18 +37,66 @@ window.showBanScreen = function(reason, expires) {
         if (authScreen) authScreen.style.display = 'none';
         document.querySelectorAll('.overlay').forEach(el => el.classList.remove('show'));
         
-        // Show Ban Screen
+        // Show Ban Screen Elements
         const banScreen = document.getElementById('ban-screen');
-        const r = document.getElementById('ban-reason');
-        const e = document.getElementById('ban-expires');
+        const msg = document.getElementById('ban-message');
+        const reasonNode = document.getElementById('ban-reason');
+        const timerNode = document.getElementById('ban-timer');
+        const logoutBtn = document.getElementById('ban-logout-btn');
+        const deviceWarning = document.getElementById('ban-device-warning');
         
-        if (r) r.textContent = reason || 'Violation of Ecosystem Terms.';
-        if (e) {
-            e.textContent = (expires && expires > 0) ? new Date(expires).toLocaleString() : 'Permanent';
+        // Differentiate Ban Types
+        if (banData.banType === 'device') {
+            msg.textContent = "Your device has been banned from accessing BSMS Web services.";
+            logoutBtn.style.display = 'none';
+            deviceWarning.style.display = 'block';
+        } else {
+            msg.textContent = "Your account has been banned from accessing BSMS Web services.";
+            logoutBtn.style.display = 'inline-block';
+            deviceWarning.style.display = 'none';
         }
+
+        reasonNode.textContent = banData.reason || 'Violation of Ecosystem Terms.';
+
+        // Live Timer Logic
+        if (window.banTimerInterval) clearInterval(window.banTimerInterval);
+
+        if (!banData.expires || banData.expires <= 0) {
+            timerNode.textContent = "Permanent";
+        } else {
+            const updateTimer = () => {
+                const now = Date.now();
+                const diff = banData.expires - now;
+                if (diff <= 0) {
+                    timerNode.textContent = "Expired. Please refresh the page.";
+                    clearInterval(window.banTimerInterval);
+                    return;
+                }
+                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+                const m = Math.floor((diff / 1000 / 60) % 60);
+                const s = Math.floor((diff / 1000) % 60);
+                
+                let str = [];
+                if (d > 0) str.push(`${d}d`);
+                if (h > 0) str.push(`${h}h`);
+                str.push(`${m}m`);
+                str.push(`${s}s remaining`);
+                
+                timerNode.textContent = str.join(' ');
+            };
+            updateTimer(); // fire immediately
+            window.banTimerInterval = setInterval(updateTimer, 1000);
+        }
+
+        // Setup the Explicit Logout Action
+        logoutBtn.onclick = function() {
+            localStorage.removeItem('bsms_auth_session');
+            window.location.href = '/';
+        };
         
         if (banScreen) {
-            banScreen.style.display = 'flex'; // Un-hide the hidden container
+            banScreen.style.display = 'flex'; 
             banScreen.classList.add('show');
         }
     };
@@ -214,16 +262,19 @@ textarea{resize:vertical;height:110px}
 
 <!-- THE REQUIRED BAN SCREEN CONTAINER -->
 <div id="ban-screen" class="screen" style="display: none; background: rgba(0,0,0,0.95); z-index: 9999;">
-  <div class="card" style="border-color: #ff3333; max-width: 460px;">
+  <div class="card" style="border-color: #ff3333; max-width: 480px; text-align: center;">
     <h1 style="color: #ff3333; font-size: 38px;">Access Denied</h1>
-    <p style="margin-bottom: 24px;">Your account or device has been restricted from the BSMS Web ecosystem.</p>
+    <p id="ban-message" style="margin-bottom: 24px;"></p>
     
     <div style="background: var(--input-bg); border: 2px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 24px; text-align: left;">
       <strong style="color: var(--fg); font-size: 19px;">Reason:</strong>
       <div id="ban-reason" style="color: var(--fg2); font-size: 17px; margin-bottom: 12px; word-wrap: break-word;">---</div>
-      <strong style="color: var(--fg); font-size: 19px;">Ban Expires:</strong>
-      <div id="ban-expires" style="color: var(--fg2); font-size: 17px;">---</div>
+      <strong style="color: var(--fg); font-size: 19px;">Ban Status:</strong>
+      <div id="ban-timer" style="color: var(--fg2); font-size: 17px; font-family: monospace;">---</div>
     </div>
+    
+    <button id="ban-logout-btn" class="btn warn" style="display: none; margin-bottom: 10px; border: 2px solid #ff3333; background: transparent; color: #ff3333;">Log Out</button>
+    <p id="ban-device-warning" style="display: none; color: var(--fg2); font-size: 15px; margin-top: 10px; margin-bottom: 15px;">For ecosystem integrity, active accounts cannot be logged out while the physical device is restricted.</p>
     
     <a href="/" class="btn sec" style="margin-top: 10px;">Return to Main Site</a>
   </div>
@@ -518,8 +569,14 @@ async function apiFetch(endpoint, options = {}) {
         
         if (response.status === 403 && data.account_status === "banned") {
             console.warn("[BSMS Web :: Auth] Device/Account banned. Showing UI.");
-            localStorage.removeItem(SESSION_KEY);
-            if (window.showBanScreen) window.showBanScreen(data.reason, data.ban_expires);
+            // We explicitly DO NOT remove SESSION_KEY so they can stay logged in underneath the restriction
+            if (window.showBanScreen) {
+                window.showBanScreen({ 
+                    banType: data.banType, 
+                    reason: data.reason, 
+                    expires: data.ban_expires 
+                });
+            }
             return null;
         }
         
