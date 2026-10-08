@@ -7,40 +7,55 @@
 (function() {
     const SESSION_KEY = 'bsms_auth_session';
 
-    // Helper to lock them out completely
-    function applyBan() {
+    // 1. Ensure a persistent Device ID exists
+    let deviceId = localStorage.getItem('bsms_device_id');
+    if (!deviceId) {
+        deviceId = 'dev_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
+        localStorage.setItem('bsms_device_id', deviceId);
+    }
+
+    // Helper to lock the UI
+    function applyBan(reason, expires) {
         try {
             localStorage.removeItem(SESSION_KEY);
-            localStorage.setItem('bsms_banned', 'true');
-        } catch(e) { } // Graceful fail if cookies are fully blocked
+            localStorage.setItem('bsms_banned_data', JSON.stringify({ reason, expires }));
+        } catch(e) { } 
         
-        // Prevent redirect looping if they are already on the page
-        if (window.location.pathname !== '/device-banned.html' && window.location.pathname !== '/device-banned') {
-            window.location.href = '/device-banned.html';
+        // Trigger the ban screen on the frontend dynamically
+        if (window.showBanScreen) {
+            window.showBanScreen(reason, expires);
+        } else {
+            window.addEventListener('DOMContentLoaded', () => {
+                if (window.showBanScreen) window.showBanScreen(reason, expires);
+            });
         }
     }
 
-    // Check 1: Is this specific browser already flagged as banned offline?
+    // 2. Local Expiration Check (Avoid unnecessary API hits if we know they are banned permanently/actively)
     try {
-        if (localStorage.getItem('bsms_banned') === 'true') {
-            applyBan();
-            return;
+        const banDataStr = localStorage.getItem('bsms_banned_data');
+        if (banDataStr) {
+            const banData = JSON.parse(banDataStr);
+            if (banData.expires && Date.now() > banData.expires) {
+                // Ban locally expired
+                localStorage.removeItem('bsms_banned_data'); 
+            } else {
+                applyBan(banData.reason, banData.expires);
+            }
         }
     } catch (e) { }
 
-    // Check 2: Global interceptor on ALL Fetch APIs 
-    // Catches *any* 403 request resulting from standard network calls returning `account_status: "banned"`
+    // 3. Global Interceptor for 403 API Ban Responses
     const originalFetch = window.fetch;
     window.fetch = async function(...args) {
         try {
             const response = await originalFetch.apply(this, args);
             
             if (response.status === 403) {
-                // Clone response to read json without consuming it for the actual endpoint handler caller
                 const clone = response.clone();
                 clone.json().then(data => {
                     if (data && data.account_status === 'banned') {
-                        applyBan();
+                        applyBan(data.reason, data.ban_expires);
                     }
                 }).catch(() => {});
             }
@@ -51,33 +66,33 @@
         }
     };
 
-    // Check 3: Active session background ping.
-    // If the user's logged in, proactively check their status on DOM load so they get kicked
-    // even if they don't explicitly fire an API call on the active page.
+    // 4. Proactive Background Ping
     window.addEventListener('DOMContentLoaded', () => {
-        try {
-            const session = localStorage.getItem(SESSION_KEY);
-            const sessionId = localStorage.getItem('session_id');
-            
-            if (session && sessionId && window.location.pathname !== '/device-banned.html' && window.location.pathname !== '/device-banned') {
-                
-                originalFetch('/api/auth', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Session-ID': sessionId
-                    },
-                    body: JSON.stringify({ action: 'checkBan' })
-                }).then(res => {
-                    if (res.status === 403) {
-                        res.json().then(data => {
-                            if (data && data.account_status === 'banned') applyBan();
-                        }).catch(()=>{});
+        const sessionId = localStorage.getItem('session_id') || "";
+        
+        originalFetch('/api/auth', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Session-ID': sessionId,
+                'X-Device-ID': deviceId
+            },
+            body: JSON.stringify({ action: 'checkBan' })
+        }).then(res => {
+            if (res.status === 403) {
+                res.json().then(data => {
+                    if (data && data.account_status === 'banned') {
+                        applyBan(data.reason, data.ban_expires);
                     }
                 }).catch(()=>{});
-                
+            } else if (res.ok) {
+                // If they were manually unbanned early by an admin, clear lock and restore
+                if (localStorage.getItem('bsms_banned_data')) {
+                    localStorage.removeItem('bsms_banned_data');
+                    window.location.reload(); 
+                }
             }
-        } catch(e) {}
+        }).catch(()=>{});
     });
 
 })();
