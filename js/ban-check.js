@@ -7,38 +7,53 @@
 (function() {
     const SESSION_KEY = 'bsms_auth_session';
 
-    // 1. Ensure a persistent Device ID exists
-    let deviceId = localStorage.getItem('bsms_device_id');
+    // 1. Strict Requirement: Device ID must map to exact localStorage key "session_id"
+    let deviceId = localStorage.getItem('session_id');
     if (!deviceId) {
-        deviceId = 'dev_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
-        localStorage.setItem('bsms_device_id', deviceId);
+        // Fallback generator matching UUID v4 format
+        deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+        localStorage.setItem('session_id', deviceId);
     }
 
-    // Helper to lock the UI
+    // Helper to lock the UI and enforce cross-page constraints
     function applyBan(reason, expires) {
         try {
             localStorage.removeItem(SESSION_KEY);
             localStorage.setItem('bsms_banned_data', JSON.stringify({ reason, expires }));
         } catch(e) { } 
         
-        // Trigger the ban screen on the frontend dynamically
-        if (window.showBanScreen) {
+        // Strict cross-page enforcement check
+        if (typeof window.showBanScreen === 'function') {
             window.showBanScreen(reason, expires);
         } else {
-            window.addEventListener('DOMContentLoaded', () => {
-                if (window.showBanScreen) window.showBanScreen(reason, expires);
-            });
+            // Forcefully redirect to the accounts page to display the UI properly
+            if (window.location.pathname !== '/accounts.html' && window.location.pathname !== '/accounts') {
+                window.location.href = '/accounts.html';
+            }
         }
     }
 
-    // 2. Local Expiration Check (Avoid unnecessary API hits if we know they are banned permanently/actively)
+    // 2. Local Expiration Check (Lazy Frontend Enforcement)
     try {
         const banDataStr = localStorage.getItem('bsms_banned_data');
         if (banDataStr) {
             const banData = JSON.parse(banDataStr);
             if (banData.expires && Date.now() > banData.expires) {
-                // Ban locally expired
-                localStorage.removeItem('bsms_banned_data'); 
+                // Expired! Explicitly inform the backend to sync clearing process
+                fetch('/api/auth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Device-ID': deviceId,
+                        'X-Session-ID': deviceId
+                    },
+                    body: JSON.stringify({ action: 'removeExpiredBan' })
+                }).then(() => {
+                    localStorage.removeItem('bsms_banned_data');
+                }).catch(() => {});
             } else {
                 applyBan(banData.reason, banData.expires);
             }
@@ -68,13 +83,15 @@
 
     // 4. Proactive Background Ping
     window.addEventListener('DOMContentLoaded', () => {
-        const sessionId = localStorage.getItem('session_id') || "";
-        
+        // Only run proactive fetch check if logged in (or relying on device ID presence)
+        const session = localStorage.getItem(SESSION_KEY);
+        if (!session && !localStorage.getItem('bsms_banned_data')) return;
+
         originalFetch('/api/auth', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Session-ID': sessionId,
+                'X-Session-ID': deviceId,
                 'X-Device-ID': deviceId
             },
             body: JSON.stringify({ action: 'checkBan' })
@@ -86,7 +103,7 @@
                     }
                 }).catch(()=>{});
             } else if (res.ok) {
-                // If they were manually unbanned early by an admin, clear lock and restore
+                // Ban cleared externally! Restore state automatically
                 if (localStorage.getItem('bsms_banned_data')) {
                     localStorage.removeItem('bsms_banned_data');
                     window.location.reload(); 
