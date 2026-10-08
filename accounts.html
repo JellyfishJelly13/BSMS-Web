@@ -27,18 +27,32 @@ SPDX-License-Identifier: MIT
 <script>
 window.showBanScreen = function(reason, expires) {
     const render = () => {
-        document.querySelectorAll('.screen, #appShell, .overlay').forEach(el => el.classList.remove('show'));
+        // Hide Main App & Loaders
+        const appShell = document.getElementById('appShell');
+        const initLoadingScreen = document.getElementById('initLoadingScreen');
+        const authScreen = document.getElementById('authScreen');
         
-        const r = document.getElementById('banReasonText');
-        const e = document.getElementById('banExpiresText');
-        const s = document.getElementById('banScreen');
+        if (appShell) appShell.style.display = 'none';
+        if (initLoadingScreen) initLoadingScreen.style.display = 'none';
+        if (authScreen) authScreen.style.display = 'none';
+        document.querySelectorAll('.overlay').forEach(el => el.classList.remove('show'));
         
-        if (r) r.textContent = reason || 'Violation of Terms of Service.';
+        // Show Ban Screen
+        const banScreen = document.getElementById('ban-screen');
+        const r = document.getElementById('ban-reason');
+        const e = document.getElementById('ban-expires');
+        
+        if (r) r.textContent = reason || 'Violation of Ecosystem Terms.';
         if (e) {
             e.textContent = (expires && expires > 0) ? new Date(expires).toLocaleString() : 'Permanent';
         }
-        if (s) s.classList.add('show');
+        
+        if (banScreen) {
+            banScreen.style.display = 'flex'; // Un-hide the hidden container
+            banScreen.classList.add('show');
+        }
     };
+    
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render);
     else render();
 };
@@ -198,20 +212,20 @@ textarea{resize:vertical;height:110px}
 
 <div id="offlineBanner">You are currently offline</div>
 
-<!-- Dynamic Ban Screen Overlay -->
-<div id="banScreen" class="screen">
-  <div class="card" style="border-color: #ff3333;">
-    <h1 style="color: #ff3333;">Access Denied</h1>
-    <p>Your account or device has been suspended from the BSMS Web ecosystem.</p>
+<!-- THE REQUIRED BAN SCREEN CONTAINER -->
+<div id="ban-screen" class="screen" style="display: none; background: rgba(0,0,0,0.95); z-index: 9999;">
+  <div class="card" style="border-color: #ff3333; max-width: 460px;">
+    <h1 style="color: #ff3333; font-size: 38px;">Access Denied</h1>
+    <p style="margin-bottom: 24px;">Your account or device has been restricted from the BSMS Web ecosystem.</p>
     
     <div style="background: var(--input-bg); border: 2px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 24px; text-align: left;">
       <strong style="color: var(--fg); font-size: 19px;">Reason:</strong>
-      <div id="banReasonText" style="color: var(--fg2); font-size: 17px; margin-bottom: 12px; word-wrap: break-word;">---</div>
+      <div id="ban-reason" style="color: var(--fg2); font-size: 17px; margin-bottom: 12px; word-wrap: break-word;">---</div>
       <strong style="color: var(--fg); font-size: 19px;">Ban Expires:</strong>
-      <div id="banExpiresText" style="color: var(--fg2); font-size: 17px;">---</div>
+      <div id="ban-expires" style="color: var(--fg2); font-size: 17px;">---</div>
     </div>
     
-    <a href="/" class="btn sec">Go Back Home</a>
+    <a href="/" class="btn sec" style="margin-top: 10px;">Return to Main Site</a>
   </div>
 </div>
 
@@ -450,13 +464,15 @@ window.addEventListener('offline', () => document.getElementById('offlineBanner'
 window.addEventListener('online', () => document.getElementById('offlineBanner').classList.remove('show'));
 if (!navigator.onLine) document.getElementById('offlineBanner').classList.add('show');
 
-// Establish global session ID on load if missing
+// Establish global session ID (and primary device ID) on load if missing
 if (!localStorage.getItem('session_id')) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let sid = '';
-    for (let i = 0; i < 10; i++) sid += chars.charAt(Math.floor(Math.random() * chars.length));
-    localStorage.setItem('session_id', sid);
-    console.log("[BSMS Web :: Auth] Generated new fallback session_id.");
+    // Generate standard UUID v4 format to match your ecosystem standard
+    const id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+    localStorage.setItem('session_id', id);
+    console.log("[BSMS Web :: Auth] Generated new fallback session_id for device tracking.");
 }
 
 const SESSION_KEY = 'bsms_auth_session';
@@ -489,8 +505,11 @@ function init() {
 
 async function apiFetch(endpoint, options = {}) {
     if (!options.headers) options.headers = {};
-    options.headers['X-Session-ID'] = localStorage.getItem('session_id') || "";
-    options.headers['X-Device-ID'] = localStorage.getItem('bsms_device_id') || "";
+    const sessionId = localStorage.getItem('session_id') || "";
+    
+    // Send it for both session tracking and precise device banning
+    options.headers['X-Session-ID'] = sessionId;
+    options.headers['X-Device-ID'] = sessionId;
     options.headers['Content-Type'] = 'application/json';
 
     try {
@@ -540,8 +559,8 @@ async function fetchCloudProfile() {
 
 function handleHash() {
     // If the ban screen is showing, DO NOT alter the display via routing
-    const banScreen = document.getElementById('banScreen');
-    if (banScreen && banScreen.classList.contains('show')) return;
+    const banScreen = document.getElementById('ban-screen');
+    if (banScreen && banScreen.style.display !== 'none') return;
     
     let hash = window.location.hash || '#';
     
@@ -656,8 +675,7 @@ async function handleAuth() {
             body: JSON.stringify({ 
                 action: authMode === 'signup' ? 'register' : 'login',
                 username: user, 
-                password: pass,
-                deviceId: localStorage.getItem('bsms_device_id') || ""
+                password: pass 
             })
         });
         
@@ -672,10 +690,6 @@ async function handleAuth() {
 }
 
 function completeLogin(data) {
-    if (data.sessionId) {
-        localStorage.setItem('session_id', data.sessionId);
-    }
-
     const sessionObj = {
         loggedIn: true, 
         uid: data.uid, 
