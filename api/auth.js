@@ -185,11 +185,11 @@ export default async function handler(req, res) {
                     account_status: 'active',
                     createdAt: currentTimestamp,
                     avatar: '', 
-                    deviceId: clientDeviceId || "", // Ensure Device ID is saved accurately
                     sessions: {
                         [newSessionId]: {
                             createdAt: currentTimestamp,
-                            lastActive: currentTimestamp
+                            lastActive: currentTimestamp,
+                            deviceId: clientDeviceId || "" // Storing ONLY in session scope
                         }
                     }
                 };
@@ -235,15 +235,11 @@ export default async function handler(req, res) {
                     return res.status(403).json({ error: 'Banned.', account_status: 'banned', banType: banCheck.banType, reason: banCheck.banReason, ban_expires: banCheck.banExpires });
                 }
 
-                // Update account deviceId node to ensure admins know what device logged in globally
-                if (clientDeviceId && targetAcc.deviceId !== clientDeviceId) {
-                    await db.ref(`/accounts/${targetUid}/deviceId`).set(clientDeviceId);
-                }
-
                 const newSessionId = sessionId || crypto.randomUUID();
                 await db.ref(`/accounts/${targetUid}/sessions/${newSessionId}`).set({
                     createdAt: admin.database.ServerValue.TIMESTAMP,
-                    lastActive: admin.database.ServerValue.TIMESTAMP
+                    lastActive: admin.database.ServerValue.TIMESTAMP,
+                    deviceId: clientDeviceId || "" // Storing ONLY in session scope
                 });
 
                 const { password: _, ...safeProfile } = targetAcc;
@@ -254,6 +250,7 @@ export default async function handler(req, res) {
                 const user = await getUserBySession(sessionId);
                 if (!user) return res.status(401).json({ error: 'Unauthorized.' });
                 
+                // Naturally deletes the device ID linkage because it is scoped entirely inside this session node
                 await db.ref(`/accounts/${user.uid}/sessions/${sessionId}`).remove();
                 return res.status(200).json({ success: true });
             }
@@ -267,7 +264,6 @@ export default async function handler(req, res) {
                 if (user) {
                     uid = user.uid; account = user.account;
                 } else if (!clientDeviceId) {
-                    // No session and no device ID provided, can't check
                     return res.status(401).json({ error: 'Unauthorized.' });
                 }
 
@@ -340,7 +336,7 @@ export default async function handler(req, res) {
                 const allAccs = snap.val() || {};
                 for (const [id, acc] of Object.entries(allAccs)) {
                     if (acc.username && acc.username.toLowerCase() === newUsername.toLowerCase()) {
-                        return res.status(409).json({ error: 'Username is already taken' });
+                        return res.status(400).json({ error: 'Username is already taken' });
                     }
                 }
 
