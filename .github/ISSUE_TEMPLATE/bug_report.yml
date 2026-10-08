@@ -1,0 +1,57 @@
+name: Bug Report
+description: Report a bug or something that isn't working correctly.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug in BSMS Web!
+
+        Please provide as much information as possible so we can reproduce and fix it.
+
+  - type: input
+    id: page
+    attributes:
+      label: Page or Feature
+      description: Which page or feature is affected?
+      placeholder: "Example: Chat, Accounts, Countdown"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the problem.
+      placeholder: Tell us what happened...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Tell us how to reproduce the problem.
+      placeholder: |
+        1. Go to...
+        2. Click...
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+      placeholder: I expected...
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional information
+      description: Add screenshots, error messages, or anything else that might help.
+      placeholder: Anything else we should know?
