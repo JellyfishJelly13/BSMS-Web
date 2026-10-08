@@ -90,8 +90,23 @@ window.showBanScreen = function(banData) {
         }
 
         // Setup the Explicit Logout Action
-        logoutBtn.onclick = function() {
+        logoutBtn.onclick = async function() {
+            logoutBtn.disabled = true;
+            logoutBtn.textContent = 'Logging out...';
+            try {
+                // Execute proper backend logout to detach device linkage from account
+                await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Session-ID': localStorage.getItem('session_id') || ""
+                    },
+                    body: JSON.stringify({ action: 'logout' })
+                });
+            } catch(e) {}
+            
             localStorage.removeItem('bsms_auth_session');
+            localStorage.removeItem('bsms_banned_data');
             window.location.href = '/';
         };
         
@@ -275,8 +290,6 @@ textarea{resize:vertical;height:110px}
     
     <button id="ban-logout-btn" class="btn warn" style="display: none; margin-bottom: 10px; border: 2px solid #ff3333; background: transparent; color: #ff3333;">Log Out</button>
     <p id="ban-device-warning" style="display: none; color: var(--fg2); font-size: 15px; margin-top: 10px; margin-bottom: 15px;">For ecosystem integrity, active accounts cannot be logged out while the physical device is restricted.</p>
-    
-    <a href="/" class="btn sec" style="margin-top: 10px;">Return to Main Site</a>
   </div>
 </div>
 
@@ -1069,6 +1082,6 @@ document.getElementById('authUsername').addEventListener('keydown', e => { if(e.
 document.getElementById('authPassword').addEventListener('keydown', e => { if(e.key === 'Enter') handleAuth(); });
 
 setTimeout(init, 300);
-</script>    
+</script>
 </body>
 </html>
