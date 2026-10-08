@@ -1753,7 +1753,7 @@ const ChatManager = {
                 nEl.innerHTML = `${Utils.escapeHTML(acc.displayName)} ${Utils.getBadgesHTML(otherUid)}`;
                 
                 if (acc.account_status === 'banned') {
-                    sEl.innerText = "Account Suspended";
+                    sEl.innerText = "Account Banned";
                     sEl.style.color = "#ef4444";
                 } else {
                     const oStatus = State.usersCache[otherUid]?.status === 'online';
