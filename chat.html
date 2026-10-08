@@ -16,93 +16,6 @@ SPDX-License-Identifier: MIT
 <meta property="og:type" content="website">
 <title>BSMS Chat</title>
 
-<!-- Universal Ban Setup -->
-<script>
-window.showBanScreen = function(banData) {
-    const render = () => {
-        const appShell = document.getElementById('appShell');
-        const initLoadingScreen = document.getElementById('loadingScreen');
-        const authScreen = document.getElementById('loginModal');
-        
-        if (appShell) appShell.style.display = 'none';
-        if (initLoadingScreen) initLoadingScreen.style.display = 'none';
-        if (authScreen) authScreen.classList.remove('show');
-        document.querySelectorAll('.overlay').forEach(el => el.classList.remove('show'));
-        
-        const banScreen = document.getElementById('ban-screen');
-        const msg = document.getElementById('ban-message');
-        const reasonNode = document.getElementById('ban-reason');
-        const timerNode = document.getElementById('ban-timer');
-        const logoutBtn = document.getElementById('ban-logout-btn');
-        const deviceWarning = document.getElementById('ban-device-warning');
-        
-        if (banData.banType === 'device') {
-            msg.textContent = "Your device has been banned from accessing BSMS Web services.";
-            logoutBtn.style.display = 'none';
-            deviceWarning.style.display = 'block';
-        } else {
-            msg.textContent = "Your account has been banned from accessing BSMS Web services.";
-            logoutBtn.style.display = 'inline-block';
-            deviceWarning.style.display = 'none';
-        }
-
-        reasonNode.textContent = banData.reason || 'Violation of Ecosystem Terms.';
-
-        if (window.banTimerInterval) clearInterval(window.banTimerInterval);
-
-        if (!banData.expires || banData.expires <= 0) {
-            timerNode.textContent = "Permanent";
-        } else {
-            const updateTimer = () => {
-                const now = Date.now();
-                const diff = banData.expires - now;
-                if (diff <= 0) {
-                    timerNode.textContent = "Expired. Please refresh the page.";
-                    clearInterval(window.banTimerInterval);
-                    return;
-                }
-                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-                const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
-                const m = Math.floor((diff / 1000 / 60) % 60);
-                const s = Math.floor((diff / 1000) % 60);
-                
-                let str = [];
-                if (d > 0) str.push(`${d}d`);
-                if (h > 0) str.push(`${h}h`);
-                str.push(`${m}m`);
-                str.push(`${s}s remaining`);
-                
-                timerNode.textContent = str.join(' ');
-            };
-            updateTimer();
-            window.banTimerInterval = setInterval(updateTimer, 1000);
-        }
-
-        logoutBtn.onclick = async function() {
-            logoutBtn.disabled = true;
-            logoutBtn.textContent = 'Logging out...';
-            try {
-                await fetch('/api/auth', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Session-ID': localStorage.getItem('session_id') || "" },
-                    body: JSON.stringify({ action: 'logout' })
-                });
-            } catch(e) {}
-            localStorage.removeItem('bsms_auth_session');
-            localStorage.removeItem('bsms_banned_data');
-            window.location.href = '/';
-        };
-        
-        if (banScreen) {
-            banScreen.style.display = 'flex'; 
-            banScreen.classList.add('show');
-        }
-    };
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render);
-    else render();
-};
-</script>
-
 <!-- Ban Check Enforcer -->
 <script src="/js/ban-check.js"></script>
 
@@ -551,24 +464,6 @@ a { color: var(--accent); text-decoration: none; }
 
 <div id="offlineBanner">You are currently offline</div>
 
-<!-- THE REQUIRED GLOBAL BAN SCREEN CONTAINER -->
-<div id="ban-screen" class="screen" style="display: none; background: rgba(0,0,0,0.95); z-index: 9999;">
-  <div class="modal-card" style="border-color: #ff3333; max-width: 480px; text-align: center;">
-    <h1 style="color: #ff3333; font-size: 38px;">Access Denied</h1>
-    <p id="ban-message" style="margin-bottom: 24px;"></p>
-    
-    <div style="background: var(--input-bg); border: 2px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 24px; text-align: left;">
-      <strong style="color: var(--fg); font-size: 19px;">Reason:</strong>
-      <div id="ban-reason" style="color: var(--fg2); font-size: 17px; margin-bottom: 12px; word-wrap: break-word;">---</div>
-      <strong style="color: var(--fg); font-size: 19px;">Ban Status:</strong>
-      <div id="ban-timer" style="color: var(--fg2); font-size: 17px; font-family: monospace;">---</div>
-    </div>
-    
-    <button id="ban-logout-btn" class="btn warn" style="display: none; margin-bottom: 10px; border: 2px solid #ff3333; background: transparent; color: #ff3333;">Log Out</button>
-    <p id="ban-device-warning" style="display: none; color: var(--fg2); font-size: 15px; margin-top: 10px; margin-bottom: 15px;">For ecosystem integrity, active accounts cannot be logged out while the physical device is restricted.</p>
-  </div>
-</div>
-
 <!-- Fixed SVG Definitions with viewBox for perfect scaling -->
 <svg style="position:absolute; width:0; height:0; overflow:hidden;" aria-hidden="true">
     <defs>
@@ -598,7 +493,10 @@ a { color: var(--accent); text-decoration: none; }
         <symbol id="ico-copy" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></symbol>
         <symbol id="ico-upload" viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></symbol>
         <symbol id="ico-crown" viewBox="0 0 24 24"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></symbol>
-        <symbol id="ico-verified" viewBox="0 0 24 24"><path d="M12 2l2.25 2.18 3.09-.45.98 2.95 2.8.9-1.07 2.92L22 12l-1.95 1.5 1.07 2.92-2.8.9-.98 2.95-3.09-.45L12 22l-2.25-2.18-3.09.45-.98-2.95-2.8-.9L4 12l1.95-1.5-1.07-2.92 2.8-.9.98-2.95 3.09.45L12 2z" fill="#3b82f6"/><path d="M10.5 16.5l-4-4 1.41-1.41L10.5 13.67l6.59-6.59L18.5 8l-8 8z" fill="#ffffff"/></symbol>
+        <symbol id="ico-verified" viewBox="0 0 24 24">
+            <path d="M23 12l-2.44-2.78.34-3.68-3.61-.82-1.89-3.18L12 3 8.6 1.54 6.71 4.72l-3.61.81.34 3.68L1 12l2.44 2.78-.34 3.69 3.61.82 1.89 3.18L12 21l3.4 1.46 1.89-3.18 3.61-.82-.34-3.68L23 12z" fill="#3b82f6"/>
+            <path d="M10.09 16.72l-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z" fill="#ffffff"/>
+        </symbol>
         <symbol id="ico-banned" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z" fill="#ef4444"/></symbol>
     </defs>
 </svg>
@@ -1087,7 +985,8 @@ const ApiClient = {
             const data = await res.json();
             
             if (res.status === 403 && data.account_status === "banned") {
-                if (window.showBanScreen) window.showBanScreen({ banType: data.banType, reason: data.reason, expires: data.ban_expires });
+                // If banned, smoothly redirect to accounts.html which handles global bans visually
+                window.location.href = '/accounts.html';
                 return null;
             }
             if (res.status === 400 && data.error && data.error.includes("filter")) {
