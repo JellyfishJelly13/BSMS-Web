@@ -167,7 +167,7 @@ export default async function handler(req, res) {
                 }
 
                 const uid = db.ref('/accounts').push().key;
-                const newSessionId = crypto.randomUUID();
+                const newSessionId = sessionId || crypto.randomUUID();
                 const currentTimestamp = Date.now();
                 
                 const newAccount = {
@@ -233,7 +233,7 @@ export default async function handler(req, res) {
                     await db.ref(`/accounts/${targetUid}/deviceId`).set(clientDeviceId);
                 }
 
-                const newSessionId = crypto.randomUUID();
+                const newSessionId = sessionId || crypto.randomUUID();
                 await db.ref(`/accounts/${targetUid}/sessions/${newSessionId}`).set({
                     createdAt: admin.database.ServerValue.TIMESTAMP,
                     lastActive: admin.database.ServerValue.TIMESTAMP
