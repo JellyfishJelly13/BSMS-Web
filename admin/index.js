@@ -1,14 +1,22 @@
-/* admin.js */
+/*
+ * BSMS Web - Admin Logic
+ * Copyright © 2026 Jellyfish Jelly
+ * SPDX-License-Identifier: MIT
+ */
+
 const Admin = {
     usersCache: {},
+    bannedDevicesCache: {},
     activeTargetUid: null,
+    currentAvatarValue: "",
 
-    switchTab: function(tabId) {
+    switchTab: function(tabId, btnEl) {
         document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(`${tabId}-panel`).classList.add('active');
-        event.currentTarget.classList.add('active');
-        if (tabId === 'users') this.loadUsers();
+        if (btnEl) btnEl.classList.add('active');
+        
+        if (tabId === 'users' || tabId === 'devices') this.loadUsers();
         if (tabId === 'db') this.loadDB();
     },
 
@@ -16,185 +24,350 @@ const Admin = {
         const sid = localStorage.getItem('session_id') || "";
         const res = await fetch('/api/admin', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Session-ID': sid },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Session-ID': sid
+            },
             body: JSON.stringify({ action, ...payload })
         });
-        const data = await res.json();
-        if (!res.ok) { alert("API Error: " + data.error); throw new Error(data.error); }
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            alert("Admin API Error: " + (data.error || res.statusText));
+            throw new Error(data.error);
+        }
         return data;
+    },
+
+    // Helper: Convert MS timestamp to YYYY-MM-DDTHH:mm for <input type="datetime-local">
+    tsToDateTimeLocal: function(ts) {
+        if (!ts || isNaN(ts)) return "";
+        const d = new Date(Number(ts));
+        if (isNaN(d.getTime())) return "";
+        const offset = d.getTimezoneOffset() * 60000;
+        return new Date(d.getTime() - offset).toISOString().slice(0, 16);
+    },
+
+    // Helper: Convert <input type="datetime-local"> value to MS timestamp
+    dateTimeLocalToTs: function(val) {
+        if (!val) return null;
+        const ts = new Date(val).getTime();
+        return isNaN(ts) ? null : ts;
+    },
+
+    // Helper: Decode Base64 if applicable, or display SHA-256 hash from auth.js
+    formatPasswordDisplay: function(rawPass) {
+        if (!rawPass) return "(None)";
+        // auth.js uses 64-character hex SHA-256 hashes
+        if (/^[a-f0-9]{64}$/i.test(rawPass)) {
+            return `[SHA-256] ${rawPass}`;
+        }
+        try {
+            return `${atob(rawPass)} (Base64)`;
+        } catch (e) {
+            return rawPass;
+        }
+    },
+
+    // Helper: Render PFP or Initial
+    buildPfpHTML: function(acc, large = false) {
+        const initial = ((acc.displayName || acc.username || '?').charAt(0)).toUpperCase();
+        if (acc.avatar && acc.avatar.trim() !== '') {
+            return `<img src="${acc.avatar}" alt="PFP">`;
+        }
+        return initial;
     },
 
     loadUsers: async function() {
         const tbody = document.querySelector('#users-table tbody');
-        tbody.innerHTML = '<tr><td colspan="6">Loading...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7">Syncing with Firebase...</td></tr>';
         try {
-            const users = await this.apiCall('getUsers');
-            this.usersCache = users;
-            tbody.innerHTML = '';
-            for (const [uid, acc] of Object.entries(users)) {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${uid.substring(0,8)}...</td>
-                    <td>${acc.username || 'N/A'}</td>
-                    <td>${acc.displayName || 'N/A'}</td>
-                    <td style="color:${acc.role === 'admin' ? 'var(--accent)' : 'inherit'}">${acc.role || 'user'}</td>
-                    <td style="color:${acc.account_status === 'banned' ? 'var(--danger)' : 'var(--success)'}">${acc.account_status || 'active'}</td>
-                    <td><button onclick="Admin.openEditModal('${uid}')">Manage</button></td>
-                `;
-                tbody.appendChild(tr);
-            }
+            const data = await this.apiCall('getUsers');
+            this.usersCache = data.accounts || {};
+            this.bannedDevicesCache = data.banned_devices || {};
+            this.renderUsers();
+            this.renderBannedDevices();
         } catch (e) {
-            tbody.innerHTML = '<tr><td colspan="6" style="color:var(--danger)">Failed to load users.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="color:var(--danger)">Failed to load accounts. Ensure your account has role: "admin" in Firebase.</td></tr>';
+        }
+    },
+
+    renderUsers: function() {
+        const tbody = document.querySelector('#users-table tbody');
+        const query = (document.getElementById('user-search')?.value || '').toLowerCase();
+        tbody.innerHTML = '';
+
+        for (const [uid, acc] of Object.entries(this.usersCache)) {
+            const matchStr = `${uid} ${acc.username || ''} ${acc.displayName || ''} ${acc.email || ''}`.toLowerCase();
+            if (query && !matchStr.includes(query)) continue;
+
+            const status = acc.account_status || 'active';
+            let expiryText = '';
+            if (status === 'banned') {
+                expiryText = acc.ban_expires
+                    ? `<div style="font-size:11px; color:var(--warn); margin-top:4px;">Until: ${new Date(acc.ban_expires).toLocaleString()}</div>`
+                    : `<div style="font-size:11px; color:var(--danger); margin-top:4px;">Permanent</div>`;
+            }
+
+            const badges = [];
+            if (acc.role === 'admin') badges.push(`<span class="badge admin">Admin</span>`);
+            if (acc.verified) badges.push(`<span class="badge verified">✓ Verified</span>`);
+
+            const sessionCount = acc.sessions ? Object.keys(acc.sessions).length : 0;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><div class="pfp-cell">${this.buildPfpHTML(acc)}</div></td>
+                <td style="color:var(--fg2);">${uid}</td>
+                <td>
+                    <strong style="color:var(--fg);">${acc.username || 'N/A'}</strong>
+                    <div style="color:var(--fg2); font-size:11px;">${acc.displayName || ''}</div>
+                </td>
+                <td>${badges.join(' ') || '<span style="color:var(--fg2)">User</span>'}</td>
+                <td>
+                    <span class="badge ${status}">${status}</span>
+                    ${expiryText}
+                </td>
+                <td>${sessionCount} active</td>
+                <td><button class="btn sm" onclick="Admin.openEditModal('${uid}')">Manage</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+    },
+
+    renderBannedDevices: function() {
+        const tbody = document.querySelector('#devices-table tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        const entries = Object.entries(this.bannedDevicesCache);
+        if (entries.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="color:var(--fg2);">No banned devices recorded.</td></tr>';
+            return;
+        }
+
+        for (const [devId, info] of entries) {
+            const exp = info.ban_expires ? new Date(info.ban_expires).toLocaleString() : 'Permanent';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${devId}</strong></td>
+                <td>${info.reason || '---'}</td>
+                <td style="color:var(--warn);">${exp}</td>
+                <td><button class="btn sec sm" onclick="Admin.unbanDevice('${devId}')">Unban Device</button></td>
+            `;
+            tbody.appendChild(tr);
         }
     },
 
     openEditModal: function(uid) {
         this.activeTargetUid = uid;
         const acc = this.usersCache[uid];
+        this.currentAvatarValue = acc.avatar || "";
+
         document.getElementById('em-uid').innerText = uid;
+        document.getElementById('em-pfp-preview').innerHTML = this.buildPfpHTML(acc, true);
+        document.getElementById('em-header-name').innerText = `${acc.displayName || acc.username} (@${acc.username})`;
+        document.getElementById('em-created').innerText = `Created: ${acc.createdAt ? new Date(acc.createdAt).toLocaleString() : 'Unknown'}`;
+
         document.getElementById('em-username').value = acc.username || '';
         document.getElementById('em-displayname').value = acc.displayName || '';
+        document.getElementById('em-email').value = acc.email || '';
         document.getElementById('em-bio').value = acc.bio || '';
-        document.getElementById('em-avatar').value = acc.avatar ? '(Contains Data)' : 'None';
-        
+        document.getElementById('em-role').value = acc.role || '';
+        document.getElementById('em-verified').checked = Boolean(acc.verified);
+
+        document.getElementById('em-password-view').value = this.formatPasswordDisplay(acc.password);
+        document.getElementById('em-new-password').value = '';
+
         document.getElementById('em-status').value = acc.account_status || 'active';
         document.getElementById('em-banreason').value = acc.ban_reason || '';
-        document.getElementById('em-banexpires').value = acc.ban_expires || '';
+        document.getElementById('em-banexpires-dt').value = this.tsToDateTimeLocal(acc.ban_expires);
 
-        // Extract devices from sessions
-        const devContainer = document.getElementById('em-devices');
-        devContainer.innerHTML = '';
-        if (acc.sessions) {
-            const table = document.createElement('table');
-            table.innerHTML = `<tr><th>Session / Device ID</th><th>Action</th></tr>`;
+        // Render Sessions & Device IDs
+        const sessBody = document.querySelector('#em-sessions-table tbody');
+        sessBody.innerHTML = '';
+        if (acc.sessions && Object.keys(acc.sessions).length > 0) {
             for (const [sid, sData] of Object.entries(acc.sessions)) {
-                if (sData.deviceId) {
-                    table.innerHTML += `<tr>
-                        <td>${sData.deviceId}</td>
-                        <td><button class="danger" onclick="Admin.banDevice('${sData.deviceId}')">Ban Device</button></td>
-                    </tr>`;
-                }
+                const devId = sData.deviceId || sid;
+                const lastAct = sData.lastActive ? new Date(sData.lastActive).toLocaleString() : 'Unknown';
+                const isDevBanned = Boolean(this.bannedDevicesCache[devId]);
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div><strong>Device:</strong> ${devId}</div>
+                        <div style="font-size:11px; color:var(--fg2);">Session: ${sid}</div>
+                    </td>
+                    <td>${lastAct}</td>
+                    <td style="display:flex; gap:6px;">
+                        <button class="btn warn sm" onclick="Admin.banDeviceFromModal('${devId}')">
+                            ${isDevBanned ? 'Update Device Ban' : 'Ban Device'}
+                        </button>
+                        <button class="btn sec sm" onclick="Admin.revokeSession('${uid}', '${sid}')">Revoke</button>
+                    </td>
+                `;
+                sessBody.appendChild(tr);
             }
-            devContainer.appendChild(table);
         } else {
-            devContainer.innerText = "No active sessions/devices found.";
+            sessBody.innerHTML = '<tr><td colspan="3" style="color:var(--fg2);">No active sessions linked to this account.</td></tr>';
         }
 
         document.getElementById('edit-modal').classList.add('show');
     },
 
-    clearAvatar: function() {
-        if(!confirm("Clear this user's avatar?")) return;
-        this.apiCall('updateUser', { targetUid: this.activeTargetUid, updates: { avatar: "" } })
-            .then(() => { alert("Avatar cleared."); document.getElementById('em-avatar').value = 'None'; this.loadUsers(); });
+    closeModal: function() {
+        document.getElementById('edit-modal').classList.remove('show');
     },
 
-    saveUser: function() {
+    clearAvatar: function() {
+        this.currentAvatarValue = "";
+        const acc = { ...this.usersCache[this.activeTargetUid], avatar: "" };
+        document.getElementById('em-pfp-preview').innerHTML = this.buildPfpHTML(acc, true);
+    },
+
+    saveUser: async function() {
+        const uid = this.activeTargetUid;
+        if (!uid) return;
+
+        const status = document.getElementById('em-status').value;
+        const dtVal = document.getElementById('em-banexpires-dt').value;
+        const expiresTs = status === 'banned' ? this.dateTimeLocalToTs(dtVal) : null;
+        const reasonVal = status === 'banned' ? (document.getElementById('em-banreason').value.trim() || 'This account has been banned.') : null;
+        const roleVal = document.getElementById('em-role').value;
+
         const updates = {
-            username: document.getElementById('em-username').value,
-            displayName: document.getElementById('em-displayname').value,
-            bio: document.getElementById('em-bio').value,
-            account_status: document.getElementById('em-status').value,
-            ban_reason: document.getElementById('em-banreason').value || null,
-            ban_expires: parseInt(document.getElementById('em-banexpires').value) || null
+            username: document.getElementById('em-username').value.trim(),
+            displayName: document.getElementById('em-displayname').value.trim(),
+            email: document.getElementById('em-email').value.trim(),
+            bio: document.getElementById('em-bio').value.trim(),
+            avatar: this.currentAvatarValue,
+            role: roleVal ? roleVal : null,
+            verified: document.getElementById('em-verified').checked,
+            account_status: status,
+            ban_reason: reasonVal,
+            ban_expires: expiresTs
         };
 
-        this.apiCall('updateUser', { targetUid: this.activeTargetUid, updates })
-            .then(() => {
-                alert("Account updated.");
-                document.getElementById('edit-modal').classList.remove('show');
-                this.loadUsers();
-            });
+        const newPassword = document.getElementById('em-new-password').value;
+
+        await this.apiCall('updateUser', { targetUid: uid, updates, newPassword });
+        this.closeModal();
+        this.loadUsers();
     },
 
-    banDevice: function(deviceId) {
-        const reason = prompt("Enter ban reason for this device:");
+    banDeviceFromModal: async function(deviceId) {
+        const defaultReason = document.getElementById('em-banreason').value.trim() || 'This device has been banned from the ecosystem.';
+        const reason = prompt(`Ban Device ID: ${deviceId}\nEnter ban reason:`, defaultReason);
         if (reason === null) return;
-        this.apiCall('banDevice', { deviceId, reason })
-            .then(() => alert(`Device ${deviceId} banned successfully.`));
+
+        // Uses the modal's date/time picker if filled, or asks confirmation for permanent
+        const dtVal = document.getElementById('em-banexpires-dt').value;
+        const ban_expires = this.dateTimeLocalToTs(dtVal);
+
+        await this.apiCall('banDevice', { deviceId, reason, ban_expires });
+        alert(`Device ${deviceId} added to /banned_devices.`);
+        this.loadUsers();
     },
 
-    // --- RAW DB EDITOR LOGIC ---
+    unbanDevice: async function(deviceId) {
+        if (!confirm(`Remove ban for device ${deviceId}?`)) return;
+        await this.apiCall('unbanDevice', { deviceId });
+        this.loadUsers();
+    },
+
+    revokeSession: async function(uid, sid) {
+        if (!confirm(`Revoke session ${sid}?`)) return;
+        await this.apiCall('revokeSession', { targetUid: uid, targetSessionId: sid });
+        await this.loadUsers();
+        this.openEditModal(uid);
+    },
+
+    // --- RAW DATABASE INSPECTOR ---
     loadDB: async function() {
-        const treeC = document.getElementById('db-tree');
-        treeC.innerHTML = "Fetching DB Snapshot...";
+        const tree = document.getElementById('db-tree');
+        tree.innerHTML = 'Loading full Firebase Realtime Database tree...';
         try {
             const data = await this.apiCall('getDB');
-            treeC.innerHTML = '';
-            treeC.appendChild(this.buildTree(data, ''));
+            tree.innerHTML = '';
+            tree.appendChild(this.buildTree(data, ''));
         } catch (e) {
-            treeC.innerHTML = `<span style="color:var(--danger)">Failed to load DB.</span>`;
+            tree.innerHTML = '<span style="color:var(--danger)">Failed to load database tree.</span>';
         }
     },
 
-    buildTree: function(data, path) {
-        const container = document.createElement('div');
-        container.className = 'tree-node';
+    buildTree: function(obj, currentPath) {
+        const wrap = document.createElement('div');
+        wrap.className = 'tree-node';
 
-        if (typeof data === 'object' && data !== null) {
-            for (const key in data) {
-                const nodePath = path === '' ? `/${key}` : `${path}/${key}`;
+        if (typeof obj === 'object' && obj !== null) {
+            for (const key of Object.keys(obj)) {
+                const val = obj[key];
+                const nextPath = `${currentPath}/${key}`;
                 const row = document.createElement('div');
-                
-                const keySpan = document.createElement('span');
-                keySpan.className = 'tree-key';
-                keySpan.innerText = `+ ${key}: `;
-                
-                const childContainer = this.buildTree(data[key], nodePath);
-                childContainer.style.display = 'none'; // Collapsed by default
 
-                keySpan.onclick = () => {
-                    const isHidden = childContainer.style.display === 'none';
-                    childContainer.style.display = isHidden ? 'block' : 'none';
-                    keySpan.innerText = isHidden ? `- ${key}: ` : `+ ${key}: `;
-                };
+                if (typeof val === 'object' && val !== null) {
+                    const keyEl = document.createElement('span');
+                    keyEl.className = 'tree-key';
+                    keyEl.innerText = `▶ ${key}`;
 
-                row.appendChild(keySpan);
-                if (typeof data[key] !== 'object' || data[key] === null) {
-                    keySpan.innerText = `${key}: `;
-                    keySpan.onclick = null; // Remove collapse toggle for primitives
-                    
-                    const valSpan = document.createElement('span');
-                    valSpan.className = `tree-val ${typeof data[key]}`;
-                    valSpan.innerText = JSON.stringify(data[key]);
-                    
-                    const editIcn = document.createElement('span');
-                    editIcn.className = 'edit-icn';
-                    editIcn.innerText = '[Edit]';
-                    editIcn.onclick = () => this.editNode(nodePath, data[key], valSpan);
+                    const childWrap = this.buildTree(val, nextPath);
+                    childWrap.style.display = 'none';
 
-                    row.appendChild(valSpan);
-                    row.appendChild(editIcn);
+                    keyEl.onclick = () => {
+                        const open = childWrap.style.display === 'none';
+                        childWrap.style.display = open ? 'block' : 'none';
+                        keyEl.innerText = `${open ? '▼' : '▶'} ${key}`;
+                    };
+
+                    const delBtn = document.createElement('span');
+                    delBtn.className = 'tree-act';
+                    delBtn.innerText = 'Delete';
+                    delBtn.onclick = () => this.deleteDBNode(nextPath);
+
+                    row.appendChild(keyEl);
+                    row.appendChild(delBtn);
+                    wrap.appendChild(row);
+                    wrap.appendChild(childWrap);
                 } else {
-                    row.appendChild(document.createTextNode('{...}'));
+                    const keyEl = document.createElement('span');
+                    keyEl.style.color = 'var(--fg2)';
+                    keyEl.innerText = `${key}: `;
+
+                    const valEl = document.createElement('span');
+                    valEl.className = `tree-val ${typeof val}`;
+                    const displayStr = typeof val === 'string' && val.length > 80 ? val.slice(0, 80) + '...' : val;
+                    valEl.innerText = JSON.stringify(displayStr);
+
+                    const editBtn = document.createElement('span');
+                    editBtn.className = 'tree-act';
+                    editBtn.innerText = 'Edit';
+                    editBtn.onclick = () => this.editDBNode(nextPath, val);
+
+                    row.appendChild(keyEl);
+                    row.appendChild(valEl);
+                    row.appendChild(editBtn);
+                    wrap.appendChild(row);
                 }
-                
-                container.appendChild(row);
-                container.appendChild(childContainer);
             }
         }
-        return container;
+        return wrap;
     },
 
-    editNode: function(path, oldVal, valSpan) {
-        const inputStr = prompt(`Editing path: ${path}\nEnter new value (valid JSON required for numbers/booleans, wrap strings in quotes):`, JSON.stringify(oldVal));
-        if (inputStr === null) return;
-        
-        let newVal;
+    editDBNode: async function(path, currentVal) {
+        const rawInput = prompt(`Edit Firebase Node: ${path}\nEnter valid JSON value (wrap strings in quotes):`, JSON.stringify(currentVal));
+        if (rawInput === null) return;
         try {
-            newVal = JSON.parse(inputStr);
-        } catch(e) {
-            alert("Invalid input format. Remember to wrap strings in double quotes.");
-            return;
+            const parsed = JSON.parse(rawInput);
+            await this.apiCall('updateDBNode', { path, value: parsed });
+            this.loadDB();
+        } catch (e) {
+            alert("Invalid JSON syntax. Example string: \"hello\" | Example number: 123");
         }
+    },
 
-        if (confirm(`Are you sure you want to write to ${path}?\nNew Value: ${newVal}`)) {
-            this.apiCall('updateDBNode', { path, value: newVal })
-                .then(() => {
-                    valSpan.innerText = JSON.stringify(newVal);
-                    valSpan.className = `tree-val ${typeof newVal}`;
-                });
-        }
+    deleteDBNode: async function(path) {
+        if (!confirm(`Permanently delete node ${path} from Firebase?`)) return;
+        await this.apiCall('updateDBNode', { path, value: null });
+        this.loadDB();
     }
 };
 
