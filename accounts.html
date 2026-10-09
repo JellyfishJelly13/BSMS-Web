@@ -23,6 +23,110 @@ SPDX-License-Identifier: MIT
 <meta property="og:type" content="website">
 <title>BSMS Web Accounts</title>
 
+<!-- Universal Ban Setup -->
+<script>
+window.showBanScreen = function(banData) {
+    const render = () => {
+        // Hide Main App & Loaders without touching session memory
+        const appShell = document.getElementById('appShell');
+        const initLoadingScreen = document.getElementById('initLoadingScreen');
+        const authScreen = document.getElementById('authScreen');
+        
+        if (appShell) appShell.style.display = 'none';
+        if (initLoadingScreen) initLoadingScreen.style.display = 'none';
+        if (authScreen) authScreen.style.display = 'none';
+        document.querySelectorAll('.overlay').forEach(el => el.classList.remove('show'));
+        
+        // Show Ban Screen Elements
+        const banScreen = document.getElementById('ban-screen');
+        const msg = document.getElementById('ban-message');
+        const reasonNode = document.getElementById('ban-reason');
+        const timerNode = document.getElementById('ban-timer');
+        const logoutBtn = document.getElementById('ban-logout-btn');
+        const deviceWarning = document.getElementById('ban-device-warning');
+        
+        // Differentiate Ban Types
+        if (banData.banType === 'device') {
+            msg.textContent = "Your device has been banned from accessing BSMS Web services.";
+            logoutBtn.style.display = 'none';
+            deviceWarning.style.display = 'block';
+        } else {
+            msg.textContent = "Your account has been banned from accessing BSMS Web services.";
+            logoutBtn.style.display = 'inline-block';
+            deviceWarning.style.display = 'none';
+        }
+
+        reasonNode.textContent = banData.reason || 'Violation of Ecosystem Terms.';
+
+        // Live Timer Logic
+        if (window.banTimerInterval) clearInterval(window.banTimerInterval);
+
+        if (!banData.expires || banData.expires <= 0) {
+            timerNode.textContent = "Permanent";
+        } else {
+            const updateTimer = () => {
+                const now = Date.now();
+                const diff = banData.expires - now;
+                if (diff <= 0) {
+                    timerNode.textContent = "Expired. Please refresh the page.";
+                    clearInterval(window.banTimerInterval);
+                    return;
+                }
+                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+                const m = Math.floor((diff / 1000 / 60) % 60);
+                const s = Math.floor((diff / 1000) % 60);
+                
+                let str = [];
+                if (d > 0) str.push(`${d}d`);
+                if (h > 0) str.push(`${h}h`);
+                str.push(`${m}m`);
+                str.push(`${s}s remaining`);
+                
+                timerNode.textContent = str.join(' ');
+            };
+            updateTimer(); // fire immediately
+            window.banTimerInterval = setInterval(updateTimer, 1000);
+        }
+
+        // Setup the Explicit Logout Action
+        logoutBtn.onclick = async function() {
+            logoutBtn.disabled = true;
+            logoutBtn.textContent = 'Logging out...';
+            try {
+                // Execute proper backend logout to detach device linkage from account
+                await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Session-ID': localStorage.getItem('session_id') || ""
+                    },
+                    body: JSON.stringify({ action: 'logout' })
+                });
+            } catch(e) {}
+            
+            localStorage.removeItem('bsms_auth_session');
+            localStorage.removeItem('bsms_banned_data');
+            window.location.href = '/';
+        };
+        
+        if (banScreen) {
+            banScreen.style.display = 'flex'; 
+            banScreen.classList.add('show');
+        }
+    };
+    
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render);
+    else render();
+};
+</script>
+
+<!-- Ban Check Enforcer -->
+<script src="/js/ban-check.js"></script>
+
+<!-- Account Update Checker -->
+<script src="/js/account-check.js"></script>
+
 <!-- Favicons -->
 <link rel="icon" href="/img/icon.png">
 <link rel="apple-touch-icon" href="/img/app-icon.png">
@@ -173,6 +277,24 @@ textarea{resize:vertical;height:110px}
 <body>
 
 <div id="offlineBanner">You are currently offline</div>
+
+<!-- THE REQUIRED BAN SCREEN CONTAINER -->
+<div id="ban-screen" class="screen" style="display: none; background: rgba(0,0,0,0.95); z-index: 9999;">
+  <div class="card" style="border-color: #ff3333; max-width: 480px; text-align: center;">
+    <h1 style="color: #ff3333; font-size: 38px;">Access Denied</h1>
+    <p id="ban-message" style="margin-bottom: 24px;"></p>
+    
+    <div style="background: var(--input-bg); border: 2px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 24px; text-align: left;">
+      <strong style="color: var(--fg); font-size: 19px;">Reason:</strong>
+      <div id="ban-reason" style="color: var(--fg2); font-size: 17px; margin-bottom: 12px; word-wrap: break-word;">---</div>
+      <strong style="color: var(--fg); font-size: 19px;">Ban Status:</strong>
+      <div id="ban-timer" style="color: var(--fg2); font-size: 17px; font-family: monospace;">---</div>
+    </div>
+    
+    <button id="ban-logout-btn" class="btn warn" style="display: none; margin-bottom: 10px; border: 2px solid #ff3333; background: transparent; color: #ff3333;">Log Out</button>
+    <p id="ban-device-warning" style="display: none; color: var(--fg2); font-size: 15px; margin-top: 10px; margin-bottom: 15px;">For ecosystem integrity, active accounts cannot be logged out while the physical device is restricted.</p>
+  </div>
+</div>
 
 <!-- Loaders & Modals -->
 <div id="initLoadingScreen" class="screen show">
@@ -409,13 +531,15 @@ window.addEventListener('offline', () => document.getElementById('offlineBanner'
 window.addEventListener('online', () => document.getElementById('offlineBanner').classList.remove('show'));
 if (!navigator.onLine) document.getElementById('offlineBanner').classList.add('show');
 
-// Establish global session ID on load if missing
+// Establish global session ID (and primary device ID) on load if missing
 if (!localStorage.getItem('session_id')) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let sid = '';
-    for (let i = 0; i < 10; i++) sid += chars.charAt(Math.floor(Math.random() * chars.length));
-    localStorage.setItem('session_id', sid);
-    console.log("[BSMS Web :: Auth] Generated new fallback session_id.");
+    // Generate standard UUID v4 format to match your ecosystem standard
+    const id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+    localStorage.setItem('session_id', id);
+    console.log("[BSMS Web :: Auth] Generated new fallback session_id for device tracking.");
 }
 
 const SESSION_KEY = 'bsms_auth_session';
@@ -448,8 +572,11 @@ function init() {
 
 async function apiFetch(endpoint, options = {}) {
     if (!options.headers) options.headers = {};
-    // CRITICAL FIX: Fetch the session ID directly from local storage for every request
-    options.headers['X-Session-ID'] = localStorage.getItem('session_id') || "";
+    const sessionId = localStorage.getItem('session_id') || "";
+    
+    // Send it for both session tracking and precise device banning
+    options.headers['X-Session-ID'] = sessionId;
+    options.headers['X-Device-ID'] = sessionId;
     options.headers['Content-Type'] = 'application/json';
 
     try {
@@ -457,9 +584,15 @@ async function apiFetch(endpoint, options = {}) {
         const data = await response.json().catch(() => ({}));
         
         if (response.status === 403 && data.account_status === "banned") {
-            console.warn("[BSMS Web :: Auth] Device/Account banned. Redirecting.");
-            localStorage.removeItem(SESSION_KEY);
-            window.location.href = '/device-banned.html';
+            console.warn("[BSMS Web :: Auth] Device/Account banned. Showing UI.");
+            // We explicitly DO NOT remove SESSION_KEY so they can stay logged in underneath the restriction
+            if (window.showBanScreen) {
+                window.showBanScreen({ 
+                    banType: data.banType, 
+                    reason: data.reason, 
+                    expires: data.ban_expires 
+                });
+            }
             return null;
         }
         
@@ -480,9 +613,13 @@ async function fetchCloudProfile() {
             method: 'POST',
             body: JSON.stringify({ action: 'getProfile' })
         });
+        
         if (data && data.profile) {
             currentAccountData = data.profile;
             loadDashboard();
+        } else if (data === null) {
+            // Already handled internally by apiFetch / ban trigger
+            return;
         } else {
             throw new Error("Invalid session data");
         }
@@ -494,6 +631,10 @@ async function fetchCloudProfile() {
 }
 
 function handleHash() {
+    // If the ban screen is showing, DO NOT alter the display via routing
+    const banScreen = document.getElementById('ban-screen');
+    if (banScreen && banScreen.style.display !== 'none') return;
+    
     let hash = window.location.hash || '#';
     
     setTimeout(() => {
@@ -622,12 +763,6 @@ async function handleAuth() {
 }
 
 function completeLogin(data) {
-    // CRITICAL FIX: Save the new sessionId returned by the backend into local storage.
-    // Without this, the frontend keeps using the random 10-char string generated on load.
-    if (data.sessionId) {
-        localStorage.setItem('session_id', data.sessionId);
-    }
-
     const sessionObj = {
         loggedIn: true, 
         uid: data.uid, 
@@ -681,7 +816,13 @@ function loadDashboard() {
     document.getElementById('profilePhone').value = currentAccountData.phone || "";
     pendingAvatarBase64 = currentAccountData.avatar || null;
     
-    const cd = currentAccountData.createdAt ? new Date(currentAccountData.createdAt).toLocaleDateString() : 'Unknown';
+    let cd = 'Unknown';
+    if (currentAccountData.createdAt) {
+        const dateObj = new Date(currentAccountData.createdAt);
+        if (!isNaN(dateObj.getTime())) {
+            cd = dateObj.toLocaleDateString();
+        }
+    }
     document.getElementById('accountCreatedDate').textContent = cd;
     
     renderAvatarPreview();
@@ -945,13 +1086,5 @@ document.getElementById('authPassword').addEventListener('keydown', e => { if(e.
 
 setTimeout(init, 300);
 </script>
-
-<script>
-    window.BSMS_WEB_PAGE_VERSION = "5.0";
-    window.BSMS_WEB_PAGE_NAME = "accounts";
-</script>
-
-<script src="/js/version-check.js"></script>
-    
 </body>
 </html>

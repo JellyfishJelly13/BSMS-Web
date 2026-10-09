@@ -47,6 +47,54 @@ async function getUserBySession(sessionId) {
     return null;
 }
 
+// Comprehensive Backend Evaluation (Device & Account Bans + Expiration Sync)
+async function evaluateAndClearBans(uid, deviceId, accountObj) {
+    const now = Date.now();
+
+    // 1. Evaluate Device Ban first (highest priority)
+    if (deviceId) {
+        const deviceSnap = await db.ref(`/banned_devices/${deviceId}`).once('value');
+        const deviceBan = deviceSnap.val();
+        if (deviceBan) {
+            if (deviceBan.ban_expires && now > deviceBan.ban_expires) {
+                // Strict lazy deletion: device ban is expired, remove it entirely
+                await db.ref(`/banned_devices/${deviceId}`).remove();
+            } else {
+                return {
+                    isBanned: true,
+                    banType: 'device',
+                    banReason: deviceBan.reason || 'This device has been permanently banned from the ecosystem.',
+                    banExpires: deviceBan.ban_expires || null
+                };
+            }
+        }
+    }
+
+    // 2. Evaluate Account Ban next
+    if (accountObj && accountObj.account_status === 'banned') {
+        if (accountObj.ban_expires && now > accountObj.ban_expires) {
+            // Strict lazy unban: account ban is expired, clear restrictions
+            if (uid) {
+                await db.ref(`/accounts/${uid}`).update({
+                    account_status: 'active',
+                    ban_expires: null,
+                    ban_reason: null
+                });
+            }
+            accountObj.account_status = 'active'; // Local override just in case
+        } else {
+            return {
+                isBanned: true,
+                banType: 'account',
+                banReason: accountObj.ban_reason || 'This account has been banned.',
+                banExpires: accountObj.ban_expires || null
+            };
+        }
+    }
+
+    return { isBanned: false };
+}
+
 // Dynamic Glin Profanity checker for usernames and display names
 async function checkProfanity(text) {
     if (!text) return false;
@@ -87,13 +135,22 @@ export default async function handler(req, res) {
 
     const payload = req.body || {};
     const action = req.query.action || payload.action;
+    
+    // Explicit extraction to support robust session tracking and strict device checking
     const sessionId = req.headers['x-session-id'];
+    const clientDeviceId = req.headers['x-device-id'];
 
     try {
         switch (action) {
             case 'register': {
                 const { email = "", username, password } = payload;
                 if (!username || !password) return res.status(400).json({ error: 'Missing required fields.' });
+
+                // STRICT: Block registration entirely if device is in /banned_devices
+                const banCheck = await evaluateAndClearBans(null, clientDeviceId, null);
+                if (banCheck.isBanned) {
+                    return res.status(403).json({ error: 'Banned.', account_status: 'banned', banType: banCheck.banType, reason: banCheck.banReason, ban_expires: banCheck.banExpires });
+                }
 
                 const validUserRegex = /^[a-zA-Z0-9_.-]+$/;
                 if (!validUserRegex.test(username)) return res.status(400).json({ error: 'Username contains invalid characters.' });
@@ -106,13 +163,19 @@ export default async function handler(req, res) {
                 const inputEmail = email ? email.toLowerCase() : "";
                 const inputUser = username.toLowerCase();
 
+                // Strict Uniqueness Checks
                 for (const [id, acc] of Object.entries(accounts)) {
-                    if (acc.email && acc.email.toLowerCase() === inputEmail) return res.status(409).json({ error: 'Email already in use.' });
-                    if (acc.username && acc.username.toLowerCase() === inputUser) return res.status(409).json({ error: 'Username already in use.' });
+                    if (acc.username && acc.username.toLowerCase() === inputUser) {
+                        return res.status(400).json({ error: 'Username is already taken' });
+                    }
+                    if (acc.email && acc.email.toLowerCase() === inputEmail) {
+                        return res.status(400).json({ error: 'Email is already taken' });
+                    }
                 }
 
                 const uid = db.ref('/accounts').push().key;
-                const newSessionId = crypto.randomUUID();
+                const newSessionId = sessionId || crypto.randomUUID();
+                const currentTimestamp = Date.now();
                 
                 const newAccount = {
                     email,
@@ -120,12 +183,13 @@ export default async function handler(req, res) {
                     displayName: username,
                     password: hashPassword(password),
                     account_status: 'active',
-                    createdAt: admin.database.ServerValue.TIMESTAMP,
+                    createdAt: currentTimestamp,
                     avatar: '', 
                     sessions: {
                         [newSessionId]: {
-                            createdAt: admin.database.ServerValue.TIMESTAMP,
-                            lastActive: admin.database.ServerValue.TIMESTAMP
+                            createdAt: currentTimestamp,
+                            lastActive: currentTimestamp,
+                            deviceId: clientDeviceId || "" // Storing ONLY in session scope
                         }
                     }
                 };
@@ -133,7 +197,7 @@ export default async function handler(req, res) {
                 await db.ref(`/accounts/${uid}`).set(newAccount);
                 await db.ref(`/chat/users/${uid}`).set({
                     status: 'online',
-                    lastSeen: admin.database.ServerValue.TIMESTAMP,
+                    lastSeen: currentTimestamp,
                     lastMessageTimestamp: 0
                 });
 
@@ -164,12 +228,18 @@ export default async function handler(req, res) {
                 }
 
                 if (!targetUid) return res.status(401).json({ error: 'Invalid username/email or password.' });
-                if (targetAcc.account_status === 'banned') return res.status(403).json({ error: 'Account is banned.' });
+                
+                // EXPLICIT CHECK: Ensure banned devices/accounts are caught securely using our handler
+                const banCheck = await evaluateAndClearBans(targetUid, clientDeviceId, targetAcc);
+                if (banCheck.isBanned) {
+                    return res.status(403).json({ error: 'Banned.', account_status: 'banned', banType: banCheck.banType, reason: banCheck.banReason, ban_expires: banCheck.banExpires });
+                }
 
-                const newSessionId = crypto.randomUUID();
+                const newSessionId = sessionId || crypto.randomUUID();
                 await db.ref(`/accounts/${targetUid}/sessions/${newSessionId}`).set({
                     createdAt: admin.database.ServerValue.TIMESTAMP,
-                    lastActive: admin.database.ServerValue.TIMESTAMP
+                    lastActive: admin.database.ServerValue.TIMESTAMP,
+                    deviceId: clientDeviceId || "" // Storing ONLY in session scope
                 });
 
                 const { password: _, ...safeProfile } = targetAcc;
@@ -180,15 +250,38 @@ export default async function handler(req, res) {
                 const user = await getUserBySession(sessionId);
                 if (!user) return res.status(401).json({ error: 'Unauthorized.' });
                 
+                // Naturally deletes the device ID linkage because it is scoped entirely inside this session node
                 await db.ref(`/accounts/${user.uid}/sessions/${sessionId}`).remove();
                 return res.status(200).json({ success: true });
             }
 
-            // --- MISSING ENDPOINTS ADDED BELOW ---
+            // --- PROACTIVE CHECK & FRONTEND SYNC ---
+            case 'removeExpiredBan':
+            case 'checkBan': {
+                let uid = null; let account = null;
+                const user = await getUserBySession(sessionId);
+                
+                if (user) {
+                    uid = user.uid; account = user.account;
+                } else if (!clientDeviceId) {
+                    return res.status(401).json({ error: 'Unauthorized.' });
+                }
+
+                // Checking the ban executes the database cleanup if it detects expiration
+                const banCheck = await evaluateAndClearBans(uid, clientDeviceId, account);
+                if (banCheck.isBanned) {
+                    return res.status(403).json({ error: 'Banned.', account_status: 'banned', banType: banCheck.banType, reason: banCheck.banReason, ban_expires: banCheck.banExpires });
+                }
+                
+                return res.status(200).json({ success: true, account_status: 'active' });
+            }
 
             case 'getProfile': {
                 const user = await getUserBySession(sessionId);
                 if (!user) return res.status(401).json({ error: 'Unauthorized.' });
+                
+                const banCheck = await evaluateAndClearBans(user.uid, clientDeviceId, user.account);
+                if (banCheck.isBanned) return res.status(403).json({ error: 'Banned.', account_status: 'banned', banType: banCheck.banType, reason: banCheck.banReason, ban_expires: banCheck.banExpires });
                 
                 const { password: _, ...safeProfile } = user.account;
                 return res.status(200).json({ profile: safeProfile });
@@ -197,6 +290,9 @@ export default async function handler(req, res) {
             case 'updateProfile': {
                 const user = await getUserBySession(sessionId);
                 if (!user) return res.status(401).json({ error: 'Unauthorized.' });
+                
+                const banCheck = await evaluateAndClearBans(user.uid, clientDeviceId, user.account);
+                if (banCheck.isBanned) return res.status(403).json({ error: 'Banned.', account_status: 'banned', banType: banCheck.banType, reason: banCheck.banReason, ban_expires: banCheck.banExpires });
 
                 const { displayName, bio, email, phone, avatar } = payload;
                 const updates = {};
@@ -223,6 +319,9 @@ export default async function handler(req, res) {
                 const user = await getUserBySession(sessionId);
                 if (!user) return res.status(401).json({ error: 'Unauthorized.' });
                 
+                const banCheck = await evaluateAndClearBans(user.uid, clientDeviceId, user.account);
+                if (banCheck.isBanned) return res.status(403).json({ error: 'Banned.', account_status: 'banned', banType: banCheck.banType, reason: banCheck.banReason, ban_expires: banCheck.banExpires });
+                
                 const { newUsername } = payload;
                 const lastChange = user.account.lastUsernameChange || 0;
                 
@@ -237,7 +336,7 @@ export default async function handler(req, res) {
                 const allAccs = snap.val() || {};
                 for (const [id, acc] of Object.entries(allAccs)) {
                     if (acc.username && acc.username.toLowerCase() === newUsername.toLowerCase()) {
-                        return res.status(409).json({ error: 'Username already in use.' });
+                        return res.status(400).json({ error: 'Username is already taken' });
                     }
                 }
 
@@ -252,6 +351,9 @@ export default async function handler(req, res) {
             case 'changePassword': {
                 const user = await getUserBySession(sessionId);
                 if (!user) return res.status(401).json({ error: 'Unauthorized.' });
+                
+                const banCheck = await evaluateAndClearBans(user.uid, clientDeviceId, user.account);
+                if (banCheck.isBanned) return res.status(403).json({ error: 'Banned.', account_status: 'banned', banType: banCheck.banType, reason: banCheck.banReason, ban_expires: banCheck.banExpires });
 
                 const { currentPassword, newPassword } = payload;
                 if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Missing password fields.' });
@@ -267,12 +369,19 @@ export default async function handler(req, res) {
             case 'getSessions': {
                 const user = await getUserBySession(sessionId);
                 if (!user) return res.status(401).json({ error: 'Unauthorized.' });
+                
+                const banCheck = await evaluateAndClearBans(user.uid, clientDeviceId, user.account);
+                if (banCheck.isBanned) return res.status(403).json({ error: 'Banned.', account_status: 'banned', banType: banCheck.banType, reason: banCheck.banReason, ban_expires: banCheck.banExpires });
+
                 return res.status(200).json({ sessions: user.account.sessions || {} });
             }
 
             case 'revokeSession': {
                 const user = await getUserBySession(sessionId);
                 if (!user) return res.status(401).json({ error: 'Unauthorized.' });
+                
+                const banCheck = await evaluateAndClearBans(user.uid, clientDeviceId, user.account);
+                if (banCheck.isBanned) return res.status(403).json({ error: 'Banned.', account_status: 'banned', banType: banCheck.banType, reason: banCheck.banReason, ban_expires: banCheck.banExpires });
                 
                 if (payload.sessionId) {
                     await db.ref(`/accounts/${user.uid}/sessions/${payload.sessionId}`).remove();
@@ -283,6 +392,9 @@ export default async function handler(req, res) {
             case 'deleteAccount': {
                 const user = await getUserBySession(sessionId);
                 if (!user) return res.status(401).json({ error: 'Unauthorized.' });
+                
+                const banCheck = await evaluateAndClearBans(user.uid, clientDeviceId, user.account);
+                if (banCheck.isBanned) return res.status(403).json({ error: 'Banned.', account_status: 'banned', banType: banCheck.banType, reason: banCheck.banReason, ban_expires: banCheck.banExpires });
                 
                 if (user.account.password !== hashPassword(payload.password)) {
                     return res.status(401).json({ error: 'Incorrect password.' });

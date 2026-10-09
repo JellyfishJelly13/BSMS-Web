@@ -76,7 +76,17 @@ export default async function handler(req, res) {
         if (!userLookup) return res.status(401).json({ error: 'Unauthorized session.' });
 
         const { uid, account } = userLookup;
-        if (account.account_status === 'banned') return res.status(403).json({ error: 'Account banned.', account_status: 'banned' });
+        
+        // Pass complete ban data specifically for front-end global routing
+        if (account.account_status === 'banned') {
+            return res.status(403).json({ 
+                error: 'Account banned.', 
+                account_status: 'banned',
+                banType: 'account',
+                reason: account.ban_reason || null,
+                ban_expires: account.ban_expires || null
+            });
+        }
 
         await db.ref(`/accounts/${uid}/sessions/${sessionId}/lastActive`).set(Date.now());
 
@@ -96,7 +106,16 @@ export default async function handler(req, res) {
                 
                 for (const [id, acc] of Object.entries(allAccounts)) {
                     if (acc.account_status !== 'deleted') {
-                        accountsCache[id] = { displayName: acc.displayName, username: acc.username, avatar: acc.avatar };
+                        // Pass specific ban, role, and verification traits directly to the chat cache
+                        accountsCache[id] = { 
+                            displayName: acc.displayName, 
+                            username: acc.username, 
+                            avatar: acc.account_status === 'banned' ? null : acc.avatar, // Automatically strip PFPs from banned profiles
+                            account_status: acc.account_status,
+                            ban_expires: acc.ban_expires || null,
+                            role: acc.role || null,
+                            verified: acc.verified || false
+                        };
                     }
                 }
 

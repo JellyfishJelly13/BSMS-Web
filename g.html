@@ -23,6 +23,12 @@ SPDX-License-Identifier: MIT
 <meta property="og:type" content="website">
 <title>BSMS Web Games</title>
 
+<!-- Ban Check Enforcer -->
+<script src="/js/ban-check.js"></script>
+
+<!-- Account Update Checker -->
+<script src="/js/account-check.js"></script>
+    
 <!-- Favicons -->
 <link rel="icon" href="/img/icon.png">
 <link rel="apple-touch-icon" href="/img/app-icon.png">
@@ -673,14 +679,6 @@ function handleHashChange() {
 window.addEventListener('hashchange', handleHashChange);
 
 fetchGames();
-</script>
-
-<script>
-    window.BSMS_WEB_PAGE_VERSION = "5.0";
-    window.BSMS_WEB_PAGE_NAME = "games";
-</script>
-
-<script src="/js/version-check.js"></script>
-    
+</script>    
 </body>
 </html>
