@@ -30,6 +30,23 @@ const Admin = {
             },
             body: JSON.stringify({ action, ...payload })
         });
+        
+        // If the user isn't an admin, inject 401.html over the whole page without redirecting
+        if (res.status === 401 || res.status === 403) {
+            try {
+                const unauthorizedPage = await fetch('/401.html');
+                const htmlText = await unauthorizedPage.text();
+                document.open();
+                document.write(htmlText);
+                document.close();
+            } catch (e) {
+                // Fallback if 401.html fails to load
+                document.body.innerHTML = '<h1 style="color:#ef4444;text-align:center;margin-top:100px;font-family:sans-serif;">401 Unauthorized</h1>';
+            }
+            // Return an unresolved Promise to instantly halt execution and prevent UI errors from firing
+            return new Promise(() => {});
+        }
+
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
             alert("Admin API Error: " + (data.error || res.statusText));
